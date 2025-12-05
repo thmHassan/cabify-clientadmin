@@ -49,7 +49,7 @@ const RidesManagement = () => {
       route: "Downtown to Airport",
       time: "10:30 AM",
       fare: "$25.00",
-      status: "Completed",
+      status: "Onboarding",
       distance: "15 miles",
     },
     {
@@ -59,7 +59,7 @@ const RidesManagement = () => {
       route: "Downtown to Airport",
       time: "10:30 AM",
       fare: "$25.00",
-      status: "Completed",
+      status: "Cancelled",
       distance: "15 miles",
     },
     {
@@ -69,7 +69,7 @@ const RidesManagement = () => {
       route: "Downtown to Airport",
       time: "10:30 AM",
       fare: "$25.00",
-      status: "Completed",
+      status: "Rescheduled",
       distance: "15 miles",
     },
   ];
@@ -98,7 +98,7 @@ const RidesManagement = () => {
           className={`${activeTab === "pob" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
           onClick={() => setActiveTab("pob")}
         >
-          Passenger on Board(POB)
+          POB
         </Button>
         <Button
           type="filled"

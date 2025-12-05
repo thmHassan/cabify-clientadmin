@@ -67,7 +67,7 @@ const DriversManagement = () => {
       changeReq: "No",
       referralCode: "MR12345",
       walletBalance: "20.00",
-      stutus: "Inactive"
+      status: "Inactive"
     },
     {
       id: "MR12347",
@@ -169,7 +169,18 @@ const DriversManagement = () => {
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
               {staticUsers.map((driver) => (
-                <DriverManagementCard key={driver.id} driver={driver} />
+                <DriverManagementCard
+                  key={driver.id}
+                  driver={driver}
+                  onEdit={(driverToEdit) => {
+                    lockBodyScroll();
+                    setIsDriversManagementModalOpen({
+                      isOpen: true,
+                      type: "edit",
+                      data: driverToEdit,
+                    });
+                  }}
+                />
               ))}
             </div>
           </Loading>

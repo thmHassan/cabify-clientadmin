@@ -45,23 +45,7 @@ const DriverDocuments = () => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
-  const actionOptions = [
-    {
-      label: "View",
-      onClick: (dispatcher) => alert(`Viewing ${dispatcher.name}`),
-    },
-    {
-      label: "Edit",
-      onClick: (dispatcher) => {
-        setIsDispatcherModalOpen({ type: "edit", isOpen: true, data: dispatcher });
-        lockBodyScroll();
-      },
-    },
-    {
-      label: "Delete",
-      onClick: (dispatcher) => alert(`Deleting ${dispatcher.name}`),
-    },
-  ];
+
   const staticDocuments = [
     {
       name: "Driver’s License",

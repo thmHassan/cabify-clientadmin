@@ -187,7 +187,7 @@ const Reviews = () => {
       </div>
       <div className="flex flex-col gap-4 sm:gap-5 lg:gap-[30px]">
         <CardContainer className="p-3 sm:p-4 lg:p-5">
-          <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
+          <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}

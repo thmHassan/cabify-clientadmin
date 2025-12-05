@@ -14,6 +14,7 @@ import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import Loading from "../../../../components/shared/Loading/Loading";
 import Tag from "../../../../components/ui/Tag";
+import UserDetails from "./components/UserDetails";
 
 const Users = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState({
@@ -132,60 +133,19 @@ const Users = () => {
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticUsers.map((user, index) => (
-                <div
-                  key={index.id}
-                  className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md   overflow-x-auto"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-60">
-                      <p className="font-semibold text-xl">{user.name}</p>
-                      <p className="text-[10px]">{user.email}</p>
-                      <p className="text-xs">{user.phone}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center gap-3" >
-
-                    <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                      <p className="text-xs text-gray-500">ID</p>
-                      <p className="text-black font-semibold text-sm">
-                        {user.id}
-                      </p>
-                    </div>
-                    <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                      <p className="text-xs text-start text-gray-500 mb-0.5 px-1 ">Address</p>
-                      <p className="text-black pb-1 px-1 text-start font-semibold text-xs w-60">
-                        {user.address}
-                      </p>
-                    </div>
-
-                    <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                      <p className="text-xs text-gray-500">Device</p>
-                      <p className="text-black font-semibold text-sm">
-                        {user.device}
-                      </p>
-                    </div>
-                    <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                      <p className="text-xs text-gray-500">Rating</p>
-                      <p className="text-black font-semibold text-sm">
-                        {user.ratings}
-                      </p>
-                    </div>
-                    <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                      <p className="text-xs text-gray-500">Created At</p>
-                      <p className="text-black font-semibold text-sm w-32">
-                        {user.createdAt}
-                      </p>
-                    </div>
-                    <div className="cursor-pointer p-3 bg-gray-100 rounded-full hover:bg-gray-200">
-                      <svg width="5" height="14" viewBox="0 0 5 20" fill="none">
-                        <circle cx="2.5" cy="3" r="2.5" fill="#7B7B7B" />
-                        <circle cx="2.5" cy="10" r="2.5" fill="#7B7B7B" />
-                        <circle cx="2.5" cy="17" r="2.5" fill="#7B7B7B" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+              {staticUsers.map((user) => (
+                <UserDetails
+                  key={user.id}
+                  user={user}
+                  onEdit={(userToEdit) => {
+                    lockBodyScroll();
+                    setIsUserModalOpen({
+                      isOpen: true,
+                      type: "edit",
+                      data: userToEdit,
+                    });
+                  }}
+                />
               ))}
             </div>
           </Loading>

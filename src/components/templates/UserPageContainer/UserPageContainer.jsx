@@ -60,31 +60,42 @@ const UserPageContainer = ({ children }) => {
 
   return (
     <div className="flex">
-      <div
-        className={`w-[85vw] max-w-[300px] border-r-[0.7px] border-[#7A7A7A] py-[21px] h-screen overflow-auto fixed z-[70] bg-[#ffffff] transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
-      >
-        <div className="px-6 lg:px-8 mb-6 lg:mb-10 flex items-center justify-center relative">
+       <div
+  className={`
+    border-r-[0.7px] border-[#7A7A7A] pb-[21px] 
+    h-screen overflow-auto fixed z-[70] bg-[#ffffff]
+    transition-all duration-300 ease-in-out
+
+    ${isSidebarOpen ? "w-[19.7rem]" : "w-16"}   /* width change here */
+    
+    /* Mobile slide animation */
+    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+    lg:translate-x-0
+  `}
+>
+
+        <div className={`${isSidebarOpen ? "mb-10" : "mb-0"} px-6 lg:px-8 flex items-center justify-center relative`}>
           <AppLogoIcon height={95} width={95} />
-          <button
-            type="button"
-            className="lg:hidden w-10 h-10 grid place-items-center rounded-md hover:bg-[#f3f3f3] absolute right-3 -top-1.5"
-            aria-label="Close menu"
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <CloseIcon width={18} height={18} fill="#3D3D3D" />
-          </button>
+    <button
+  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+  className="absolute top-4 right-[13px] w-8 h-8  flex items-center justify-center transition lg:block md:hidden"
+>
+  {isSidebarOpen ? (
+    <CloseIcon width={18} height={18} fill="#3D3D3D" /> 
+  ) : (
+    <DrawerIcon width={30} height={30} fill="#000000" /> 
+  )}
+</button>
         </div>
         <div className="flex flex-col gap-[30px]">
           {NAV_ELEMENTS.map(({ title, routes }, index) => (
             <div key={index}>
-              <div className="text-[#7A7A7A] px-6 lg:px-8 text-sm leading-[19px] font-semibold mb-[18px]">
+              <div className={`${isSidebarOpen ? "block" : "hidden"} text-[#7A7A7A] px-6 lg:px-8 text-sm leading-[19px] font-semibold mb-[18px]`}>
                 {title}
               </div>
               <div className="flex flex-col sm:gap-5 gap-4">
                 {routes.map((navItem, iIndex) => {
-                  return <NavElement key={iIndex} navItem={navItem} />;
+                  return <NavElement key={iIndex} navItem={navItem} isSidebarOpen={isSidebarOpen}/>;
                 })}
               </div>
             </div>
@@ -99,8 +110,18 @@ const UserPageContainer = ({ children }) => {
         aria-hidden="true"
         onClick={() => setIsSidebarOpen(false)}
       ></div>
-      <div className="w-full lg:w-[calc(100%-300px)] lg:ml-[300px]">
-        <div className="h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full lg:w-[calc(100%-300px)] z-50">
+           <div
+  className={`w-full transition-all duration-300 ease-in-out
+    ${isSidebarOpen 
+      ? "lg:ml-[19.7rem] lg:w-[calc(100%-325px)]" 
+      : "lg:ml-16 lg:w-[calc(100%-64px)]"
+    }
+  `}
+>
+  <div className={`h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full ] z-50 ${isSidebarOpen 
+      ? "lg:ml-0 lg:w-[calc(100%-315px)]" 
+      : "lg:ml-0 lg:w-[calc(100%-64px)]"
+    }`}>
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 pr-2 sm:pr-5">
             <button
               type="button"

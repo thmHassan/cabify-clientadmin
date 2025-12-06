@@ -8,11 +8,11 @@ import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import Loading from '../../../../components/shared/Loading/Loading';
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectOptions';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
-import SubCompantCard from './components/subCompanyCard/SubCompanyCard';
 import { useAppSelector } from '../../../../store';
 import { lockBodyScroll } from '../../../../utils/functions/common.function';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddSubCompanyModel from './components/AddSubCompanyModel/AddSubCompanyModel';
+import SubCompantCard from './components/SubCompanyCard';
 
 const SubCompany = () => {
   const [isSubCompanyModelOpen, setIsSubCompanyModelOpen] = useState({

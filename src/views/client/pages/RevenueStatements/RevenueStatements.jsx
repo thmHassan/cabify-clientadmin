@@ -47,7 +47,7 @@ const RevenueStatements = () => {
       title: "Active Companies",
       value: "15",
       change: "+3 from last hour",
-      icon: { component: CompaniesIcon },
+       icon: { component: CompaniesIcon },
       backgroundColor: "#e5f9f0",
       color: "#3E9972",
     },
@@ -104,7 +104,8 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid"
+      status: "paid",
+      paymentStatus: "Cash"
     },
     {
       id: 1,
@@ -113,7 +114,8 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid"
+      status: "Failed",
+      paymentStatus: "Credit Card"
     },
     {
       id: 1,
@@ -122,7 +124,8 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid"
+      status: "paid",
+      paymentStatus: "Online"
     },
     {
       id: 1,
@@ -131,7 +134,8 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid"
+      status: "paid",
+      paymentStatus: "Cash"
     }
   ];
 
@@ -296,117 +300,6 @@ const RevenueStatements = () => {
           ) : null}
         </CardContainer>
       </div>
-
-      {/* <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-800">BID List</h2>
-          <div className="w-full sm:w-48">
-            <CustomSelect
-              variant={2}
-              options={STATUS_OPTIONS}
-              value={selectedStatus}
-              onChange={setSelectedStatus}
-              placeholder="Filter by status"
-            />
-          </div>
-        </div>
-
-        {tableLoading ? (
-          <div className="flex justify-center items-center p-8">
-            <Loading />
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {BID_DATA.map((bid) => (
-                    <tr key={bid.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {bid.bidNumber}
-                        <div>{bid.date}</div>
-
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {bid.customer.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {bid.customer.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${bid.amount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyles(bid.status)}`}>
-                          {getStatusText(bid.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          className="text-blue-600 hover:text-blue-900 mr-3 transition-colors"
-                          onClick={() => console.log(`View ${bid.bidNumber}`)}
-                        >
-                          View
-                        </button>
-                        <button
-                          className="text-indigo-600 hover:text-indigo-900 transition-colors"
-                          onClick={() => console.log(`Edit ${bid.bidNumber}`)}
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {BID_DATA.length > 0 && (
-              <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                <div className="flex-1 flex justify-between sm:hidden">
-                  <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    Previous
-                  </button>
-                  <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    Next
-                  </button>
-                </div>
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      Showing <span className="font-medium">1</span> to{' '}
-                      <span className="font-medium">{Math.min(BID_DATA.length, itemsPerPage)}</span> of{' '}
-                      <span className="font-medium">{BID_DATA.length}</span> results
-                    </p>
-                  </div>
-                  <div>
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={Math.ceil(BID_DATA.length / itemsPerPage)}
-                      itemsPerPage={itemsPerPage}
-                      onPageChange={handlePageChange}
-                      onItemsPerPageChange={handleItemsPerPageChange}
-                      itemsPerPageOptions={PAGE_SIZE_OPTIONS}
-                      pageKey="revenueStatements"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div> */}
     </div>
   );
 };

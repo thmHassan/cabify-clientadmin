@@ -31,6 +31,16 @@ jobs:
           echo "Files in workspace:"
           ls -R
 
+      - name: Clean target folder on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            sudo rm -rf /var/www/html/clientadmin.cabifyit.com/*
+
       - name: Copy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:

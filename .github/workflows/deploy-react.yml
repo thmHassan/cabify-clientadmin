@@ -48,5 +48,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "dist/*"
-          target: "/var/www/html/clientadmin.cabifyit.com/" 
+          source: "./dist/*"
+          target: "/var/www/html/clientadmin.cabifyit.com/"

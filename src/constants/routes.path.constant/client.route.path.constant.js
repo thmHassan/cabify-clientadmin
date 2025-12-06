@@ -18,3 +18,4 @@ export const SUB_COMPANY_PATH = "/sub-company";
 export const TICKETS_PATH = "/tickets";
 export const USERS_PATH = "/users";
 export const VEHICLE_TYPE_PATH = "/vehicle-type";
+// export const VEHICLES_MANAGEMENT_PATH = "/vehicles-type-management";

@@ -38,3 +38,12 @@ export const PAGE_SIZE_OPTIONS = [
   { value: 50, label: "50 / page" },
   { value: 100, label: "100 / page" },
 ];
+
+export const COMPANY_OPTIONS = [
+    { value: 'all', label: 'All Sub Company' },
+    { value: 'company_a', label: 'Company A' },
+    { value: 'company_b', label: 'Company B' },
+    { value: 'company_c', label: 'Company C' },
+    { value: 'company_d', label: 'Company D' },
+    { value: 'company_e', label: 'Company E' },
+  ];

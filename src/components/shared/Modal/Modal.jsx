@@ -46,7 +46,7 @@ const ModalComponent = ({ size = "xl", children, className }) => {
         exit={{ opacity: 0, scale: 0.9, y: 30 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
         className={classNames(
-          "w-full bg-white rounded-[15px] sm:rounded-[25px] relative h-fit shadow-xl sm:mx-6 my-4 sm:my-0",
+          "w-auto bg-white rounded-[15px] sm:rounded-[25px] relative h-fit shadow-xl sm:mx-6 my-4 sm:my-0",
           SIZE_CONFIG[size],
           className
         )}

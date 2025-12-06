@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import * as KEY from "../../../constants/routes.key.constant/client.route.key.constant";
 import * as PATH from "../../../constants/routes.path.constant/client.route.path.constant";
+import { path } from "framer-motion/client";
 
 const clientRoute = [
   {
@@ -123,6 +124,12 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/VehicleType")),
     authority: [],
   },
+  // {
+  //   key: KEY.VEHICLES_MANAGEMENT_PATH,
+  //   path: PATH.VEHICLES_MANAGEMENT_PATH,
+  //   component: lazy(() => import("../../../views/client/pages/VehiclesTypeManagement")),
+  //   authority: [],
+  // }
 ];
 
 export default clientRoute;

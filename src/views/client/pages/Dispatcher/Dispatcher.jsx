@@ -7,12 +7,168 @@ import DownloadIcon from "../../../../components/svg/DownloadIcon";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import AddDispatcherModal from "./components/AddDispatcherModal";
+import CompaniesIcon from "../../../../components/svg/CompaniesIcon";
+import SnapshotCard from "../../../../components/shared/SnapshotCard/SnapshotCard";
+import CardContainer from "../../../../components/shared/CardContainer/CardContainer";
+import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
+import CustomSelect from "../../../../components/ui/CustomSelect/CustomSelect";
+import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
+import Loading from "../../../../components/shared/Loading/Loading";
+import DataDetailsTable from "../../../../components/shared/DataDetailsTable/DataDetailsTable";
+import Pagination from "../../../../components/ui/Pagination/Pagination";
+import { useAppSelector } from "../../../../store";
+import CardSubtitle from "../../../../components/ui/CardSubtitle";
+import Tag from "../../../../components/ui/Tag";
+import UserDropdown from "../../../../components/shared/UserDropdown";
+import ThreeDotsIcon from "../../../../components/svg/ThreeDotsIcon";
 
 const Dispatcher = () => {
   const [isDispatcherModalOpen, setIsDispatcherModalOpen] = useState({
     type: "new",
     isOpen: false,
   });
+  const [tableLoading, setTableLoading] = useState(false);
+  const [_searchQuery, setSearchQuery] = useState("");
+  const [companyListDisplay, setCompanyListDisplay] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [_selectedStatus, setSelectedStatus] = useState(
+    STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
+  );
+  const savedPagination = useAppSelector(
+    (state) => state?.app?.app?.pagination?.companies
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(savedPagination?.currentPage) || 1
+  );
+  const [itemsPerPage, setItemsPerPage] = useState(
+    Number(savedPagination?.itemsPerPage) || 10
+  );
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const DASHBOARD_CARDS = [
+    {
+      title: "Total Companies",
+      value: "25",
+      change: "+3 from last hour",
+      icon: {
+        component: CompaniesIcon,
+      },
+      backgroundColor: "#eeedff",
+      color: "#534CB4",
+    },
+    {
+      title: "Active Companies",
+      value: "15",
+      change: "+3 from last hour",
+      icon: {
+        component: CompaniesIcon,
+      },
+      backgroundColor: "#e5f9f0",
+      color: "#3E9972",
+    },
+    {
+      title: "Monthly Revenue",
+      value: "$6,800",
+      change: "+3 from last hour",
+      icon: {
+        component: CompaniesIcon,
+      },
+      backgroundColor: "#fdf3e7",
+      color: "#C29569",
+    },
+  ];
+
+  const staticDispatchers = [
+    {
+      id: 1,
+      name: "Alex Rodriguez",
+      email: "alex.rodriguez@gmail.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/men/44.jpg",
+      status: "active",
+      active_rides: 12,
+      completed_today: 45,
+    },
+    {
+      id: 2,
+      name: "Savannah Nguyen",
+      email: "nevaeh.simmons@example.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/women/65.jpg",
+      status: "inactive",
+      active_rides: 12,
+      completed_today: 45,
+    },
+    {
+      id: 3,
+      name: "Jacob Jones",
+      email: "dolores.chambers@example.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/men/67.jpg",
+      status: "active",
+      active_rides: 12,
+      completed_today: 45,
+    },
+    {
+      id: 4,
+      name: "Cameron Williamson",
+      email: "kenzi.lawson@example.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/men/22.jpg",
+      status: "active",
+      active_rides: 12,
+      completed_today: 45,
+    },
+    {
+      id: 5,
+      name: "Brooklyn Simmons",
+      email: "alma.lawson@example.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/women/33.jpg",
+      status: "active",
+      active_rides: 12,
+      completed_today: 45,
+    },
+    {
+      id: 6,
+      name: "Robert Fox",
+      email: "jackson.graham@example.com",
+      phone: "+1 (555) 123-4567",
+      picture: "https://randomuser.me/api/portraits/men/55.jpg",
+      status: "active",
+      active_rides: 12,
+      completed_today: 45,
+    },
+  ];
+
+  const actionOptions = [
+    {
+      label: "View",
+      onClick: (dispatcher) => alert(`Viewing ${dispatcher.name}`),
+    },
+    {
+      label: "Edit",
+      onClick: (dispatcher) => {
+        setIsDispatcherModalOpen({ type: "edit", isOpen: true, data: dispatcher });
+        lockBodyScroll();
+      },
+    },
+    {
+      label: "Delete",
+      onClick: (dispatcher) => alert(`Deleting ${dispatcher.name}`),
+    },
+  ];
+  
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -26,10 +182,10 @@ const Dispatcher = () => {
           <Button
             type="bgOutlined"
             btnSize="2xl"
-            // onClick={() => {
-            //   lockBodyScroll();
-            //   setIsManualRequestModal({ isOpen: true, type: "new" });
-            // }}
+            onClick={() => {
+              lockBodyScroll();
+              setIsManualRequestModal({ isOpen: true, type: "new" });
+            }}
             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3 !bg-transparent"
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
@@ -61,6 +217,115 @@ const Dispatcher = () => {
               <span>Add Dispatcher</span>
             </div>
           </Button>
+        </div>
+      </div>
+      <div className="flex flex-col sm:gap-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 1.5xl:grid-cols-3 gap-4 sm:gap-5">
+          {DASHBOARD_CARDS.map((card, index) => (
+            <SnapshotCard
+              key={index}
+              isChange={false}
+              data={card}
+              className={
+                DASHBOARD_CARDS.length - 1 === index
+                  ? "sm:col-span-2 1.5xl:col-span-1"
+                  : "col-span-1"
+              }
+            />
+          ))}
+        </div>
+        <div>
+          <div>
+            <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
+              <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
+                <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
+                  <SearchBar
+                    value={_searchQuery}
+                    // onSearchChange={handleSearchChange}
+                    className="w-full md:max-w-[400px] max-w-full"
+                  />
+                </div>
+                <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+                  <CustomSelect
+                    variant={2}
+                    options={STATUS_OPTIONS}
+                    value={_selectedStatus}
+                    // onChange={handleStatusChange}
+                    placeholder="All Status"
+                  />
+                </div>
+              </div>
+              <Loading loading={tableLoading} type="cover">
+                <div className="flex flex-col gap-4 pt-4 ">
+                  {staticDispatchers.map((d) => (
+                    <div
+                      key={d.id}
+                      className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={d.picture}
+                          className="w-14 h-14 rounded-md object-cover"
+                          alt=""
+                        />
+                        <div className="w-60">
+                          <p className="font-semibold text-xl">{d.name}</p>
+                          <p className="text-[10px]">{d.email}</p>
+                          <p className="text-xs">{d.phone}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-3">
+
+                        <Tag
+                          className={
+                            d.status === "active"
+                              ? "bg-[#b1f7d8] border border-green-500 text-green-700 xl:h-14 lg:h-14 md:h-14 h-14 w-28 xl:py-4 lg:py-4.5 md:py-4 py-3 text-center rounded-full"
+                              : "bg-[#faadad] border border-red-500 text-red-700 text-center xl:h-14 lg:h-14 md:h-14 h-14 w-28 xl:py-4 lg:py-4 md:py-5 py-3 rounded-full"
+                          }
+                        >
+                          {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
+                        </Tag>
+
+                        <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
+                          <p className="text-xs text-gray-500">Active Rides</p>
+                          <p className="text-[#1F41BB] font-semibold text-sm">
+                            {d.active_rides}
+                          </p>
+                        </div>
+
+                        <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
+                          <p className="text-xs text-gray-500">Completed Today</p>
+                          <p className="text-[#00cc66] font-semibold text-sm">
+                            {d.completed_today}
+                          </p>
+                        </div>
+                      </div>
+                      <UserDropdown options={actionOptions} itemData={d}>
+                        <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                          <ThreeDotsIcon />
+                        </Button>
+                      </UserDropdown>
+                    </div>
+                  ))}
+                </div>
+
+              </Loading>
+              {Array.isArray(staticDispatchers) &&
+                staticDispatchers.length > 0 ? (
+                <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                    itemsPerPageOptions={PAGE_SIZE_OPTIONS}
+                    pageKey="companies"
+                  />
+                </div>
+              ) : null}
+            </CardContainer>
+          </div>
         </div>
       </div>
       <Modal

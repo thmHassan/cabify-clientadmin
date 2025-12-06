@@ -7,7 +7,7 @@ const DataDetailsTable = ({ rowType, companies, actionOptions, ...rest }) => {
   return (
     <div className="sm:pt-5 overflow-auto">
       {hasData ? (
-        <table className="w-full border-collapse table-auto">
+        <table className="w-full border-collapse table-auto md:table">
           <tbody>
             {companies.map((data, i) => (
               <DataDetailsRow

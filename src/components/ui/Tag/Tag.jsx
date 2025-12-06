@@ -16,9 +16,9 @@ const VARIANT_BG_CONFIG = {
 };
 
 const SIZE_CONFIG = {
-  sm: "px-5 pt-1.5 pb-[5px] text-sm leading-[19px] rounded-[25px]",
-  md: "px-[30px] py-1.5 text-base leading-[22px] rounded-[35px]",
-  lg: "px-[35px] pt-[11px] pb-2.5 text-[18px] leading-[25px] rounded-[35px]",
+  sm: "px-5 pt-1.5 pb-[5px] text-sm leading-[19px] rounded-[25px] text-center",
+  md: "px-[30px] py-1.5 text-base leading-[22px] rounded-[35px] text-center",
+  lg: "px-[35px] pt-[11px] pb-2.5 text-[18px] leading-[25px] rounded-[35px] text-center",
 };
 
 const VARIANT_BORDER_CONFIG = {
@@ -45,16 +45,16 @@ const Tag = ({
   variant = "gray",
   layout = "bg",
   size = "sm",
-  className,
+  // className,
   ...rest
 }) => {
   return (
     <div
       className={classNames(
-        "font-semibold",
+        "font-semibold text-center",
         VARIANT_CONFIG[layout][variant],
         SIZE_CONFIG[size],
-        className
+        // className
       )}
       {...rest}
     >

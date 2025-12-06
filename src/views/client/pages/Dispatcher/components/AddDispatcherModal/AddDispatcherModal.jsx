@@ -141,7 +141,7 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen }) => {
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
-                <div className="w-[calc((100%-20px)/2)]">
+                {/* <div className="w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="shift">Shift</FormLabel>
                   <div className="sm:h-16 h-14">
                     <FormSelection
@@ -158,7 +158,7 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen }) => {
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
-                </div>
+                </div> */}
                 <div className="w-full sm:w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="password">Password</FormLabel>
                   <div className="sm:h-16 h-14">

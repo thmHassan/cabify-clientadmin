@@ -5,7 +5,7 @@ const initialState = {
   avatar: "",
   name: "",
   email: "",
-  role: "superadmin", // Default to superadmin for encrypted token users
+  // role: "client", // Default to superadmin for encrypted token users
 };
 
 const userSlice = createSlice({
@@ -16,7 +16,7 @@ const userSlice = createSlice({
       state.avatar = action.payload?.avatar;
       state.email = action.payload?.email;
       state.name = action.payload?.name;
-      state.role = action.payload?.role;
+      // state.role = action.payload?.role;
     },
   },
 });

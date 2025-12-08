@@ -21,12 +21,9 @@ const DriverDocumentCard = ({ doc, onEdit }) => {
     return (
         <div className="bg-white rounded-[15px] p-4 flex  hover:shadow-md transition border border-[#E9E9E9]">
             <div className="w-full flex  gap-4">
-
-                {/* Start: Document Name */}
                 <div className="text-lg font-semibold text-[#252525]">
                     {doc.name}
                 </div>
-                {/* Center: Status Badges */}
                 <div className="flex gap-3 flex-wrap justify-center flex-1">
                     <div className="flex justify-center items-start gap-2 flex-wrap">
                         {doc.frontPhoto && (
@@ -55,7 +52,6 @@ const DriverDocumentCard = ({ doc, onEdit }) => {
                         )}
                     </div>
                 </div>
-                {/* End: Dropdown */}
                 <UserDropdown options={actionOptions} itemData={doc}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
                         <ThreeDotsIcon />

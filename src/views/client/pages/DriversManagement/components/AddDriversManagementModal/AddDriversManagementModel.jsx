@@ -1,31 +1,137 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as Yup from "yup";
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
+import { apiCreateDriveManagement, apiEditDriverManagement } from "../../../../../../services/DriverManagementService";
+import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 
-const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
+const DRIVER_VALIDATION_SCHEMA = Yup.object().shape({
+  name: Yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
+  email: Yup.string().email("Invalid email").required("Email is required"),
+  phone_no: Yup.string().required("Phone number is required"),
+  password: Yup.string().when("id", {
+    is: (id) => !id,
+    then: (schema) => schema.required("Password is required").min(6, "Password must be at least 6 characters"),
+    otherwise: (schema) => schema.min(6, "Password must be at least 6 characters"),
+  }),
+  address: Yup.string(),
+  driver_license: Yup.string(),
+  assigned_vehicle: Yup.string(),
+  joined_date: Yup.string(),
+  sub_company: Yup.string(),
+});
+
+const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreated }) => {
   const [submitError, setSubmitError] = useState(null);
-  const [formData, setFormData] = useState(initialValue);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [subCompanyList, setSubCompanyList] = useState([]);
+  const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
+
+  // Detect if in edit mode
+  useEffect(() => {
+    setIsEditMode(!!initialValue?.id);
+  }, [initialValue]);
+
+  // Fetch sub-companies for dropdown
+  useEffect(() => {
+    const fetchSubCompanies = async () => {
+      setLoadingSubCompanies(true);
+      try {
+        const response = await apiGetSubCompany({ page: 1, perPage: 100 });
+        if (response?.data?.success === 1) {
+          const companies = response?.data?.list?.data || [];
+          const options = companies.map(company => ({
+            label: company.name,
+            value: company.id.toString(),
+          }));
+          setSubCompanyList(options);
+        }
+      } catch (error) {
+        console.error("Error fetching sub-companies:", error);
+      } finally {
+        setLoadingSubCompanies(false);
+      }
+    };
+    fetchSubCompanies();
+  }, []);
+
+  const handleSubmit = async (values) => {
+    setIsLoading(true);
+    setSubmitError(null);
+
+    try {
+      const formDataObj = new FormData();
+      
+      if (isEditMode) {
+        formDataObj.append('id', initialValue.id);
+      }
+      
+      formDataObj.append('name', values.name || '');
+      formDataObj.append('email', values.email || '');
+      formDataObj.append('phone_no', values.phone_no || '');
+      if (values.password) {
+        formDataObj.append('password', values.password);
+      }
+      formDataObj.append('address', values.address || '');
+      formDataObj.append('driver_license', values.driver_license || '');
+      formDataObj.append('assigned_vehicle', values.assigned_vehicle || '');
+      formDataObj.append('joined_date', values.joined_date || '');
+      formDataObj.append('sub_company', values.sub_company || '');
+
+      const response = isEditMode 
+        ? await apiEditDriverManagement(formDataObj)
+        : await apiCreateDriveManagement(formDataObj);
+      
+      console.log(`${isEditMode ? 'Edit' : 'Create'} driver response:`, response);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        if (onDriverCreated) {
+          onDriverCreated();
+        }
+        unlockBodyScroll();
+        setIsOpen({ type: "new", isOpen: false });
+      } else {
+        setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} driver`);
+      }
+    } catch (error) {
+      console.error(`Driver ${isEditMode ? 'edit' : 'creation'} error:`, error);
+      setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} driver`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div>
       <Formik
-        initialValues={{}}
-      // validationSchema={COMPANY_VALIDATION_SCHEMA}
-      // onSubmit={onSubmit}
-      // validateOnChange={true}
-      // validateOnBlur={true}
-      // enableReinitialize={true}
+        initialValues={{
+          name: initialValue?.name || "",
+          email: initialValue?.email || "",
+          phone_no: initialValue?.phone_no || "",
+          password: "",
+          address: initialValue?.address || "",
+          driver_license: initialValue?.driver_license || "",
+          assigned_vehicle: initialValue?.assigned_vehicle || "",
+          joined_date: initialValue?.joined_date || "",
+          sub_company: initialValue?.sub_company || "",
+        }}
+        validationSchema={DRIVER_VALIDATION_SCHEMA}
+        onSubmit={handleSubmit}
+        validateOnChange={true}
+        validateOnBlur={true}
+        enableReinitialize={true}
       >
-        {({ values, setFieldValue }) => {
+        {({ values, setFieldValue, errors, touched }) => {
           return (
             <Form>
               <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
                 <span className="w-full text-center block truncate">
-                  Add New Driver
+                  {isEditMode ? 'Edit Driver' : 'Add New Driver'}
                 </span>
               </div>
               {submitError && (
@@ -35,29 +141,13 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
               )}
               <div className="flex flex-wrap gap-5 mb-6 sm:mb-[60px]">
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="firstName">First Name</FormLabel>
+                  <FormLabel htmlFor="name">Full Name</FormLabel>
                   <div className="sm:h-16 h-14">
                     <Field
                       type="text"
-                      name="firstName"
+                      name="name"
                       className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                      placeholder="Enter first name"
-                    />
-                  </div>
-                  <ErrorMessage
-                    name="name"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
-                </div>
-                <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="lasttName">Last Name</FormLabel>
-                  <div className="sm:h-16 h-14">
-                    <Field
-                      type="text"
-                      name="lastName"
-                      className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                      placeholder="Enter last name"
+                      placeholder="Enter full name"
                     />
                   </div>
                   <ErrorMessage
@@ -70,7 +160,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
                   <FormLabel htmlFor="email">Email</FormLabel>
                   <div className="sm:h-16 h-14">
                     <Field
-                      type="text"
+                      type="email"
                       name="email"
                       className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
                       placeholder="Enter Email"
@@ -83,17 +173,33 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
                   />
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="mobile-number">Mobile Number</FormLabel>
+                  <FormLabel htmlFor="phone_no">Phone Number</FormLabel>
                   <div className="sm:h-16 h-14">
                     <Field
                       type="text"
-                      name="mobileNumber"
+                      name="phone_no"
                       className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
                       placeholder="Enter Phone Number"
                     />
                   </div>
                   <ErrorMessage
-                    name="phoneNumber"
+                    name="phone_no"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+                <div className="w-[calc((100%-20px)/2)]">
+                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <div className="sm:h-16 h-14">
+                    <Field
+                      type="password"
+                      name="password"
+                      className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
+                      placeholder={isEditMode ? "Leave blank to keep current" : "Enter Password"}
+                    />
+                  </div>
+                  <ErrorMessage
+                    name="password"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -109,95 +215,73 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
                     />
                   </div>
                   <ErrorMessage
-                    name="phoneNumber"
+                    name="address"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="driver-license-number">Driver's License Number</FormLabel>
+                  <FormLabel htmlFor="driver_license">Driver License Number</FormLabel>
                   <div className="sm:h-16 h-14">
                     <Field
                       type="text"
-                      name="driverLicenseNumber"
+                      name="driver_license"
                       className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
                       placeholder="Enter Driver's License Number"
                     />
                   </div>
                   <ErrorMessage
-                    name="phoneNumber"
+                    name="driver_license"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="assignedVahicle">Assigned Vehicle</FormLabel>
+                  <FormLabel htmlFor="assigned_vehicle">Assigned Vehicle</FormLabel>
                   <div className="sm:h-16 h-14">
-                    <FormSelection
-                      label="Select Status"
-                      name="assignedVahicle"
-                      value={values.status}
-                      onChange={(val) => setFieldValue("status", val)}
-                      placeholder="Any Vahicle"
-                      options={[]}
+                    <Field
+                      type="text"
+                      name="assigned_vehicle"
+                      className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
+                      placeholder="Enter Assigned Vehicle"
                     />
                   </div>
                   <ErrorMessage
-                    name="status"
+                    name="assigned_vehicle"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="status">Status</FormLabel>
+                  <FormLabel htmlFor="joined_date">Joined Date</FormLabel>
                   <div className="sm:h-16 h-14">
-                    <FormSelection
-                      label="Select Status"
-                      name="status"
-                      value={values.status}
-                      onChange={(val) => setFieldValue("status", val)}
-                      placeholder="Select Status"
-                      options={[]}
+                    <Field
+                      type="datetime-local"
+                      name="joined_date"
+                      className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
                     />
                   </div>
                   <ErrorMessage
-                    name="status"
+                    name="joined_date"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="joinedDate">Joined Date</FormLabel>
+                  <FormLabel htmlFor="sub_company">Sub Company</FormLabel>
                   <div className="sm:h-16 h-14">
                     <FormSelection
-                      label="Select Status"
-                      name="joinedDate"
-                      value={values.status}
-                      onChange={(val) => setFieldValue("status", val)}
-                      placeholder="Select Date"
-                      options={[]}
+                      label="Select Sub Company"
+                      name="sub_company"
+                      value={values.sub_company}
+                      onChange={(val) => setFieldValue("sub_company", val)}
+                      placeholder="Select Sub Company"
+                      options={subCompanyList}
+                      disabled={loadingSubCompanies}
                     />
                   </div>
                   <ErrorMessage
-                    name="status"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
-                </div>
-                <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="subCompany">Sub Company</FormLabel>
-                  <div className="sm:h-16 h-14">
-                    <FormSelection
-                      label="Select Status"
-                      name="subCompany"
-                      value={values.status}
-                      onChange={(val) => setFieldValue("status", val)}
-                      placeholder="select Sub Company"
-                      options={[]}
-                    />
-                  </div>
-                  <ErrorMessage
-                    name="status"
+                    name="sub_company"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -220,8 +304,9 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen }) => {
                   btnSize="md"
                   type="filled"
                   className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                  disabled={isLoading}
                 >
-                  <span>Add Driver</span>
+                  <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Add Driver")}</span>
                 </Button>
               </div>
             </Form>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
@@ -13,14 +13,18 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectO
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import PlotsCard from "./components/PlotsCard/PlotsCard";
 import AddPlotsModel from "./components/AddPlotsModel";
+import { apiDeletePlot, apiGetPlot } from "../../../../services/PlotService";
+import _ from "lodash";
 
 const Plots = () => {
   const [isPlotsModelOpen, setIsPlotsModelOpen] = useState({
     type: "new",
     isOpen: false,
   });
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [plotsData, setPlotsData] = useState([]);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -35,6 +39,70 @@ const Plots = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [plotToDelete, setPlotToDelete] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchPlots = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      const response = await apiGetPlot(params);
+      console.log("Plots response:", response);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.list;
+        setPlotsData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching plots:", error);
+      setPlotsData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  const handleDeletePlot = async () => {
+    if (!plotToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeletePlot(plotToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setPlotToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete plot");
+      }
+    } catch (error) {
+      console.error("Error deleting plot:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlots();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchPlots, refreshTrigger]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -45,23 +113,15 @@ const Plots = () => {
     setCurrentPage(1);
   };
 
-  const staticPlots = [
-    {
-      name: "Abbottabad",
-    },
-    {
-      name: "Rawalpindi",
-    },
-    {
-      name: "Lahore",
-    },
-    {
-      name: "Peshawar",
-    },
-    {
-      name: "Karachi",
-    },
-  ];
+  const handleOnPlotsCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleDeleteClick = (plot) => {
+    setPlotToDelete(plot);
+    setDeleteModalOpen(true);
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-7 2xl:p-10 min-h-[calc(100vh-64px)] sm:min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
@@ -97,8 +157,8 @@ const Plots = () => {
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
-                value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
@@ -106,18 +166,19 @@ const Plots = () => {
           <Loading loading={tableLoading} type="cover">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
               <div className="flex flex-col gap-4">
-                {staticPlots.map((plot) => (
+                {plotsData?.map((plot) => (
                   <PlotsCard
-                    key={plot.name}
+                    key={plot.id || plot.name}
                     plot={plot}
                     onEdit={(plotToEdit) => {
                       lockBodyScroll();
                       setIsPlotsModelOpen({
                         isOpen: true,
                         type: "edit",
-                        data: plotToEdit, // pass document to modal
+                        data: plotToEdit,
                       });
                     }}
+                    onDelete={handleDeleteClick}
                   />
                 ))}
               </div>
@@ -130,8 +191,8 @@ const Plots = () => {
               </div>
             </div>
           </Loading>
-          {Array.isArray(staticPlots) &&
-            staticPlots.length > 0 ? (
+          {Array.isArray(plotsData) &&
+            plotsData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -150,7 +211,55 @@ const Plots = () => {
         isOpen={isPlotsModelOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
-        <AddPlotsModel setIsOpen={setIsPlotsModelOpen} />
+        <AddPlotsModel
+          initialValue={isPlotsModelOpen.type === "edit" ? {
+            id: isPlotsModelOpen.data?.id,
+            name: isPlotsModelOpen.data?.name,
+            coordinates: isPlotsModelOpen.data?.features ? (() => {
+              try {
+                const features = typeof isPlotsModelOpen.data.features === 'string'
+                  ? JSON.parse(isPlotsModelOpen.data.features)
+                  : isPlotsModelOpen.data.features;
+                return features?.geometry?.coordinates || [[72.865475, 21.457506], [72.601643, 21.319401]];
+              } catch (e) {
+                console.error('Error parsing features:', e);
+                return [[72.865475, 21.457506], [72.601643, 21.319401]];
+              }
+            })() : [[72.865475, 21.457506], [72.601643, 21.319401]],
+          } : {}}
+          setIsOpen={setIsPlotsModelOpen}
+          onPlotsCreated={handleOnPlotsCreated}
+        />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Plot?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {plotToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setPlotToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeletePlot}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

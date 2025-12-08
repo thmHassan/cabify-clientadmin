@@ -21,7 +21,7 @@ const SigninForm = ({
   const { isLoading, executeWithLoader } = useApiLoader();
 
   const onSignIn = async (values, setSubmitting) => {
-    const { email, password, role } = values;
+    const { email, password } = values;
 
     setSubmitting(true);
 
@@ -29,7 +29,7 @@ const SigninForm = ({
       await executeWithLoader(
         () =>
           isAdminLogin
-            ? adminSignIn({ email, password, role: role || "superadmin" })
+            ? adminSignIn({ email, password })
             : signIn({ email, password }),
         {
           onSuccess: (result) => {

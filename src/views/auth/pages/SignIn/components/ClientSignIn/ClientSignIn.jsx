@@ -14,9 +14,6 @@ const ClientSignIn = () => {
     <AuthLayout title="Client Admin Panel Login">
       <SigninForm initialValues={initialValues}>
         <div>
-          <FormLabel htmlFor="Email" className="text-[#363636]">
-            Company ID
-          </FormLabel>
           <div>
             <div>
               <Field

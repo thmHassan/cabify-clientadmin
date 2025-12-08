@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
@@ -21,6 +21,7 @@ import CardSubtitle from "../../../../components/ui/CardSubtitle";
 import Tag from "../../../../components/ui/Tag";
 import UserDropdown from "../../../../components/shared/UserDropdown";
 import ThreeDotsIcon from "../../../../components/svg/ThreeDotsIcon";
+import ApiService from "../../../../services/ApiService";
 
 const Dispatcher = () => {
   const [isDispatcherModalOpen, setIsDispatcherModalOpen] = useState({
@@ -45,6 +46,70 @@ const Dispatcher = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [cardsLoading, setDispatchLoading] = useState(false);
+  const [dispatchCards, setDispatchCards] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [dispatcherListRaw, setDispatcherListRaw] = useState([]);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  const fetchDispatcherCards = async () => {
+    try {
+      setDispatchLoading(true);
+      const response = await ApiService.getDispatcherCards();
+      setDispatchCards(response?.data ?? null);
+    } catch (error) {
+      console.log("err--", error);
+      setCompanyCards(null);
+    } finally {
+      setDispatchLoading(false);
+    }
+  };
+
+  const fetchDispatcherList = async (
+    page = 1,
+    perPage = itemsPerPage,
+    search = ""
+  ) => {
+    try {
+      setTableLoading(true);
+      const response = await ApiService.getDispatcherList({
+        page,
+        perPage,
+        search: search || undefined,
+      });
+      const list = response?.data?.list;
+      console.log(list, "list");
+      const rows = Array.isArray(list?.data) ? list?.data : [];
+
+      console.log(rows, "rows");
+
+      setDispatcherListRaw(rows);
+
+      const nextPerPage = list?.per_page ?? itemsPerPage;
+      const total = list?.total ?? rows.length;
+      const lastPage = list?.last_page ?? 1;
+
+      setItemsPerPage(nextPerPage);
+      setTotalItems(total);
+      setTotalPages(lastPage);
+    } catch (error) {
+      console.log("err--", error);
+      setDispatcherListRaw([]);
+      setTotalItems(0);
+      setTotalPages(1);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchDispatcherCards();
+    const statusParam = _selectedStatus?.value ?? "all";
+
+    console.log(statusParam, "statusparam");
+    fetchDispatcherList(1, itemsPerPage, debouncedSearchQuery);
+  }, [refreshTrigger]);
 
   const DASHBOARD_CARDS = [
     {
@@ -159,7 +224,7 @@ const Dispatcher = () => {
       onClick: (dispatcher) => alert(`Deleting ${dispatcher.name}`),
     },
   ];
-  
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };

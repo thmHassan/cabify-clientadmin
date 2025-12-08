@@ -3,19 +3,15 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const PlotsCard = ({ plot, onEdit }) => {
+const PlotsCard = ({ plot, onEdit, onDelete }) => {
     const actionOptions = [
-        {
-            label: "View",
-            onClick: () => alert(`Viewing ${plot.name}`),
-        },
         {
             label: "Edit",
             onClick: () => onEdit(plot),
         },
         {
             label: "Delete",
-            onClick: () => alert(`Deleting ${plot.name}`),
+            onClick: () => onDelete(plot),
         },
     ];
     return (

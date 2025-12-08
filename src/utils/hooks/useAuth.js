@@ -21,6 +21,7 @@ import {
   clearAllAuthData,
   isAuthenticated,
   getUserDataFromToken,
+  storeTenantId,
 } from "../functions/tokenEncryption";
 
 function useAuth() {
@@ -43,7 +44,7 @@ function useAuth() {
               resp.data.user || {
                 avatar: "",
                 name: "Anonymous",
-                role: "client",
+                // role: "client",
                 email: "",
               }
             )
@@ -67,25 +68,52 @@ function useAuth() {
   const adminSignIn = async (values) => {
     try {
       const resp = await apiAdminSignIn(values);
-      if (resp.data && resp.data.success === 1) {
-        const { access_token, user } = resp.data;
-        console.log(user, "admin resp.data.user====");
+      // Log response for debugging
+      console.log("adminSignIn response:", resp);
 
-        // Store encrypted token in localStorage
-        storeEncryptedToken(access_token);
+      // Try to extract token from common response shapes
+      const data = resp?.data || {};
+      const possibleToken =
+        data.access_token || data.token || data.auth_token ||
+        data.data?.access_token || data.data?.token || data.data?.auth_token ||
+        data.accessToken || data.tokenValue || null;
 
-        // Dispatch to Redux store
-        dispatch(signInSuccess(access_token));
+      // Determine success: prefer explicit success flag, otherwise token presence
+      const isSuccess = data.success === 1 || data.success === true || !!possibleToken;
+
+      if (isSuccess) {
+        const token = possibleToken;
+        const user = data.user || data.data?.user || data.admin || null;
+
+        if (token) {
+          // Store encrypted token in localStorage under 'admin_token'
+          storeEncryptedToken(token);
+
+          // Dispatch to Redux store
+          dispatch(signInSuccess(token));
+        } else {
+          // If no token but success, still mark signed in to restore state
+          dispatch(signInSuccess("restored"));
+        }
 
         if (user) {
           dispatch(
             setUser({
               avatar: user.avatar || "",
               name: user.name || "Anonymous",
-              role: user.role || values.role || "superadmin",
               email: user.email || values.email,
             })
           );
+        }
+
+        // Save tenant id (if returned) to localStorage so BaseService can include it in headers
+        try {
+          const tenantId = data.tenant_id || data.tenantId || data.data?.tenant_id || data.data?.tenantId || null;
+          if (tenantId) {
+            storeTenantId(tenantId);
+          }
+        } catch (e) {
+          // ignore tenant storage errors
         }
 
         // Redirect to home page on success
@@ -95,13 +123,16 @@ function useAuth() {
         return {
           status: "success",
           message: "Login successful",
-        };
-      } else {
-        return {
-          status: "failed",
-          message: resp.data?.message || "Login failed",
+          token: token || null,
+          data,
         };
       }
+
+      return {
+        status: "failed",
+        message: data?.message || "Login failed",
+        data,
+      };
     } catch (errors) {
       return {
         status: "failed",
@@ -111,21 +142,17 @@ function useAuth() {
   };
 
   const handleSignOut = () => {
-    // Clear all authentication data from localStorage
     clearAllAuthData();
 
-    // Clear Redux state
     dispatch(signOutSuccess());
     dispatch(
       setUser({
         avatar: "",
         name: "",
         email: "",
-        role: "client",
       })
     );
 
-    // Redirect to login page
     navigate(appConfig.unAuthenticatedEntryPath);
   };
 

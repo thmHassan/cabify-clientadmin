@@ -12,6 +12,41 @@ const ApiService = {
         });
     });
   },
+
+  getDispatcherCards() {
+    return new Promise((resolve, reject) => {
+      BaseService({
+        method: "GET",
+        url: "/dispatcher-cards",
+      })
+        .then((response) => {
+          resolve(response);
+        })
+        .catch((errors) => {
+          reject(errors);
+        });
+    });
+  },
+
+  getDispatcherList({ page = 1, perPage, search } = {}) {
+    return new Promise((resolve, reject) => {
+      const params = { page, perPage };
+      if (search) {
+        params.search = search;
+      }
+      BaseService({
+        method: "GET",
+        url: "/list-dispatcher",
+        params,
+      })
+        .then((response) => {
+          resolve(response);
+        })
+        .catch((errors) => {
+          reject(errors);
+        });
+    });
+  },
 };
 
 export default ApiService;

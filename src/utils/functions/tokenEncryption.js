@@ -96,6 +96,43 @@ export const removeEncryptedToken = () => {
 };
 
 /**
+ * Stores tenant id in localStorage (plain string)
+ * @param {string} tenantId
+ */
+export const storeTenantId = (tenantId) => {
+  try {
+    if (!tenantId) return;
+    localStorage.setItem('tenant_id', tenantId);
+  } catch (error) {
+    console.error('Failed to store tenant id:', error);
+  }
+};
+
+/**
+ * Retrieves tenant id from localStorage
+ * @returns {string|null}
+ */
+export const getTenantId = () => {
+  try {
+    return localStorage.getItem('tenant_id');
+  } catch (error) {
+    console.error('Failed to get tenant id:', error);
+    return null;
+  }
+};
+
+/**
+ * Removes tenant id from localStorage
+ */
+export const removeTenantId = () => {
+  try {
+    localStorage.removeItem('tenant_id');
+  } catch (error) {
+    console.error('Failed to remove tenant id:', error);
+  }
+};
+
+/**
  * Checks if user is authenticated by verifying token existence
  * @returns {boolean} - True if token exists and is valid
  */
@@ -118,6 +155,9 @@ export const clearAllAuthData = () => {
     // Remove encrypted token
     localStorage.removeItem('admin_token');
     
+    // Remove tenant id
+    localStorage.removeItem('tenant_id');
+
     // Remove any legacy Redux persistence data
     localStorage.removeItem('admin');
     
@@ -142,8 +182,8 @@ export const getUserDataFromToken = () => {
     return {
       id: 1,
       name: "Super Admin",
-      email: "superadmin@taxidispatch.com",
-      role: "superadmin",
+      email: "divonyx@gmail.com",
+      // role: "superadmin",
       avatar: ""
     };
   } catch (error) {

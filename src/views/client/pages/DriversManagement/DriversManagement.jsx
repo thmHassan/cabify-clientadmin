@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
@@ -14,6 +14,7 @@ import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import DriverManagementCard from "./components/DriversManagementCard";
+import { apiDeleteDriverManagement, apiGetDriverManagement } from "../../../../services/DriverManagementService";
 
 const DriversManagement = () => {
   const [isDriversManagementModalOpen, setIsDriversManagementModalOpen] = useState({
@@ -21,8 +22,10 @@ const DriversManagement = () => {
     isOpen: false,
   });
   const [activeTab, setActiveTab] = useState("accepted");
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [driversData, setDriversData] = useState([]);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -37,6 +40,54 @@ const DriversManagement = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [driverToDelete, setDriverToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchDrivers = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+        status: activeTab,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      const response = await apiGetDriverManagement(params);
+      console.log("Drivers response:", response);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.list;
+        setDriversData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching drivers:", error);
+      setDriversData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab]);
+
+  useEffect(() => {
+    fetchDrivers();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab, fetchDrivers, refreshTrigger]);
+
+  const handleOnDriverCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -46,41 +97,33 @@ const DriversManagement = () => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
-  const staticUsers = [
-    {
-      id: "MR12345",
-      name: "Alex Rodriguez",
-      email: "alex.rodriguez@gmail.com",
-      phone: "+1 (555) 123-4567",
-      vahicleType: "SuZuki Alto",
-      changeReq: "No",
-      referralCode: "MR12345",
-      walletBalance: "20.00",
-      status: "Active"
-    },
-    {
-      id: "MR12346",
-      name: "Alex Rodriguez",
-      email: "alex.rodriguez@gmail.com",
-      phone: "+1 (555) 123-4567",
-      vahicleType: "SuZuki Alto",
-      changeReq: "No",
-      referralCode: "MR12345",
-      walletBalance: "20.00",
-      status: "Inactive"
-    },
-    {
-      id: "MR12347",
-      name: "Alex Rodriguez",
-      email: "alex.rodriguez@gmail.com",
-      phone: "+1 (555) 123-4567",
-      vahicleType: "SuZuki Alto",
-      changeReq: "No",
-      referralCode: "MR12345",
-      walletBalance: "20.00",
-      status: "Active"
-    },
-  ];
+
+  const handleDeleteClick = (driver) => {
+    setDriverToDelete(driver);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteDriver = async () => {
+    if (!driverToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteDriverManagement(driverToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setDriverToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete driver");
+      }
+    } catch (error) {
+      console.error("Error deleting driver:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -151,8 +194,8 @@ const DriversManagement = () => {
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
-                value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
@@ -168,10 +211,11 @@ const DriversManagement = () => {
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticUsers.map((driver) => (
+              {driversData?.map((driver) => (
                 <DriverManagementCard
                   key={driver.id}
                   driver={driver}
+                  onDelete={handleDeleteClick}
                   onEdit={(driverToEdit) => {
                     lockBodyScroll();
                     setIsDriversManagementModalOpen({
@@ -184,8 +228,8 @@ const DriversManagement = () => {
               ))}
             </div>
           </Loading>
-          {Array.isArray(staticUsers) &&
-            staticUsers.length > 0 ? (
+          {Array.isArray(driversData) &&
+            driversData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -204,7 +248,41 @@ const DriversManagement = () => {
         isOpen={isDriversManagementModalOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
-        <AddDriversManagementModal setIsOpen={setIsDriversManagementModalOpen} />
+        <AddDriversManagementModal
+          initialValue={isDriversManagementModalOpen.type === "edit" ? isDriversManagementModalOpen.data : {}}
+          setIsOpen={setIsDriversManagementModalOpen}
+          onDriverCreated={handleOnDriverCreated}
+        />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {driverToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDriverToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteDriver}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

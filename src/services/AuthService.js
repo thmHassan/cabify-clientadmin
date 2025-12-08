@@ -13,7 +13,7 @@ export async function apiAdminSignIn(data) {
   const formData = new FormData();
   formData.append('email', data.email);
   formData.append('password', data.password);
-  formData.append('role', data.role || 'superadmin');
+  // formData.append('role', data.role || 'superadmin');
 
   return ApiService.fetchData({
     url: "/login",

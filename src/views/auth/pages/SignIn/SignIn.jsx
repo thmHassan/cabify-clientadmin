@@ -5,10 +5,8 @@ import SigninFormFields from "./components/SigninFormFields";
 
 const SignIn = () => {
   const initialValues = {
-    companyId: "test",
-    email: "superadmin@taxidispatch.com",
-    password: "taxidispatch@123",
-    role: "superadmin",
+    email: "divonyx@gmail.com",
+    password: "divonyx@123",
   };
 
   return (

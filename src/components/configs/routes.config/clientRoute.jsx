@@ -119,6 +119,12 @@ const clientRoute = [
     authority: [],
   },
   {
+    key: KEY.USER_DETAILS_KEY,
+    path: PATH.USER_DETAILS_PATH,
+    component: lazy(() => import("../../../views/client/pages/Users/components/EditUserDetails")),
+    authority: [],
+  },
+  {
     key: KEY.VEHICLE_TYPE_KEY,
     path: PATH.VEHICLE_TYPE_PATH,
     component: lazy(() => import("../../../views/client/pages/VehicleType")),

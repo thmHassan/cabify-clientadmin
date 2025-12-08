@@ -3,19 +3,15 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const SubCompantCard = ({ company, onEdit }) => {
+const SubCompantCard = ({ company, onEdit, onDelete }) => {
     const actionOptions = [
-        {
-            label: "View",
-            onClick: () => alert(`Viewing ${company.name}`),
-        },
         {
             label: "Edit",
             onClick: () => onEdit(company),
         },
         {
             label: "Delete",
-            onClick: () => alert(`Deleting ${company.name}`),
+            onClick: () => onDelete(company),
         },
     ];
     return (
@@ -38,10 +34,6 @@ const SubCompantCard = ({ company, onEdit }) => {
                 </Button>
             </UserDropdown>
         </div>
-
-
-
-
     );
 };
 

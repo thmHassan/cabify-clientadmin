@@ -1,14 +1,51 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import React, { useRef, useState } from "react";
+import * as Yup from "yup";
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
+import { apiCreateDriveDocumet } from "../../../../../../services/DriversDocumentServices";
+import { DRIVER_DOCUMENT_VALIDATION_SCHEMA } from "../../../../validators/pages/driver.validation";
 
-const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen }) => {
+const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) => {
     const [submitError, setSubmitError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState(initialValue);
-    console.log(formData, "formData=====");
+
+    const handleSubmit = async (values) => {
+        setIsLoading(true);
+        setSubmitError(null);
+
+        try {
+            const formDataObj = new FormData();
+            formDataObj.append('document_name', values.documentName || '');
+            formDataObj.append('front_photo', values.frontPhoto ? 'yes' : 'no');
+            formDataObj.append('back_photo', values.backPhoto ? 'yes' : 'no');
+            formDataObj.append('profile_photo', values.issuePhoto ? 'yes' : 'no');
+            formDataObj.append('has_issue_date', values.issueDate ? 'yes' : 'no');
+            formDataObj.append('has_expiry_date', values.expiryDate ? 'yes' : 'no');
+            formDataObj.append('has_number_field', values.numberField ? 'yes' : 'no');
+
+            const response = await apiCreateDriveDocumet(formDataObj);
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                if (onDocumentCreated) {
+                    onDocumentCreated();
+                }
+                unlockBodyScroll();
+                setIsOpen({ type: "new", isOpen: false });
+            } else {
+                setSubmitError(response?.data?.message || 'Failed to create document');
+            }
+        } catch (error) {
+            console.error('Document creation error:', error);
+            setSubmitError(error?.response?.data?.message || error?.message || 'Error creating document');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div>
             <Formik
@@ -19,10 +56,10 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen }) => {
                     issueDate: false,
                     expiryDate: false,
                     numberField: false,
+                    issuePhoto: false,
                 }}
-                onSubmit={(values) => {
-                    console.log("Submitted: ", values);
-                }}
+                validationSchema={DRIVER_DOCUMENT_VALIDATION_SCHEMA}
+                onSubmit={handleSubmit}
             >
                 {({ values, setFieldValue }) => {
                     return (
@@ -50,7 +87,7 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen }) => {
                                             />
                                         </div>
                                         <ErrorMessage
-                                            name="name"
+                                            name="documentName"
                                             component="div"
                                             className="text-red-500 text-sm mt-1"
                                         />
@@ -117,8 +154,9 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen }) => {
                                         btnSize="md"
                                         type="filled"
                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                                        disabled={isLoading}
                                     >
-                                        <span>Add Driver</span>
+                                        <span>{isLoading ? 'Creating...' : 'Add Document'}</span>
                                     </Button>
                                 </div>
                             </Form>

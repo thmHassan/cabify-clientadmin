@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
 import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import Button from '../../../../components/ui/Button/Button';
@@ -13,15 +13,18 @@ import { lockBodyScroll } from '../../../../utils/functions/common.function';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddSubCompanyModel from './components/AddSubCompanyModel/AddSubCompanyModel';
 import SubCompantCard from './components/SubCompanyCard';
+import { apiGetSubCompany, apiDeleteSubCompany } from '../../../../services/SubCompanyServices';
 
 const SubCompany = () => {
   const [isSubCompanyModelOpen, setIsSubCompanyModelOpen] = useState({
     type: "new",
     isOpen: false,
   });
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
+  const [subCompanyData, setSubCompanyData] = useState([]);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -36,6 +39,80 @@ const SubCompany = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [subCompanyToDelete, setSubCompanyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchSubCompanies = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      const response = await apiGetSubCompany(params);
+      console.log("Sub-companies response:", response);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.list;
+        setSubCompanyData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching sub-companies:", error);
+      setSubCompanyData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => {
+    fetchSubCompanies();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchSubCompanies, refreshTrigger]);
+
+  const handleOnSubCompanyCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleDeleteClick = (company) => {
+    setSubCompanyToDelete(company);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteSubCompany = async () => {
+    if (!subCompanyToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteSubCompany(subCompanyToDelete.id);
+      console.log("Delete sub-company response:", response);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setSubCompanyToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete sub-company");
+      }
+    } catch (error) {
+      console.error("Error deleting sub-company:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -46,48 +123,13 @@ const SubCompany = () => {
     setCurrentPage(1);
   };
 
-  const handleView = (account) => {
-    setIsSubCompanyModelOpen({
-      type: "view",  // Set to view mode
-      isOpen: true,
-      accountData: account,  // Pass the selected account data
-    });
-  }
   const handleEdit = (account) => {
     setIsSubCompanyModelOpen({
-      type: "edit",  // Set to edit mode
+      type: "edit",
       isOpen: true,
-      accountData: account,  // Pass the account data
+      accountData: account,
     });
   };
-  const staticCompany = [
-    {
-      id: 1,
-      name: "Presting Auto Pvt. Ltd.",
-      email: "debra@gmail.com"
-    },
-    {
-      id: 2,
-      name: "Swift Logistics Co.",
-      email: "demo@gmail.com"
-
-    },
-    {
-      id: 3,
-      name: "Global Transport Inc.",
-      email: "demo@gmail.com",
-    },
-    {
-      id: 4,
-      name: "Express Movers Ltd.",
-      email: "demo@gmail.com",
-    },
-    {
-      id: 5,
-      name: "Rapid Delivery Services",
-      email: "demo@gmail.com",
-    },
-  ];
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -125,26 +167,26 @@ const SubCompany = () => {
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
-                value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticCompany.map((company) => (
+              {subCompanyData?.map((company) => (
                 <SubCompantCard
                   key={company.id}
                   company={company}
-                  // onView={handleView}
                   onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
                 />
               ))}
             </div>
           </Loading>
-          {Array.isArray(staticCompany) &&
-            staticCompany.length > 0 ? (
+          {Array.isArray(subCompanyData) &&
+            subCompanyData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -163,10 +205,44 @@ const SubCompany = () => {
         isOpen={isSubCompanyModelOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
-        <AddSubCompanyModel setIsOpen={setIsSubCompanyModelOpen} />
+        <AddSubCompanyModel
+          initialValue={isSubCompanyModelOpen.type === "edit" ? isSubCompanyModelOpen.accountData : {}}
+          setIsOpen={setIsSubCompanyModelOpen}
+          onSubCompanyCreated={handleOnSubCompanyCreated}
+        />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {subCompanyToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setSubCompanyToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteSubCompany}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
-  );
-}
+  )
 
+}
 export default SubCompany

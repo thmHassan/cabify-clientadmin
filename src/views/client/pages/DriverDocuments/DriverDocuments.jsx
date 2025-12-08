@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
@@ -10,10 +10,10 @@ import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../components/ui/CustomSelect";
 import Loading from "../../../../components/shared/Loading/Loading";
 import DriverDocumentCard from "./components/DriverDocumentCard";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
+import { apiGetDocumentTypes } from "../../../../services/DriversDocumentServices";
 
 const DriverDocuments = () => {
   const [isDriverDocumentModelOpen, setIsDriverDocumentModelOpen] = useState({
@@ -22,6 +22,10 @@ const DriverDocuments = () => {
   });
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -46,44 +50,47 @@ const DriverDocuments = () => {
     setCurrentPage(1);
   };
 
-  const staticDocuments = [
-    {
-      name: "Driver’s License",
-      frontPhoto: true,
-      backPhoto: true,
-      issueDate: true,
-      expiryDate: true,
-    },
-    {
-      name: "Profile Photo",
-      frontPhoto: true,
-    },
-    {
-      name: "Vehicle Photo",
-      frontPhoto: true,
-      backPhoto: true,
-    },
-    {
-      name: "PAN Card",
-      frontPhoto: true,
-      backPhoto: true,
-      issueDate: true,
-    },
-    {
-      name: "Insurance",
-      frontPhoto: true,
-      backPhoto: true,
-      issueDate: true,
-      expiryDate: true,
-    },
-    {
-      name: "PUC",
-      frontPhoto: true,
-      backPhoto: true,
-      issueDate: true,
-      expiryDate: true,
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(_searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [_searchQuery]);
+
+  const fetchDocuments = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      console.log("Fetching documents with params:", params);
+
+      const result = await apiGetDocumentTypes(params);
+
+      if (result?.status === 200 && result?.data) {
+        const documentList = result.data.data || result.data.documents || [];
+        setDocuments(Array.isArray(documentList) ? documentList : []);
+        setTotalItems(result.data.total || 0);
+        setTotalPages(result.data.last_page || 1);
+      } else {
+        setDocuments([]);
+      }
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      setDocuments([]);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchDocuments, refreshTrigger]);
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -122,31 +129,37 @@ const DriverDocuments = () => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
           </div>
-          <Loading loading={tableLoading} type="cover">
+          <Loading loading={isLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticDocuments.map((doc) => (
-                <DriverDocumentCard
-                  key={doc.name} // or id if available
-                  doc={doc}
-                  onEdit={(docToEdit) => {
-                    lockBodyScroll();
-                    setIsDriverDocumentModelOpen({
-                      isOpen: true,
-                      type: "edit",
-                      data: docToEdit, // pass document to modal
-                    });
-                  }}
-                />
-              ))}
+              {documents && documents.length > 0 ? (
+                documents.map((doc) => (
+                  <DriverDocumentCard
+                    key={doc.id || doc.name}
+                    doc={doc}
+                    onEdit={(docToEdit) => {
+                      lockBodyScroll();
+                      setIsDriverDocumentModelOpen({
+                        isOpen: true,
+                        type: "edit",
+                        data: docToEdit,
+                      });
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No documents found
+                </div>
+              )}
             </div>
           </Loading>
-          {Array.isArray(staticDocuments) &&
-            staticDocuments.length > 0 ? (
+          {Array.isArray(documents) &&
+            documents.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -165,7 +178,10 @@ const DriverDocuments = () => {
         isOpen={isDriverDocumentModelOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
-        <AddDriverDocumentModel setIsOpen={setIsDriverDocumentModelOpen} />
+        <AddDriverDocumentModel
+          setIsOpen={setIsDriverDocumentModelOpen}
+          onDocumentCreated={() => setRefreshTrigger(prev => prev + 1)}
+        />
       </Modal>
     </div>
   );

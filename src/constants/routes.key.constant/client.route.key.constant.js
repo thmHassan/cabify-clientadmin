@@ -17,4 +17,5 @@ export const SOS_KEY = "sos";
 export const SUB_COMPANY_KEY = "sub-company";
 export const TICKETS_KEY = "tickets";
 export const USERS_KEY = "users";
+export const USER_DETAILS_KEY = "user-details";
 export const VEHICLE_TYPE_KEY = "vehicle-type";

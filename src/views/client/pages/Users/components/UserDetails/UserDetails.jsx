@@ -3,19 +3,15 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const UserDetails = ({ user, onEdit }) => {
+const UserDetails = ({ user, onEdit, onDelete }) => {
     const actionOptions = [
-        {
-            label: "View",
-            onClick: () => alert(`Viewing ${user.name}`),
-        },
         {
             label: "Edit",
             onClick: () => onEdit(user),
         },
         {
             label: "Delete",
-            onClick: () => alert(`Deleting ${user.name}`),
+            onClick: () => onDelete(user),
         },
     ];
     return (
@@ -26,7 +22,7 @@ const UserDetails = ({ user, onEdit }) => {
                 <div className="w-60">
                     <p className="font-semibold text-xl">{user.name}</p>
                     <p className="text-[10px]">{user.email}</p>
-                    <p className="text-xs">{user.phone}</p>
+                    <p className="text-xs">{user.phone_no}</p>
                 </div>
             </div>
             <div className="flex items-center justify-center gap-3">

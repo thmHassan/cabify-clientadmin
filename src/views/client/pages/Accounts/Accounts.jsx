@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
 import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import Button from '../../../../components/ui/Button/Button';
@@ -13,13 +13,14 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectO
 import Modal from '../../../../components/shared/Modal/Modal';
 import AccountCard from './components/AccountCard';
 import AddAccountModel from './components/AddAccountsModel';
+import { apiDeleteAccount, apiGetAccount } from '../../../../services/AccountService';
 
 const Accounts = () => {
   const [isAccountModelOpen, setIsAccountModelOpen] = useState({
     type: "new",
     isOpen: false,
   });
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
@@ -36,6 +37,42 @@ const Accounts = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [accounts, setAccounts] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchAccounts = async () => {
+    setTableLoading(true);
+    try {
+      const response = await apiGetAccount({
+        page: currentPage,
+        search: searchQuery,
+      });
+
+      if (response?.data?.success === 1 && response?.data?.list) {
+        const listData = response.data.list;
+        const accountsData = listData.data || [];
+        setAccounts(Array.isArray(accountsData) ? accountsData : []);
+
+        if (listData) {
+          setTotalItems(listData.total || 0);
+          setTotalPages(listData.last_page || 1);
+        }
+      } else {
+        setAccounts([]);
+      }
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      setAccounts([]);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [currentPage, searchQuery]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -46,51 +83,48 @@ const Accounts = () => {
     setCurrentPage(1);
   };
 
-  const staticAccount = [
-    {
-      id: 1,
-      name: "Presting Auto Pvt. Ltd.",
-      // email: "debra@gmail.com"
-    },
-    {
-      id: 2,
-      name: "Swift Logistics Co.",
-      // email: "demo@gmail.com"
-
-    },
-    {
-      id: 3,
-      name: "Global Transport Inc.",
-      // email: "demo@gmail.com",
-    },
-    {
-      id: 4,
-      name: "Express Movers Ltd.",
-      // email: "demo@gmail.com",
-    },
-    {
-      id: 5,
-      name: "Rapid Delivery Services",
-      // email: "demo@gmail.com",
-    },
-  ];
-
   const handleEdit = (account) => {
     setIsAccountModelOpen({
-      type: "edit",  // Set to edit mode
+      type: "edit",
       isOpen: true,
-      accountData: account,  // Pass the account data
+      accountData: account,
     });
   };
 
   const handleView = (account) => {
     setIsAccountModelOpen({
-      type: "view",  // Set to view mode
+      type: "view",
       isOpen: true,
-      accountData: account,  // Pass the selected account data
+      accountData: account,
     });
   }
-  
+
+  const handleDeleteClick = (account) => {
+    setAccountToDelete(account);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!accountToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteAccount(accountToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setAccountToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete account");
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -127,26 +161,36 @@ const Accounts = () => {
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
-                value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                value={searchQuery}
+                onSearchChange={(value) => {
+                  setSearchQuery(value);
+                  setCurrentPage(1);
+                }}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticAccount.map((account) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  onView={handleView}
-                  onEdit={handleEdit}  // Pass the onEdit function to AccountCard
-                />
-              ))}
+              {accounts.length > 0 ? (
+                accounts.map((account) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No accounts found
+                </div>
+              )}
             </div>
           </Loading>
-          {Array.isArray(staticAccount) &&
-            staticAccount.length > 0 ? (
+          {Array.isArray(accounts) &&
+            accounts.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -167,9 +211,39 @@ const Accounts = () => {
       >
         <AddAccountModel
           setIsOpen={setIsAccountModelOpen}
-          initialValue={isAccountModelOpen.accountData}  // Pass account data if editing or viewing
-          mode={isAccountModelOpen.type}  // Pass the current mode (view or edit)
+          initialValue={isAccountModelOpen.accountData}
+          onAccountCreated={fetchAccounts}
         />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {accountToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setAccountToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

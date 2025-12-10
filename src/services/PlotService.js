@@ -2,7 +2,7 @@ import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
-import { CREATE_PLOT, DELETE_PLOT, EDIT_PLOT, GET_PLOT_BY_ID, GET_PLOTS } from "../constants/api.route.constant";
+import { ASSIGN_BACKUP_PLOT, CREATE_PLOT, DELETE_PLOT, EDIT_PLOT, GET_PLOT_BY_ID, GET_PLOTS, MANAGE_PLOT } from "../constants/api.route.constant";
 
 export async function apiCreatePlot(data) {
     const isFormData = data instanceof FormData;
@@ -59,6 +59,33 @@ export async function apiEditPlot(data) {
 
     return ApiService.fetchData({
         url: plotId ? `${EDIT_PLOT}?id=${plotId}` : EDIT_PLOT,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiGetManagePlot(params) {
+    try {
+        return ApiService.fetchData({
+            url: MANAGE_PLOT,
+            method: METHOD_GET,
+            params,
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
+}
+
+export async function apiAssignBackupPlot(data) {
+    const isFormData = data instanceof FormData;
+    return ApiService.fetchData({
+        url: ASSIGN_BACKUP_PLOT,
         method: METHOD_POST,
         data,
         ...(isFormData && {

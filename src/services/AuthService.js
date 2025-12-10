@@ -16,7 +16,7 @@ export async function apiAdminSignIn(data) {
   // formData.append('role', data.role || 'superadmin');
 
   return ApiService.fetchData({
-    url: "/login",
+    url: "/company/login",
     method: "post",
     data: formData,
     headers: {

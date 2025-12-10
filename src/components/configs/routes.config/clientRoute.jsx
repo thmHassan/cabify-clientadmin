@@ -130,6 +130,12 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/VehicleType")),
     authority: [],
   },
+  {
+    key: KEY.VEHICLE_TYPE_DETAILS_KEY,
+    path: PATH.VEHICLE_TYPE_DETAILS_PATH,
+    component: lazy(() => import("../../../views/client/pages/VehicleType/components/AddVehicleType")),
+    authority: [],
+  }
   // {
   //   key: KEY.VEHICLES_MANAGEMENT_PATH,
   //   path: PATH.VEHICLES_MANAGEMENT_PATH,

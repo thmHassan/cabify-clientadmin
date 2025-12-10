@@ -18,6 +18,7 @@
     "formik": "^2.4.6",
     "framer-motion": "^12.23.21",
     "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
     "lodash": "^4.17.21",
     "miragejs": "^0.1.48",
     "moment": "^2.30.1",

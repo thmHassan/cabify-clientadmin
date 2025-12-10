@@ -1,108 +1,158 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { apiSaveCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
+import { apiGetCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
 
 const CompanyProfile = () => {
+    const [companyProfileData, setCompanyProfileData] = useState({});
+    const [tableLoading, setTableLoading] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchCompanieProfile = useCallback(async () => {
+        setTableLoading(true);
+        try {
+            const response = await apiGetCompanyProfile();
+            if (response?.data?.success === 1) {
+                const companyData = response?.data?.data;
+                setCompanyProfileData(companyData || {});
+            }
+        } catch (error) {
+            setCompanyProfileData({});
+        } finally {
+            setTableLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCompanieProfile();
+    }, [fetchCompanieProfile, refreshTrigger]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append("company_name", companyProfileData.company_name);
+        formData.append("company_email", companyProfileData.company_email);
+        formData.append("company_phone_no", companyProfileData.company_phone_no);
+        formData.append("company_business_license", companyProfileData.company_business_license);
+        formData.append("company_business_address", companyProfileData.company_business_address);
+        formData.append("company_timezone", companyProfileData.company_timezone);
+        formData.append("company_description", companyProfileData.company_description);
+
+        try {
+            const response = await apiSaveCompanyProfile(formData);
+            if (response?.data?.success === 1) {
+            } else {
+                setError("Failed to save changes.");
+            }
+        } catch (err) {
+            setError("An error occurred while saving the company profile.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="w-full mx-auto">
             <h2 className="text-2xl font-semibold text-gray-800">Company Profile</h2>
-            <p className="text-gray-500 mb-6">
-                Update your company information and branding
-            </p>
+            <p className="text-gray-500 mb-6">Update your company information and branding</p>
 
-            <form className="grid gap-3">
-                {/* Row 1 */}
+            <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Company Name
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Company Name</label>
                         <input
                             type="text"
+                            value={companyProfileData?.company_name || ""}
                             placeholder="Enter Name"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_name: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Email</label>
                         <input
                             type="email"
+                            value={companyProfileData?.company_email || ""}
                             placeholder="Enter Email"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_email: e.target.value })}
                         />
                     </div>
                 </div>
 
-                {/* Row 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Mobile Number
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Mobile Number</label>
                         <input
                             type="text"
+                            value={companyProfileData?.company_phone_no || ""}
                             placeholder="Enter Mobile Number"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_phone_no: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Business License
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Business License</label>
                         <input
                             type="text"
-                            placeholder="Enter Telephone Number"
+                            value={companyProfileData?.company_business_license || ""}
+                            placeholder="Enter Business License"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_business_license: e.target.value })}
                         />
                     </div>
                 </div>
 
-                {/* Row 3 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Business Address
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Business Address</label>
                         <input
                             type="text"
-                            placeholder="Enter Mobile Number"
+                            value={companyProfileData?.company_business_address || ""}
+                            placeholder="Enter Business Address"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_business_address: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Time Zone
-                        </label>
+                        <label className="block font-medium text-gray-700 mb-1">Time Zone</label>
                         <input
                             type="text"
-                            placeholder="Enter time zone"
+                            value={companyProfileData?.company_timezone || ""}
+                            placeholder="Enter Time Zone"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_timezone: e.target.value })}
                         />
                     </div>
                 </div>
 
-                {/* Description */}
                 <div>
-                    <label className="block font-medium text-gray-700 mb-1">
-                        Company Description
-                    </label>
+                    <label className="block font-medium text-gray-700 mb-1">Company Description</label>
                     <textarea
                         rows="4"
+                        value={companyProfileData?.company_description || ""}
                         placeholder="Enter Description"
                         className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                        onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_description: e.target.value })}
                     />
                 </div>
 
-                {/* Buttons */}
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+
                 <div className="flex space-x-4 pt-4">
                     <button
                         type="submit"
+                        disabled={isSubmitting}
                         className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
                     >
-                        Save Changes
+                        {isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
 
                     <button
@@ -114,7 +164,7 @@ const CompanyProfile = () => {
                 </div>
             </form>
         </div>
-    )
-}
+    );
+};
 
 export default CompanyProfile;

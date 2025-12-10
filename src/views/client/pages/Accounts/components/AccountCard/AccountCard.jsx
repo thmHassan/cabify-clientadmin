@@ -3,19 +3,19 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const AccountCard = ({ account, onEdit, onView }) => {
+const AccountCard = ({ account, onEdit, onView, onDelete }) => {
     const actionOptions = [
-        {
-            label: "View",
-            onClick: () => onView(account),
-        },
+        // {
+        //     label: "View",
+        //     onClick: () => onView(account),
+        // },
         {
             label: "Edit",
             onClick: () => onEdit(account),
         },
         {
             label: "Delete",
-            onClick: () => alert(`Deleting ${account.name}`),
+            onClick: () => onDelete(account),
         },
     ];
     return (

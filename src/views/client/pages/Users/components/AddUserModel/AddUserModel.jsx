@@ -66,20 +66,15 @@ const handleSubmit = async (values) => {
   formData.append('password', values.password || '');
   formData.append('address', values.address || '');
   formData.append('city', values.city || '');
-  console.log("Form Data as JSON:", JSON.stringify(formData)); // Check JSON data being sent
-
-  // Log form data as plain JSON for debugging
-  const formDataJson = {};
-  for (let [key, value] of formData.entries()) {
-    formDataJson[key] = value;
-  }
-  console.log("Form Data as JSON:", JSON.stringify(formDataJson));
 
   try {
     const response = await apiCreateUser(formData);
     console.log("API Response:", response);
 
-    if (response?.data?.success === 1 || response?.status === 200 || response?.data?.status === 'success') {
+    // Check for error in response data
+    if (response?.data?.error === 1) {
+      setSubmitError(response?.data?.message || 'Failed to create user');
+    } else if (response?.data?.success === 1 || response?.status === 200) {
       if (onUserCreated) {
         onUserCreated();
       }
@@ -88,7 +83,7 @@ const handleSubmit = async (values) => {
     } else {
       const errorMsg = response?.data?.message || 
                        response?.data?.error || 
-                       `Failed to create user: ${JSON.stringify(response.data)}`;
+                       `Failed to create user`;
       setSubmitError(errorMsg);
     }
   } catch (error) {
@@ -101,7 +96,6 @@ const handleSubmit = async (values) => {
       
       errorMessage = error.response.data?.message || 
                     error.response.data?.error || 
-                    JSON.stringify(error.response.data) || 
                     `Server error: ${error.response.status}`;
     } else if (error.request) {
       console.error('No response received:', error.request);

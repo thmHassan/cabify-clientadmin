@@ -1,15 +1,5 @@
-// import React from "react";
-
-// const MobileApp = () => {
-//     return (
-//         <div>Mobile App</div>
-//     )
-// }
-
-// export default MobileApp;
-
-
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { apiGetMobileAppSetting, apiSaveMobileAppSetting } from "../../../../../../services/SettingsConfigurationServices";
 
 const Toggle = ({ label, checked, onChange }) => (
     <div className="flex items-center justify-between py-2">
@@ -37,6 +27,57 @@ const Section = ({ title, children }) => (
 );
 
 const MobileApp = () => {
+    const [mobileAppSettingData, setMobileAppSettingData] = useState({});
+    const [tableLoading, setTableLoading] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchMobileAppSetting = useCallback(async () => {
+        setTableLoading(true);
+        try {
+            const response = await apiGetMobileAppSetting();
+            if (response?.data?.success === 1) {
+                const companyData = response?.data?.data;
+                setMobileAppSettingData(companyData || {});
+            }
+        } catch (error) {
+            setMobileAppSettingData({});
+        } finally {
+            setTableLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchMobileAppSetting();
+    }, [fetchMobileAppSetting, refreshTrigger]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append("company_name", mobileAppSettingData.company_name);
+        formData.append("company_email", mobileAppSettingData.company_email);
+        formData.append("company_phone_no", mobileAppSettingData.company_phone_no);
+        formData.append("company_business_license", mobileAppSettingData.company_business_license);
+        formData.append("company_business_address", mobileAppSettingData.company_business_address);
+        formData.append("company_timezone", mobileAppSettingData.company_timezone);
+        formData.append("company_description", mobileAppSettingData.company_description);
+
+        try {
+            const response = await apiSaveMobileAppSetting(formData);
+            if (response?.data?.success === 1) {
+            } else {
+                setError("Failed to save changes.");
+            }
+        } catch (err) {
+            setError("An error occurred while saving the company profile.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
     return (
         <div className="w-full mx-auto mt-4 grid gap-4">
             <h2 className="text-xl font-semibold">Mobile App Settings</h2>

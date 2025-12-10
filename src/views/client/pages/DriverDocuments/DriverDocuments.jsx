@@ -13,7 +13,8 @@ import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import Loading from "../../../../components/shared/Loading/Loading";
 import DriverDocumentCard from "./components/DriverDocumentCard";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
-import { apiGetDocumentTypes } from "../../../../services/DriversDocumentServices";
+import { apiDeleteDriverDocument, apiGetDocumentTypes } from "../../../../services/DriversDocumentServices";
+import { set } from "lodash";
 
 const DriverDocuments = () => {
   const [isDriverDocumentModelOpen, setIsDriverDocumentModelOpen] = useState({
@@ -40,6 +41,9 @@ const DriverDocuments = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [driverDocumentToDelete, setDriverDocumentToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -64,19 +68,31 @@ const DriverDocuments = () => {
         page: currentPage,
         perPage: itemsPerPage,
       };
+
       if (debouncedSearchQuery?.trim()) {
         params.search = debouncedSearchQuery.trim();
       }
 
-      console.log("Fetching documents with params:", params);
-
       const result = await apiGetDocumentTypes(params);
 
       if (result?.status === 200 && result?.data) {
-        const documentList = result.data.data || result.data.documents || [];
-        setDocuments(Array.isArray(documentList) ? documentList : []);
-        setTotalItems(result.data.total || 0);
-        setTotalPages(result.data.last_page || 1);
+        const rawList = result.data.list?.data || [];
+
+        const mappedList = rawList.map((item) => ({
+          id: item.id,
+          name: item.document_name,
+          frontPhoto: item.front_photo === "yes",
+          backPhoto: item.back_photo === "yes",
+          profilePhoto: item.profile_photo === "yes",
+          issueDate: item.has_issue_date === "yes",
+          expiryDate: item.has_expiry_date === "yes",
+          numberField: item.has_number_field === "yes",
+          uploadedDocument: item.uploaded_document,
+        }));
+
+        setDocuments(mappedList);
+        setTotalItems(result.data.list.total || 0);
+        setTotalPages(result.data.list.last_page || 1);
       } else {
         setDocuments([]);
       }
@@ -91,6 +107,57 @@ const DriverDocuments = () => {
   useEffect(() => {
     fetchDocuments();
   }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchDocuments, refreshTrigger]);
+
+  const handleDeleteClick = (company) => {
+    setDriverDocumentToDelete(company);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteDriverDocument = async () => {
+    if (!driverDocumentToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteDriverDocument(driverDocumentToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setDriverDocumentToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete driver document");
+      }
+    } catch (error) {
+      console.error("Error deleting driver document:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDriveDocumetCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+  
+const handleEdit = (doc) => {
+    // Convert mapped data back to API format
+    const apiFormatData = {
+        id: doc.id,
+        document_name: doc.name,
+        front_photo: doc.frontPhoto ? 'yes' : 'no',
+        back_photo: doc.backPhoto ? 'yes' : 'no',
+        profile_photo: doc.profilePhoto ? 'yes' : 'no',
+        has_issue_date: doc.issueDate ? 'yes' : 'no',
+        has_expiry_date: doc.expiryDate ? 'yes' : 'no',
+        has_number_field: doc.numberField ? 'yes' : 'no',
+    };
+    
+    setIsDriverDocumentModelOpen({
+        type: "edit",
+        isOpen: true,
+        documentData: apiFormatData,
+    });
+    lockBodyScroll();
+};
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -141,14 +208,8 @@ const DriverDocuments = () => {
                   <DriverDocumentCard
                     key={doc.id || doc.name}
                     doc={doc}
-                    onEdit={(docToEdit) => {
-                      lockBodyScroll();
-                      setIsDriverDocumentModelOpen({
-                        isOpen: true,
-                        type: "edit",
-                        data: docToEdit,
-                      });
-                    }}
+                    onDelete={handleDeleteClick}
+                    onEdit={handleEdit}
                   />
                 ))
               ) : (
@@ -179,9 +240,40 @@ const DriverDocuments = () => {
         className="p-4 sm:p-6 lg:p-10"
       >
         <AddDriverDocumentModel
+          initialValue={isDriverDocumentModelOpen.type === "edit" ? isDriverDocumentModelOpen.documentData : {}}
           setIsOpen={setIsDriverDocumentModelOpen}
-          onDocumentCreated={() => setRefreshTrigger(prev => prev + 1)}
+          onDocumentCreated={handleDriveDocumetCreated}
         />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Driver Document?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {driverDocumentToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDriverDocumentToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteDriverDocument}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

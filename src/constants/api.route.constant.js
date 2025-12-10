@@ -6,55 +6,80 @@ export const GET_COMPANY_CARD_DETAILS = "/super-admin/company-cards";
 export const GET_COMPANY_BY_ID = "/super-admin/edit-company";
 export const EDIT_COMPANY = "/super-admin/edit-company";
 
+//api for dispatcher
+export const CREATE_DISPATCHER = "/company/create-dispatcher";
+export const DELETE_DISPATCHER = "/company/delete-dispatcher";
+export const EDIT_DISPATCHER = "/company/edit-dispatcher";
+
 // api for user
-export const CREATE_USER = "/create-user";
-export const GET_USER_LIST = "/list-user";
-export const GET_USER_BY_ID = "/edit-user";
-export const POST_EDIT_USER_STATUS = "/change-user-status";
-export const EDIT_USER = "/edit-user";
-export const DELETE_USER = "/delete-user";
+export const CREATE_USER = "/company/create-user";
+export const GET_USER_LIST = "/company/list-user";
+export const GET_USER_BY_ID = "/company/edit-user";
+export const POST_EDIT_USER_STATUS = "/company/change-user-status";
+export const EDIT_USER = "/company/edit-user";
+export const DELETE_USER = "/company/delete-user";
 
 //api for drivers management
-export const GET_DRIVERS_MANAGEMENT = "/list-driver";
-export const GET_DRIVER_BY_ID = "/edit-driver";
-export const CREATE_DRIVER = "/create-driver";
-export const EDIT_DRIVER = "/edit-driver";
-export const DELETE_DRIVER = "/delete-driver";
-export const POST_EDIT_DRIVER_STATUS = "/change-driver-status";
+export const GET_DRIVERS_MANAGEMENT = "/company/list-driver";
+export const GET_DRIVER_BY_ID = "/company/edit-driver";
+export const CREATE_DRIVER = "/company/create-driver";
+export const EDIT_DRIVER = "/company/edit-driver";
+export const DELETE_DRIVER = "/company/delete-driver";
+export const POST_EDIT_DRIVER_STATUS = "/company/change-driver-status";
 
 // api for driver's documents
-export const GET_DRIVERS_DOCUMENT = "/list-document-type";
-export const CREATE_DRIVERS_DOCUMENT = "/create-document-type";
-export const DELETE_DRIVERS_DOCUMENT = "/delete-document-type";
-export const EDIT_DRIVERS_DOCUMENT = "/edit-document-type";
-export const GET_DRIVERS_DOCUMENT_BY_ID = "/edit-document-type";
+export const GET_DRIVERS_DOCUMENT = "/company/list-document-type";
+export const CREATE_DRIVERS_DOCUMENT = "/company/create-document-type";
+export const DELETE_DRIVERS_DOCUMENT = "/company/delete-document-type";
+export const EDIT_DRIVERS_DOCUMENT = "/company/edit-document-type";
+export const GET_DRIVERS_DOCUMENT_BY_ID = "/company/edit-document-type";
 
 // api for plots
-export const GET_PLOTS = "/list-plot";
-export const CREATE_PLOT = "/create-plot";
-export const EDIT_PLOT = "/edit-plot";
-export const DELETE_PLOT = "/delete-plot";
-export const GET_PLOT_BY_ID = "/edit-plot";
+export const GET_PLOTS = "/company/list-plot";
+export const CREATE_PLOT = "/company/create-plot";
+export const EDIT_PLOT = "/company/edit-plot";
+export const DELETE_PLOT = "/company/delete-plot";
+export const GET_PLOT_BY_ID = "/company/edit-plot";
+export const MANAGE_PLOT = "/company/all-plot"
+export const ASSIGN_BACKUP_PLOT = "/company/store-backup-plot"
 
 // api for sub company
-export const GET_SUB_COMPANY_LIST = "/list-sub-company";
-export const GET_SUB_COMPANY_BY_ID = "/edit-sub-company";
-export const CREATE_SUB_COMPANY = "/create-sub-company";
-export const EDIT_SUB_COMPANY = "/edit-sub-company";
-export const DELETE_SUB_COMPANY = "/delete-sub-company";
+export const GET_SUB_COMPANY_LIST = "/company/list-sub-company";
+export const GET_SUB_COMPANY_BY_ID = "/company/edit-sub-company";
+export const CREATE_SUB_COMPANY = "/company/create-sub-company";
+export const EDIT_SUB_COMPANY = "/company/edit-sub-company";
+export const DELETE_SUB_COMPANY = "/company/delete-sub-company";
 
 // api for vehicle types
-export const GET_VEHICLE_TYPES = "/list-vehicle-type";
-export const GET_VEHICLE_TYPE_BY_ID = "/super-admin/edit-vehicle-type";
-export const CREATE_VEHICLE_TYPE = "/super-admin/create-vehicle-type";
-export const EDIT_VEHICLE_TYPE = "/super-admin/edit-vehicle-type";
-export const DELETE_VEHICLE_TYPE = "/super-admin/delete-vehicle-type";
+export const GET_VEHICLE_TYPES = "/company/list-vehicle-type";
+export const GET_VEHICLE_TYPE_BY_ID = "/company/edit-vehicle-type";
+export const CREATE_VEHICLE_TYPE = "/company/create-vehicle-type";
+export const EDIT_VEHICLE_TYPE = "/company/edit-vehicle-type";
+export const DELETE_VEHICLE_TYPE = "/company/delete-vehicle-type";
 
 // api for vehicle types
 export const GET_SUB_ADMINS = "/super-admin/subadmin-list";
 export const GET_SUB_ADMIN_BY_ID = "/super-admin/edit-subadmin";
 export const CREATE_SUB_ADMIN = "/super-admin/create-subadmin";
 export const EDIT_SUB_ADMIN = "/super-admin/edit-subadmin";
+
+// api for settings configuration
+export const GET_COMPANY_PROFILE = "/company/get-company-profile";
+export const SAVE_COMPANY_PROFILE = "/company/save-company-profile";
+export const GET_MOBILE_APP_SETTINGS = "/company/get-mobile-setting";
+export const SAVE_MOBILE_APP_SETTINGS = "/company/update-mobile-setting";
+export const GET_COMMISSION = "/company/get-commission-data";
+export const SAVE_COMMISSION = "/company/save-main-commission";
+export const CREATE_PACKAGE_TOPUP = "/company/save-package-topup";
+export const EDIT_PACKAGE_TOPUP = "/company/edit-package-topup";
+export const DELETE_PACKAGE_TOPUPS = "/company/delete-package-topup";
+
+//api for account
+export const GET_ACCOUNT= "/company/list-account";
+export const UPDATE_ACCOUNT = "/company/edit-account";
+export const CREATE_ACCOUNT= "/company/create-account";
+export const DELETE_ACCOUNT = "/company/delete-account";
+export const GET_ACCOUNT_BY_ID = "/company/edit-account";
 
 // api for subscriptions
 export const CREATE_SUBSCRIPTION = "/super-admin/create-subscription";

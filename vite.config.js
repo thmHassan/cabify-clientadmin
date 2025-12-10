@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: 'public',
   server: {
     proxy: {
-      '/api/company': {
+      '/api': {
         target: 'https://backend.cabifyit.com',
         changeOrigin: true,
         secure: false,

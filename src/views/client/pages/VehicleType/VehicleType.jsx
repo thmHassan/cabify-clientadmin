@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
@@ -11,11 +11,13 @@ import Loading from "../../../../components/shared/Loading/Loading";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../store";
 import VehicleTypeCard from "./components/VehicleTypeCard";
-import AddVehicleType from "./components/AddVehicleType";
+import { apiDeleteVehicleType, apiGetVehicleTypes } from "../../../../services/VehicleTypeServices";
+import { useNavigate } from "react-router-dom";
+import Modal from "../../../../components/shared/Modal/Modal";
 
 const VehicleType = () => {
+  const navigate = useNavigate();
   const [_searchQuery, setSearchQuery] = useState("");
-  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
@@ -31,6 +33,43 @@ const VehicleType = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [vehicleTypeData, setVehicleTypeData] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [vehicleTypeToDelete, setVehicleTypeToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchVehicleType = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      const response = await apiGetVehicleTypes(params);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.list;
+        setVehicleTypeData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching sub-companies:", error);
+      setVehicleTypeData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => {
+    fetchVehicleType();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchVehicleType, refreshTrigger]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -41,68 +80,32 @@ const VehicleType = () => {
     setCurrentPage(1);
   };
 
-  const staticVehicle = [
-    {
-      id: 1,
-      name: "Camry(sedan)",
-      picture: "https://randomuser.me/api/portraits/men/44.jpg",
-      seats: "5 seater",
-      cubic: "15.1 cubic feet",
-    },
-    {
-      id: 2,
-      name: "Highlander(SUV)",
-      picture: "https://randomuser.me/api/portraits/women/65.jpg",
-      seats: "7 seater",
-      cubic: "20.5 cubic feet",
-    },
-    {
-      id: 3,
-      name: "Olivia Rhye",
-      picture: "https://randomuser.me/api/portraits/men/67.jpg",
-      seats: "4 seater",
-      cubic: "12.3 cubic feet",
-    },
-    {
-      id: 4,
-      name: "Cody Fisher",
-      picture: "https://randomuser.me/api/portraits/men/22.jpg",
-      seats: "6 seater",
-      cubic: "18.4 cubic feet",
-    },
-    {
-      id: 5,
-      name: "Esther Howard",
-      picture: "https://randomuser.me/api/portraits/women/33.jpg",
-      seats: "5 seater",
-      cubic: "14.7 cubic feet",
-    },
-    {
-      id: 6,
-      name: "Robert Fox",
-      picture: "https://randomuser.me/api/portraits/men/55.jpg",
-      seats: "8 seater",
-      cubic: "22.0 cubic feet",
-    },
-  ];
+  const handleDeleteClick = (vehicle) => {
+    setVehicleTypeToDelete(vehicle);
+    setDeleteModalOpen(true);
+  };
 
-  const actionOptions = [
-    {
-      label: "View",
-      onClick: (dispatcher) => alert(`Viewing ${dispatcher.name}`),
-    },
-    {
-      label: "Edit",
-      onClick: (dispatcher) => {
-        setIsDispatcherModalOpen({ type: "edit", isOpen: true, data: dispatcher });
-        lockBodyScroll();
-      },
-    },
-    {
-      label: "Delete",
-      onClick: (dispatcher) => alert(`Deleting ${dispatcher.name}`),
-    },
-  ];
+  const handleDeleteVehicleType = async () => {
+    if (!vehicleTypeToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteVehicleType(vehicleTypeToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setVehicleTypeToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete vehicle type");
+      }
+    } catch (error) {
+      console.error("Error deleting  vehicle type:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -113,12 +116,10 @@ const VehicleType = () => {
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8">
-          {/* <Button
+          <Button
             type="filled"
             btnSize="2xl"
-            onClick={() => {
-             <AddVehicleType setIsOpen={setIsAddVehicleOpen} isOpen={isAddVehicleOpen} />;
-            }}
+            onClick={() => navigate("/vehicle-type/vehicle-details")}
             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
@@ -130,25 +131,7 @@ const VehicleType = () => {
               </span>
               <span>Add Vehicle Type</span>
             </div>
-          </Button> */}
-          <Button
-            type="filled"
-            btnSize="2xl"
-            onClick={() => setIsAddVehicleOpen(true)}
-            className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
-          >
-            <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
-              <PlusIcon />
-              <span>Add Vehicle Type</span>
-            </div>
           </Button>
-
-          {isAddVehicleOpen && (
-            <AddVehicleType
-              isOpen={isAddVehicleOpen}
-              setIsOpen={setIsAddVehicleOpen}
-            />
-          )}
         </div>
       </div>
       <div>
@@ -164,13 +147,17 @@ const VehicleType = () => {
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticVehicle.map((vehicle) => (
-                <VehicleTypeCard key={vehicle.id} vehicle={vehicle} />
+              {vehicleTypeData.map((vehicle) => (
+                <VehicleTypeCard key={vehicle.id}
+                  vehicle={vehicle}
+                  onEdit={(vehicleToEdit) => navigate(`/vehicle-type/vehicle-details`, { state: { data: vehicleToEdit } })}
+                  onDelete={handleDeleteClick} 
+                />
               ))}
             </div>
           </Loading>
-          {Array.isArray(staticVehicle) &&
-            staticVehicle.length > 0 ? (
+          {Array.isArray(vehicleTypeData) &&
+            vehicleTypeData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -185,6 +172,36 @@ const VehicleType = () => {
           ) : null}
         </CardContainer>
       </div>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {vehicleTypeToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setVehicleTypeToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteVehicleType}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

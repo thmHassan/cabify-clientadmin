@@ -22,6 +22,7 @@ import Tag from "../../../../components/ui/Tag";
 import UserDropdown from "../../../../components/shared/UserDropdown";
 import ThreeDotsIcon from "../../../../components/svg/ThreeDotsIcon";
 import ApiService from "../../../../services/ApiService";
+import { apiDeleteDispatcher } from "../../../../services/DispatcherService";
 
 const Dispatcher = () => {
   const [isDispatcherModalOpen, setIsDispatcherModalOpen] = useState({
@@ -51,12 +52,15 @@ const Dispatcher = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [dispatcherListRaw, setDispatcherListRaw] = useState([]);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [dispatcherToDelete, setDispatcherToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchDispatcherCards = async () => {
     try {
       setDispatchLoading(true);
       const response = await ApiService.getDispatcherCards();
-      setDispatchCards(response?.data ?? null);
+      setDispatchCards(response?.data?.data ?? null);
     } catch (error) {
       console.log("err--", error);
       setCompanyCards(null);
@@ -77,7 +81,7 @@ const Dispatcher = () => {
         perPage,
         search: search || undefined,
       });
-      const list = response?.data?.list;
+      const list = response?.data?.dispatchers;
       console.log(list, "list");
       const rows = Array.isArray(list?.data) ? list?.data : [];
 
@@ -114,7 +118,7 @@ const Dispatcher = () => {
   const DASHBOARD_CARDS = [
     {
       title: "Total Companies",
-      value: "25",
+      value: dispatchCards ? dispatchCards.totalDispatcher : "0",
       change: "+3 from last hour",
       icon: {
         component: CompaniesIcon,
@@ -124,7 +128,7 @@ const Dispatcher = () => {
     },
     {
       title: "Active Companies",
-      value: "15",
+      value: dispatchCards ? dispatchCards.activeDispatcher : "0",
       change: "+3 from last hour",
       icon: {
         component: CompaniesIcon,
@@ -134,7 +138,7 @@ const Dispatcher = () => {
     },
     {
       title: "Monthly Revenue",
-      value: "$6,800",
+      value: dispatchCards ? `${dispatchCards.ridesDispatchToday}` : "$0",
       change: "+3 from last hour",
       icon: {
         component: CompaniesIcon,
@@ -144,74 +148,7 @@ const Dispatcher = () => {
     },
   ];
 
-  const staticDispatchers = [
-    {
-      id: 1,
-      name: "Alex Rodriguez",
-      email: "alex.rodriguez@gmail.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/men/44.jpg",
-      status: "active",
-      active_rides: 12,
-      completed_today: 45,
-    },
-    {
-      id: 2,
-      name: "Savannah Nguyen",
-      email: "nevaeh.simmons@example.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/women/65.jpg",
-      status: "inactive",
-      active_rides: 12,
-      completed_today: 45,
-    },
-    {
-      id: 3,
-      name: "Jacob Jones",
-      email: "dolores.chambers@example.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/men/67.jpg",
-      status: "active",
-      active_rides: 12,
-      completed_today: 45,
-    },
-    {
-      id: 4,
-      name: "Cameron Williamson",
-      email: "kenzi.lawson@example.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active",
-      active_rides: 12,
-      completed_today: 45,
-    },
-    {
-      id: 5,
-      name: "Brooklyn Simmons",
-      email: "alma.lawson@example.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/women/33.jpg",
-      status: "active",
-      active_rides: 12,
-      completed_today: 45,
-    },
-    {
-      id: 6,
-      name: "Robert Fox",
-      email: "jackson.graham@example.com",
-      phone: "+1 (555) 123-4567",
-      picture: "https://randomuser.me/api/portraits/men/55.jpg",
-      status: "active",
-      active_rides: 12,
-      completed_today: 45,
-    },
-  ];
-
   const actionOptions = [
-    {
-      label: "View",
-      onClick: (dispatcher) => alert(`Viewing ${dispatcher.name}`),
-    },
     {
       label: "Edit",
       onClick: (dispatcher) => {
@@ -221,7 +158,7 @@ const Dispatcher = () => {
     },
     {
       label: "Delete",
-      onClick: (dispatcher) => alert(`Deleting ${dispatcher.name}`),
+      onClick: (dispatcher) => handleDeleteClick(dispatcher),
     },
   ];
 
@@ -232,6 +169,36 @@ const Dispatcher = () => {
   const handleItemsPerPageChange = (newItemsPerPage) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
+  };
+
+  const handleDeleteClick = (company) => {
+    setDispatcherToDelete(company);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteDispatcher = async () => {
+    if (!dispatcherToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiDeleteDispatcher(dispatcherToDelete.id);
+
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setDispatcherToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Failed to delete dispatcher");
+      }
+    } catch (error) {
+      console.error("Error deleting dispatcher:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleonDispatcherCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -322,17 +289,17 @@ const Dispatcher = () => {
               </div>
               <Loading loading={tableLoading} type="cover">
                 <div className="flex flex-col gap-4 pt-4 ">
-                  {staticDispatchers.map((d) => (
+                  {dispatcherListRaw.map((d) => (
                     <div
                       key={d.id}
                       className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
                     >
                       <div className="flex items-center gap-3">
-                        <img
+                        {/* <img
                           src={d.picture}
                           className="w-14 h-14 rounded-md object-cover"
                           alt=""
-                        />
+                        /> */}
                         <div className="w-60">
                           <p className="font-semibold text-xl">{d.name}</p>
                           <p className="text-[10px]">{d.email}</p>
@@ -375,8 +342,8 @@ const Dispatcher = () => {
                 </div>
 
               </Loading>
-              {Array.isArray(staticDispatchers) &&
-                staticDispatchers.length > 0 ? (
+              {Array.isArray(dispatcherListRaw) &&
+                dispatcherListRaw.length > 0 ? (
                 <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
                   <Pagination
                     currentPage={currentPage}
@@ -397,7 +364,40 @@ const Dispatcher = () => {
         isOpen={isDispatcherModalOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
-        <AddDispatcherModal setIsOpen={setIsDispatcherModalOpen} />
+        <AddDispatcherModal
+          initialValue={isDispatcherModalOpen.type === "edit" ? isDispatcherModalOpen.data : {}}
+          setIsOpen={setIsDispatcherModalOpen}
+          onDispatcherCreated={handleonDispatcherCreated} />
+      </Modal>
+      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-3">Delete Driver Document?</h2>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete {dispatcherToDelete?.name}?
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              type="filledGray"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDispatcherToDelete(null);
+              }}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="filledRed"
+              onClick={handleDeleteDispatcher}
+              disabled={isDeleting}
+              className="px-6 py-2"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -124,6 +124,10 @@ const DriversManagement = () => {
     }
   };
 
+  const handleDriverStatusChange = () => {
+    setRefreshTrigger(prev => prev + 1);
+};
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -224,6 +228,7 @@ const DriversManagement = () => {
                       data: driverToEdit,
                     });
                   }}
+                   onStatusChange={handleDriverStatusChange}
                 />
               ))}
             </div>

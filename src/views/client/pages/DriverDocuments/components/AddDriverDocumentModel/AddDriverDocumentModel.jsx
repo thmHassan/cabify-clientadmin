@@ -1,65 +1,75 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
-import _ from "lodash";
-import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
-import { apiCreateDriveDocumet } from "../../../../../../services/DriversDocumentServices";
+import { apiCreateDriveDocument, apiEditDriverDocument } from "../../../../../../services/DriversDocumentServices";
 import { DRIVER_DOCUMENT_VALIDATION_SCHEMA } from "../../../../validators/pages/driver.validation";
+import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 
 const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) => {
     const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState(initialValue);
+    const [isEditMode, setIsEditMode] = useState(false);
 
-    const handleSubmit = async (values) => {
-        setIsLoading(true);
-        setSubmitError(null);
+    useEffect(() => {
+        setIsEditMode(!!initialValue?.id);
+    }, [initialValue]);
 
-        try {
-            const formDataObj = new FormData();
-            formDataObj.append('document_name', values.documentName || '');
-            formDataObj.append('front_photo', values.frontPhoto ? 'yes' : 'no');
-            formDataObj.append('back_photo', values.backPhoto ? 'yes' : 'no');
-            formDataObj.append('profile_photo', values.issuePhoto ? 'yes' : 'no');
-            formDataObj.append('has_issue_date', values.issueDate ? 'yes' : 'no');
-            formDataObj.append('has_expiry_date', values.expiryDate ? 'yes' : 'no');
-            formDataObj.append('has_number_field', values.numberField ? 'yes' : 'no');
+const handleSubmit = async (values, { resetForm }) => {
+    setIsLoading(true);
+    setSubmitError(null);
 
-            const response = await apiCreateDriveDocumet(formDataObj);
+    try {
+        const formDataObj = new FormData();
+        if (isEditMode) formDataObj.append('id', initialValue.id);
+        formDataObj.append('document_name', values.documentName || '');
+        formDataObj.append('front_photo', values.frontPhoto ? 'yes' : 'no');
+        formDataObj.append('back_photo', values.backPhoto ? 'yes' : 'no');
+        formDataObj.append('profile_photo', values.issuePhoto ? 'yes' : 'no');
+        formDataObj.append('has_issue_date', values.issueDate ? 'yes' : 'no');
+        formDataObj.append('has_expiry_date', values.expiryDate ? 'yes' : 'no');
+        formDataObj.append('has_number_field', values.numberField ? 'yes' : 'no');
 
-            if (response?.data?.success === 1 || response?.status === 200) {
-                if (onDocumentCreated) {
-                    onDocumentCreated();
-                }
-                unlockBodyScroll();
-                setIsOpen({ type: "new", isOpen: false });
-            } else {
-                setSubmitError(response?.data?.message || 'Failed to create document');
+        const response = isEditMode
+            ? await apiEditDriverDocument(formDataObj)
+            : await apiCreateDriveDocument(formDataObj);
+
+        if (response?.data?.success === 1 || response?.status === 200) {
+            if (onDocumentCreated) {
+                onDocumentCreated();
             }
-        } catch (error) {
-            console.error('Document creation error:', error);
-            setSubmitError(error?.response?.data?.message || error?.message || 'Error creating document');
-        } finally {
-            setIsLoading(false);
+            unlockBodyScroll();
+            setIsOpen({ type: "new", isOpen: false });
+            resetForm(); // Reset the form on successful submission
+        } else {
+            setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} driver document`);
         }
-    };
+    } catch (error) {
+        setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} driver document`);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     return (
         <div>
             <Formik
                 initialValues={{
-                    documentName: "",
-                    frontPhoto: false,
-                    backPhoto: false,
-                    issueDate: false,
-                    expiryDate: false,
-                    numberField: false,
-                    issuePhoto: false,
+                    documentName: initialValue?.document_name || "",
+                    frontPhoto: initialValue?.front_photo === 'yes' ? true : false,
+                    backPhoto: initialValue?.back_photo === 'yes' ? true : false,
+                    issueDate: initialValue?.has_issue_date === 'yes' ? true : false,
+                    expiryDate: initialValue?.has_expiry_date === 'yes' ? true : false,
+                    numberField: initialValue?.has_number_field === 'yes' ? true : false,
+                    issuePhoto: initialValue?.profile_photo === 'yes' ? true : false,
+                    at_least_one: false,
                 }}
                 validationSchema={DRIVER_DOCUMENT_VALIDATION_SCHEMA}
                 onSubmit={handleSubmit}
+                validateOnChange={true}
+                validateOnBlur={true}
+                enableReinitialize={true}
             >
                 {({ values, setFieldValue }) => {
                     return (
@@ -67,7 +77,7 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
                             <Form>
                                 <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
                                     <span className="w-full text-center block truncate">
-                                        Add Document Type
+                                        {isEditMode ? 'Edit Driver Document' : 'Add New Driver Document'}
                                     </span>
                                 </div>
                                 {submitError && (
@@ -156,7 +166,7 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                                         disabled={isLoading}
                                     >
-                                        <span>{isLoading ? 'Creating...' : 'Add Document'}</span>
+                                        <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Add Document")}</span>
                                     </Button>
                                 </div>
                             </Form>

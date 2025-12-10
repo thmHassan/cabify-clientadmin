@@ -41,12 +41,10 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 
             const featuresObj = {
                 type: 'Feature',
-                properties: {
-                    name: values.name,
-                },
+                properties: { name: values.name },
                 geometry: {
                     type: 'Polygon',
-                    coordinates: values.coordinates || [],
+                    coordinates: [values.coordinates], // <-- Correct
                 },
             };
 
@@ -80,6 +78,9 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                     coordinates: initialValue?.coordinates || [
                         [72.865475, 21.457506],
                         [72.601643, 21.319401],
+                        [72.702111, 21.321122],
+                        [72.802333, 21.402333],
+                        [72.865475, 21.457506],
                     ],
                 }}
                 validationSchema={PLOT_VALIDATION_SCHEMA}
@@ -156,3 +157,191 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 };
 
 export default AddPlotsModel;
+
+// import { ErrorMessage, Field, Form, Formik } from "formik";
+// import React, { useRef, useState, useEffect } from "react";
+// import * as Yup from "yup";
+// import L from "leaflet";
+// import "leaflet/dist/leaflet.css";
+// import "leaflet-draw";
+// import "leaflet-draw/dist/leaflet.draw.css";
+// import { MapContainer, TileLayer } from "react-leaflet";
+// import Button from "../../../../../../components/ui/Button/Button";
+// import { apiCreatePlot, apiEditPlot } from "../../../../../../services/PlotService";
+
+// const PLOT_VALIDATION_SCHEMA = Yup.object().shape({
+//     name: Yup.string().required("Plot name is required"),
+//     coordinates: Yup.array()
+//         .min(3, "Minimum 3 points required")
+//         .required("Coordinates are required"),
+// });
+
+// const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
+//     const [isEditMode, setIsEditMode] = useState(false);
+//     const mapRef = useRef(null);
+//     const drawnItemsRef = useRef(null);
+
+//     useEffect(() => {
+//         setIsEditMode(!!initialValue?.id);
+//     }, [initialValue]);
+
+//     useEffect(() => {
+//         setTimeout(() => {
+//             if (mapRef.current) {
+//                 mapRef.current.invalidateSize();
+//             }
+//         }, 300);
+//     }, []);
+
+//     const handleSubmit = async (values) => {
+//         let finalCoords = [...values.coordinates];
+
+//         if (finalCoords.length > 2) {
+//             const first = finalCoords[0];
+//             const last = finalCoords[finalCoords.length - 1];
+
+//             if (JSON.stringify(first) !== JSON.stringify(last)) {
+//                 finalCoords.push(first);
+//             }
+//         }
+
+//         const featureObj = {
+//             type: "Feature",
+//             properties: { name: values.name },
+//             geometry: {
+//                 type: "Polygon",
+//                 coordinates: [finalCoords],
+//             },
+//         };
+
+//         const fd = new FormData();
+//         if (isEditMode) fd.append("id", initialValue.id);
+
+//         fd.append("name", values.name);
+//         fd.append("features", JSON.stringify(featureObj));
+
+//         const res = isEditMode ? await apiEditPlot(fd) : await apiCreatePlot(fd);
+
+//         if (res?.data?.success === 1) {
+//             onPlotsCreated && onPlotsCreated();
+//             setIsOpen({ type: "new", isOpen: false });
+//         }
+//     };
+
+//     return (
+//         <Formik
+//             initialValues={{
+//                 name: initialValue?.name || "",
+//                 coordinates: initialValue?.coordinates || [],
+//             }}
+//             validationSchema={PLOT_VALIDATION_SCHEMA}
+//             onSubmit={handleSubmit}
+//         >
+//             {({ setFieldValue, values }) => (
+//                 <div className="w-[450px]">
+//                     <Form>
+//                         <h2 className="text-xl font-semibold text-center mb-4">
+//                             {isEditMode ? "Edit Plot" : "Add Plot"}
+//                         </h2>
+
+//                         <div className="mb-4">
+//                             <Field
+//                                 type="text"
+//                                 name="name"
+//                                 placeholder="Enter Plot Name"
+//                                 className="w-full px-4 py-3 border border-gray-400 rounded"
+//                             />
+//                             <ErrorMessage
+//                                 name="name"
+//                                 component="div"
+//                                 className="text-red-500 text-sm"
+//                             />
+//                         </div>
+
+//                         <div className="mb-4">
+//                             <MapContainer
+//                                 center={[21.17, 72.83]}
+//                                 zoom={12}
+//                                 className="h-[300px] w-full rounded border"
+//                                 whenCreated={(map) => {
+//                                     mapRef.current = map;
+
+//                                     const drawnItems = new L.FeatureGroup();
+//                                     drawnItemsRef.current = drawnItems;
+//                                     map.addLayer(drawnItems);
+
+//                                     const drawControl = new L.Control.Draw({
+//                                         draw: {
+//                                             marker: false,
+//                                             polyline: false,
+//                                             rectangle: false,
+//                                             circle: false,
+//                                             circlemarker: false,
+//                                             polygon: {
+//                                                 allowIntersection: false,
+//                                                 showArea: true,
+//                                                 shapeOptions: { color: "#97009c" },
+//                                             },
+//                                         },
+//                                         edit: { featureGroup: drawnItems },
+//                                     });
+
+//                                     map.addControl(drawControl);
+
+//                                     if (isEditMode && initialValue.coordinates?.length > 2) {
+//                                         const latlngs = initialValue.coordinates.map((c) => ({
+//                                             lat: c[1],
+//                                             lng: c[0],
+//                                         }));
+//                                         const polygon = L.polygon(latlngs, {
+//                                             color: "#97009c",
+//                                         });
+//                                         drawnItems.addLayer(polygon);
+//                                         map.fitBounds(polygon.getBounds());
+//                                     }
+
+//                                     // Polygon draw event
+//                                     map.on("draw:created", (e) => {
+//                                         drawnItems.clearLayers();
+//                                         drawnItems.addLayer(e.layer);
+
+//                                         let pts = e.layer.getLatLngs();
+//                                         if (Array.isArray(pts[0])) pts = pts[0];
+
+//                                         const coords = pts.map((p) => [p.lng, p.lat]);
+
+//                                         setFieldValue("coordinates", coords);
+//                                     });
+//                                 }}
+//                             >
+//                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+//                             </MapContainer>
+
+//                             <ErrorMessage
+//                                 name="coordinates"
+//                                 component="div"
+//                                 className="text-red-500 text-sm mt-1"
+//                             />
+//                         </div>
+
+//                         {/* Buttons */}
+//                         <div className="flex justify-end gap-4">
+//                             <Button
+//                                 type="filledGray"
+//                                 onClick={() => setIsOpen({ type: "new", isOpen: false })}
+//                             >
+//                                 Cancel
+//                             </Button>
+
+//                             <Button btnType="submit" type="filled">
+//                                 {isEditMode ? "Update" : "Create"}
+//                             </Button>
+//                         </div>
+//                     </Form>
+//                 </div>
+//             )}
+//         </Formik>
+//     );
+// };
+
+// export default AddPlotsModel;

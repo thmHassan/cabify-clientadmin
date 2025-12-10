@@ -9,13 +9,12 @@ export async function apiCreateUser(data) {
 
     return ApiService.fetchData({
         url: CREATE_USER,
-        method: METHOD_POST,    
+        method: METHOD_POST,
+        data,
         ...(isFormData && {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-                    body: JSON.stringify(data), 
-
         }),
     });
 }
@@ -24,9 +23,8 @@ export async function apiGetUser(params) {
     try {
         console.log("Making API call to:", GET_USER_LIST, "with params:", params);
         return ApiService.fetchData({
-
             url: params ? replaceSlash(params, GET_USER_LIST) : GET_USER_LIST,
-           METHOD_GET,
+            method: METHOD_GET,
         });
     } catch (error) {
         console.log("Error in API call:", error);

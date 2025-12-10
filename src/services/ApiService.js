@@ -17,7 +17,7 @@ const ApiService = {
     return new Promise((resolve, reject) => {
       BaseService({
         method: "GET",
-        url: "/dispatcher-cards",
+        url: "/company/dispatcher-cards",
       })
         .then((response) => {
           resolve(response);
@@ -36,7 +36,7 @@ const ApiService = {
       }
       BaseService({
         method: "GET",
-        url: "/list-dispatcher",
+        url: "/company/list-dispatcher",
         params,
       })
         .then((response) => {

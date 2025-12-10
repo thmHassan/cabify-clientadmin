@@ -19,4 +19,5 @@ export const TICKETS_PATH = "/tickets";
 export const USERS_PATH = "/users";
 export const USER_DETAILS_PATH = "/users/:id";
 export const VEHICLE_TYPE_PATH = "/vehicle-type";
+export const VEHICLE_TYPE_DETAILS_PATH = "/vehicle-type/vehicle-details";
 // export const VEHICLES_MANAGEMENT_PATH = "/vehicles-type-management";

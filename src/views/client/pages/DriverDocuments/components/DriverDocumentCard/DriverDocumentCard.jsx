@@ -3,19 +3,15 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const DriverDocumentCard = ({ doc, onEdit }) => {
+const DriverDocumentCard = ({ doc, onEdit, onDelete }) => {
     const actionOptions = [
-        {
-            label: "View",
-            onClick: () => alert(`Viewing ${doc.name}`),
-        },
         {
             label: "Edit",
             onClick: () => onEdit(doc),
         },
         {
             label: "Delete",
-            onClick: () => alert(`Deleting ${doc.name}`),
+            onClick: () => onDelete(doc),
         },
     ];
     return (

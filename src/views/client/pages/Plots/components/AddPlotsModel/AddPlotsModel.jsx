@@ -13,7 +13,7 @@ const PLOT_VALIDATION_SCHEMA = Yup.object().shape({
         .min(2, "Plot name must be at least 2 characters"),
     coordinates: Yup.array()
         .of(Yup.array().of(Yup.number()))
-        .min(2, "At least 2 coordinates are required")
+        .min(3, "At least 3 coordinates are required to create a polygon")
         .required("Coordinates are required"),
 });
 
@@ -21,12 +21,42 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [mapLoaded, setMapLoaded] = useState(false);
+    const [clickedCoord, setClickedCoord] = useState(null);
+    
     const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
+    const polygonRef = useRef(null);
+    const markersRef = useRef([]);
+    const coordinatesRef = useRef([]); 
+
     useEffect(() => {
         setIsEditMode(!!initialValue?.id);
     }, [initialValue]);
 
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
+        document.head.appendChild(link);
+
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+        script.onload = () => setMapLoaded(true);
+        document.body.appendChild(script);
+
+        return () => {
+            if (document.head.contains(link)) {
+                document.head.removeChild(link);
+            }
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
+        };
+    }, []);
+
     const handleSubmit = async (values) => {
+        console.log("values===", values);
         setIsLoading(true);
         setSubmitError(null);
 
@@ -38,17 +68,25 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
             }
 
             formDataObj.append('name', values.name || '');
+            formDataObj.append('features[type]', 'Feature');
+            formDataObj.append('features[properties][name]', values.name);
+            formDataObj.append('features[geometry][type]', 'Polygon');
+            const closedCoordinates = [...values.coordinates, values.coordinates[0]];
+            
+            const polygonCoordinates = [closedCoordinates];
+            
+            formDataObj.append('features[geometry][coordinates]', JSON.stringify(polygonCoordinates));
 
-            const featuresObj = {
-                type: 'Feature',
-                properties: { name: values.name },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [values.coordinates], // <-- Correct
-                },
-            };
+            console.log('Sending coordinates to API:');
+            console.log('Total points (including closing point):', closedCoordinates.length);
+            console.log('Coordinates structure:', polygonCoordinates);
+            console.log('Coordinates as JSON:', JSON.stringify(polygonCoordinates));
 
-            formDataObj.append('features', JSON.stringify(featuresObj));
+            console.log('FormData contents:');
+            for (let pair of formDataObj.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
             const response = isEditMode
                 ? await apiEditPlot(formDataObj)
                 : await apiCreatePlot(formDataObj);
@@ -75,18 +113,183 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
             <Formik
                 initialValues={{
                     name: initialValue?.name || "",
-                    coordinates: initialValue?.coordinates || [
-                        [72.865475, 21.457506],
-                        [72.601643, 21.319401],
-                        [72.702111, 21.321122],
-                        [72.802333, 21.402333],
-                        [72.865475, 21.457506],
-                    ],
+                    coordinates: initialValue?.coordinates || [],
                 }}
                 validationSchema={PLOT_VALIDATION_SCHEMA}
                 onSubmit={handleSubmit}
             >
-                {({ values, setFieldValue }) => {
+                {({ values, setFieldValue, errors, touched }) => {
+                    useEffect(() => {
+                        coordinatesRef.current = values.coordinates;
+                    }, [values.coordinates]);
+
+                    useEffect(() => {
+                        if (mapLoaded && mapRef.current && !mapInstanceRef.current && window.L) {
+                        
+                            const map = window.L.map(mapRef.current).setView([21.1702, 72.8311], 12);
+                            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors',
+                                maxZoom: 19
+                            }).addTo(map);
+
+                            map.on('click', (e) => {
+                                console.log("clicked");
+                                
+                                const { lat, lng } = e.latlng;
+                                setClickedCoord({ lat, lng });
+
+                                const currentCoordinates = coordinatesRef.current;
+                                const newCoordinates = [...currentCoordinates, [lng, lat]];
+                                setFieldValue('coordinates', newCoordinates);
+
+                                console.log('Point added:', { lat, lng });
+                                console.log('Previous coordinates count:', currentCoordinates.length);
+                                console.log('New coordinates count:', newCoordinates.length);
+                                console.log('All coordinates so far:', newCoordinates);
+
+                                // Add marker for the clicked point
+                                const marker = window.L.circleMarker([lat, lng], {
+                                    radius: 6,
+                                    fillColor: '#3B82F6',
+                                    color: '#fff',
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                                }).addTo(map);
+
+                                // Add number label to show order
+                                marker.bindTooltip(`${newCoordinates.length}`, {
+                                    permanent: true,
+                                    direction: 'center',
+                                    className: 'coordinate-label'
+                                });
+
+                                markersRef.current.push(marker);
+                                console.log("markersRef===", markersRef);
+
+                                // Draw/update polygon if we have at least 3 points
+                                if (newCoordinates.length >= 3) {
+                                    // Remove old polygon if exists
+                                    if (polygonRef.current) {
+                                        map.removeLayer(polygonRef.current);
+                                    }
+
+                                    // Convert coordinates back to [lat, lng] for Leaflet polygon
+                                    const latLngs = newCoordinates.map(coord => [coord[1], coord[0]]);
+
+                                    // Create new polygon
+                                    polygonRef.current = window.L.polygon(latLngs, {
+                                        color: '#3B82F6',
+                                        fillColor: '#3B82F6',
+                                        fillOpacity: 0.2,
+                                        weight: 2
+                                    }).addTo(map);
+                                }
+                            });
+
+                            mapInstanceRef.current = map;
+
+                            // If editing, draw existing coordinates
+                            const initialCoords = coordinatesRef.current;
+                            if (initialCoords.length >= 3) {
+                                const latLngs = initialCoords.map(coord => [coord[1], coord[0]]);
+                                
+                                // Add markers for existing points
+                                initialCoords.forEach((coord, index) => {
+                                    const marker = window.L.circleMarker([coord[1], coord[0]], {
+                                        radius: 6,
+                                        fillColor: '#3B82F6',
+                                        color: '#fff',
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 0.8
+                                    }).addTo(map);
+
+                                    marker.bindTooltip(`${index + 1}`, {
+                                        permanent: true,
+                                        direction: 'center',
+                                        className: 'coordinate-label'
+                                    });
+
+                                    markersRef.current.push(marker);
+                                });
+
+                                // Draw polygon
+                                polygonRef.current = window.L.polygon(latLngs, {
+                                    color: '#3B82F6',
+                                    fillColor: '#3B82F6',
+                                    fillOpacity: 0.2,
+                                    weight: 2
+                                }).addTo(map);
+
+                                // Fit map to polygon bounds
+                                map.fitBounds(polygonRef.current.getBounds());
+                            }
+                        }
+
+                        return () => {
+                            if (mapInstanceRef.current) {
+                                mapInstanceRef.current.remove();
+                                mapInstanceRef.current = null;
+                            }
+                        };
+                    }, [mapLoaded]);
+
+                    const handleClearCoordinates = () => {
+                        setFieldValue('coordinates', []);
+                        setClickedCoord(null);
+
+                        // Clear all markers
+                        markersRef.current.forEach(marker => {
+                            if (mapInstanceRef.current) {
+                                mapInstanceRef.current.removeLayer(marker);
+                            }
+                        });
+                        markersRef.current = [];
+
+                        // Clear polygon
+                        if (polygonRef.current && mapInstanceRef.current) {
+                            mapInstanceRef.current.removeLayer(polygonRef.current);
+                            polygonRef.current = null;
+                        }
+
+                        console.log('All coordinates cleared');
+                    };
+
+                    const handleRemoveLastPoint = () => {
+                        if (values.coordinates.length > 0) {
+                            // Remove last coordinate
+                            const newCoordinates = values.coordinates.slice(0, -1);
+                            setFieldValue('coordinates', newCoordinates);
+
+                            // Remove last marker
+                            const lastMarker = markersRef.current.pop();
+                            if (lastMarker && mapInstanceRef.current) {
+                                mapInstanceRef.current.removeLayer(lastMarker);
+                            }
+
+                            // Update polygon
+                            if (polygonRef.current && mapInstanceRef.current) {
+                                mapInstanceRef.current.removeLayer(polygonRef.current);
+                                polygonRef.current = null;
+                            }
+
+                            if (newCoordinates.length >= 3 && mapInstanceRef.current) {
+                                const latLngs = newCoordinates.map(coord => [coord[1], coord[0]]);
+                                polygonRef.current = window.L.polygon(latLngs, {
+                                    color: '#3B82F6',
+                                    fillColor: '#3B82F6',
+                                    fillOpacity: 0.2,
+                                    weight: 2
+                                }).addTo(mapInstanceRef.current);
+                            }
+
+                            if (newCoordinates.length === 0) {
+                                setClickedCoord(null);
+                            }
+                        }
+                    };
+
                     return (
                         <div className="w-96">
                             <Form>
@@ -95,11 +298,13 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         {isEditMode ? 'Edit Plot' : 'Add New Plot'}
                                     </span>
                                 </div>
+
                                 {submitError && (
                                     <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                                         {submitError}
                                     </div>
                                 )}
+
                                 <div className="">
                                     <div className="w-full mb-4">
                                         <FormLabel htmlFor="name">Plot Name</FormLabel>
@@ -118,13 +323,97 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         />
                                     </div>
                                 </div>
-                                <div className="relative w-full h-[250px] rounded-xl overflow-hidden border border-gray-200">
-                                    <iframe
-                                        title="map"
-                                        src="https://maps.google.com/maps?q=london&t=&z=11&ie=UTF8&iwloc=&output=embed"
-                                        className="w-full h-full"
-                                    ></iframe>
+
+                                {/* Points Counter */}
+                                <div className="">
+                                    <div className="flex justify-between items-center">
+                                        {/* <div>
+                                            <span className="text-sm font-semibold text-blue-900">Points Added:</span>
+                                            <span className="ml-2 text-2xl font-bold text-blue-600">{values.coordinates.length}</span>
+                                        </div> */}
+                                        {values.coordinates.length > 0 && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveLastPoint}
+                                                    className="text-orange-600 hover:text-orange-800 font-medium text-xs bg-white px-2 py-1 rounded"
+                                                >
+                                                    Remove Last
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleClearCoordinates}
+                                                    className="text-red-600 hover:text-red-800 font-medium text-xs bg-white px-2 py-1 rounded"
+                                                >
+                                                    Clear All
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* Clicked Coordinate Display */}
+                                {clickedCoord && (
+                                    <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm">
+                                        <div className="font-semibold text-green-900 mb-1">Last Clicked Point:</div>
+                                        <div className="text-green-700 text-xs">
+                                            <span className="font-medium">Lat:</span> {clickedCoord.lat.toFixed(6)} | 
+                                            <span className="font-medium ml-2">Lng:</span> {clickedCoord.lng.toFixed(6)}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Map Container */}
+                                <div className="relative w-full h-[300px] rounded-xl overflow-hidden border border-gray-200 mb-3">
+                                    <div 
+                                        ref={mapRef} 
+                                        className="w-full h-full"
+                                    >
+                                        {!mapLoaded && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                                                <div className="text-center">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                                                    <p className="text-gray-600 text-sm">Loading map...</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Validation Message */}
+                                {/* {values.coordinates.length < 3 && (
+                                    <p className="text-amber-600 text-sm mb-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                                        ⚠️ Click on the map to add points. Minimum 3 points required for a polygon.
+                                    </p>
+                                )} */}
+
+                                {values.coordinates.length >= 3 && (
+                                    <p className="text-green-600 text-sm mb-3 p-2 bg-green-50 border border-green-200 rounded">
+                                        ✓ Polygon is ready with {values.coordinates.length} points
+                                    </p>
+                                )}
+
+                                <ErrorMessage
+                                    name="coordinates"
+                                    component="div"
+                                    className="text-red-500 text-sm mb-3"
+                                />
+
+                                {/* Style for coordinate labels */}
+                                <style>{`
+                                    .coordinate-label {
+                                        background: transparent !important;
+                                        border: none !important;
+                                        box-shadow: none !important;
+                                        font-weight: bold;
+                                        color: #1e40af;
+                                        font-size: 12px;
+                                    }
+                                    .coordinate-label::before {
+                                        display: none;
+                                    }
+                                `}</style>
+
                                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-3">
                                     <Button
                                         btnSize="md"
@@ -142,9 +431,14 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         btnSize="md"
                                         type="filled"
                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
-                                        disabled={isLoading}
+                                        disabled={isLoading || values.coordinates.length < 3}
                                     >
-                                        <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Create")}</span>
+                                        <span>
+                                            {isLoading 
+                                                ? (isEditMode ? "Updating..." : "Creating...") 
+                                                : (isEditMode ? "Update" : "Create")
+                                            }
+                                        </span>
                                     </Button>
                                 </div>
                             </Form>
@@ -157,191 +451,3 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 };
 
 export default AddPlotsModel;
-
-// import { ErrorMessage, Field, Form, Formik } from "formik";
-// import React, { useRef, useState, useEffect } from "react";
-// import * as Yup from "yup";
-// import L from "leaflet";
-// import "leaflet/dist/leaflet.css";
-// import "leaflet-draw";
-// import "leaflet-draw/dist/leaflet.draw.css";
-// import { MapContainer, TileLayer } from "react-leaflet";
-// import Button from "../../../../../../components/ui/Button/Button";
-// import { apiCreatePlot, apiEditPlot } from "../../../../../../services/PlotService";
-
-// const PLOT_VALIDATION_SCHEMA = Yup.object().shape({
-//     name: Yup.string().required("Plot name is required"),
-//     coordinates: Yup.array()
-//         .min(3, "Minimum 3 points required")
-//         .required("Coordinates are required"),
-// });
-
-// const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
-//     const [isEditMode, setIsEditMode] = useState(false);
-//     const mapRef = useRef(null);
-//     const drawnItemsRef = useRef(null);
-
-//     useEffect(() => {
-//         setIsEditMode(!!initialValue?.id);
-//     }, [initialValue]);
-
-//     useEffect(() => {
-//         setTimeout(() => {
-//             if (mapRef.current) {
-//                 mapRef.current.invalidateSize();
-//             }
-//         }, 300);
-//     }, []);
-
-//     const handleSubmit = async (values) => {
-//         let finalCoords = [...values.coordinates];
-
-//         if (finalCoords.length > 2) {
-//             const first = finalCoords[0];
-//             const last = finalCoords[finalCoords.length - 1];
-
-//             if (JSON.stringify(first) !== JSON.stringify(last)) {
-//                 finalCoords.push(first);
-//             }
-//         }
-
-//         const featureObj = {
-//             type: "Feature",
-//             properties: { name: values.name },
-//             geometry: {
-//                 type: "Polygon",
-//                 coordinates: [finalCoords],
-//             },
-//         };
-
-//         const fd = new FormData();
-//         if (isEditMode) fd.append("id", initialValue.id);
-
-//         fd.append("name", values.name);
-//         fd.append("features", JSON.stringify(featureObj));
-
-//         const res = isEditMode ? await apiEditPlot(fd) : await apiCreatePlot(fd);
-
-//         if (res?.data?.success === 1) {
-//             onPlotsCreated && onPlotsCreated();
-//             setIsOpen({ type: "new", isOpen: false });
-//         }
-//     };
-
-//     return (
-//         <Formik
-//             initialValues={{
-//                 name: initialValue?.name || "",
-//                 coordinates: initialValue?.coordinates || [],
-//             }}
-//             validationSchema={PLOT_VALIDATION_SCHEMA}
-//             onSubmit={handleSubmit}
-//         >
-//             {({ setFieldValue, values }) => (
-//                 <div className="w-[450px]">
-//                     <Form>
-//                         <h2 className="text-xl font-semibold text-center mb-4">
-//                             {isEditMode ? "Edit Plot" : "Add Plot"}
-//                         </h2>
-
-//                         <div className="mb-4">
-//                             <Field
-//                                 type="text"
-//                                 name="name"
-//                                 placeholder="Enter Plot Name"
-//                                 className="w-full px-4 py-3 border border-gray-400 rounded"
-//                             />
-//                             <ErrorMessage
-//                                 name="name"
-//                                 component="div"
-//                                 className="text-red-500 text-sm"
-//                             />
-//                         </div>
-
-//                         <div className="mb-4">
-//                             <MapContainer
-//                                 center={[21.17, 72.83]}
-//                                 zoom={12}
-//                                 className="h-[300px] w-full rounded border"
-//                                 whenCreated={(map) => {
-//                                     mapRef.current = map;
-
-//                                     const drawnItems = new L.FeatureGroup();
-//                                     drawnItemsRef.current = drawnItems;
-//                                     map.addLayer(drawnItems);
-
-//                                     const drawControl = new L.Control.Draw({
-//                                         draw: {
-//                                             marker: false,
-//                                             polyline: false,
-//                                             rectangle: false,
-//                                             circle: false,
-//                                             circlemarker: false,
-//                                             polygon: {
-//                                                 allowIntersection: false,
-//                                                 showArea: true,
-//                                                 shapeOptions: { color: "#97009c" },
-//                                             },
-//                                         },
-//                                         edit: { featureGroup: drawnItems },
-//                                     });
-
-//                                     map.addControl(drawControl);
-
-//                                     if (isEditMode && initialValue.coordinates?.length > 2) {
-//                                         const latlngs = initialValue.coordinates.map((c) => ({
-//                                             lat: c[1],
-//                                             lng: c[0],
-//                                         }));
-//                                         const polygon = L.polygon(latlngs, {
-//                                             color: "#97009c",
-//                                         });
-//                                         drawnItems.addLayer(polygon);
-//                                         map.fitBounds(polygon.getBounds());
-//                                     }
-
-//                                     // Polygon draw event
-//                                     map.on("draw:created", (e) => {
-//                                         drawnItems.clearLayers();
-//                                         drawnItems.addLayer(e.layer);
-
-//                                         let pts = e.layer.getLatLngs();
-//                                         if (Array.isArray(pts[0])) pts = pts[0];
-
-//                                         const coords = pts.map((p) => [p.lng, p.lat]);
-
-//                                         setFieldValue("coordinates", coords);
-//                                     });
-//                                 }}
-//                             >
-//                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-//                             </MapContainer>
-
-//                             <ErrorMessage
-//                                 name="coordinates"
-//                                 component="div"
-//                                 className="text-red-500 text-sm mt-1"
-//                             />
-//                         </div>
-
-//                         {/* Buttons */}
-//                         <div className="flex justify-end gap-4">
-//                             <Button
-//                                 type="filledGray"
-//                                 onClick={() => setIsOpen({ type: "new", isOpen: false })}
-//                             >
-//                                 Cancel
-//                             </Button>
-
-//                             <Button btnType="submit" type="filled">
-//                                 {isEditMode ? "Update" : "Create"}
-//                             </Button>
-//                         </div>
-//                     </Form>
-//                 </div>
-//             )}
-//         </Formik>
-//     );
-// };
-
-// export default AddPlotsModel;

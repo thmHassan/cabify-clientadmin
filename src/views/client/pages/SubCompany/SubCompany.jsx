@@ -22,7 +22,6 @@ const SubCompany = () => {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [subCompanyData, setSubCompanyData] = useState([]);
   const [_selectedStatus, setSelectedStatus] = useState(

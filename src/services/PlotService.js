@@ -2,7 +2,7 @@ import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
-import { ASSIGN_BACKUP_PLOT, CREATE_PLOT, DELETE_PLOT, EDIT_PLOT, GET_PLOT_BY_ID, GET_PLOTS, MANAGE_PLOT } from "../constants/api.route.constant";
+import { ASSIGN_BACKUP_PLOT, CREATE_PLOT, DELETE_PLOT, EDIT_PLOT, GET_BACKUP_PLOT, GET_PLOT_BY_ID, GET_PLOTS, MANAGE_PLOT } from "../constants/api.route.constant";
 
 export async function apiCreatePlot(data) {
     const isFormData = data instanceof FormData;
@@ -94,4 +94,17 @@ export async function apiAssignBackupPlot(data) {
             },
         }),
     });
+}
+
+export async function apiGetBackupPlot(params) {
+    try {
+        return ApiService.fetchData({
+            url: GET_BACKUP_PLOT,
+            method: METHOD_GET,
+            params,
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
 }

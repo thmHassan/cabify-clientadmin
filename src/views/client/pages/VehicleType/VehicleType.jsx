@@ -14,6 +14,7 @@ import VehicleTypeCard from "./components/VehicleTypeCard";
 import { apiDeleteVehicleType, apiGetVehicleTypes } from "../../../../services/VehicleTypeServices";
 import { useNavigate } from "react-router-dom";
 import Modal from "../../../../components/shared/Modal/Modal";
+import { VEHICLE_TYPE_DETAILS_PATH } from "../../../../constants/routes.path.constant/client.route.path.constant";
 
 const VehicleType = () => {
   const navigate = useNavigate();
@@ -119,7 +120,7 @@ const VehicleType = () => {
           <Button
             type="filled"
             btnSize="2xl"
-            onClick={() => navigate("/vehicle-type/vehicle-details")}
+            onClick={() => navigate(VEHICLE_TYPE_DETAILS_PATH)}
             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
@@ -150,7 +151,7 @@ const VehicleType = () => {
               {vehicleTypeData.map((vehicle) => (
                 <VehicleTypeCard key={vehicle.id}
                   vehicle={vehicle}
-                  onEdit={(vehicleToEdit) => navigate(`/vehicle-type/vehicle-details`, { state: { data: vehicleToEdit } })}
+                  onEdit={(vehicleToEdit) => navigate(`${VEHICLE_TYPE_DETAILS_PATH}?id=${vehicleToEdit.id}`)}
                   onDelete={handleDeleteClick} 
                 />
               ))}

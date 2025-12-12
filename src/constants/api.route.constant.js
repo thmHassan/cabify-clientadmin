@@ -6,6 +6,12 @@ export const GET_COMPANY_CARD_DETAILS = "/super-admin/company-cards";
 export const GET_COMPANY_BY_ID = "/super-admin/edit-company";
 export const EDIT_COMPANY = "/super-admin/edit-company";
 
+//api for booking
+export const GET_ALL_PLOT = "/company/get-plot"
+export const CREATE_BOOKING = "/company/create-booking"
+export const CALCULATE_FARES = "/company/calculate-fares"
+export const CANCELLED_BOOKING = "/company/cancelled-booking"
+
 //api for dispatcher
 export const CREATE_DISPATCHER = "/company/create-dispatcher";
 export const DELETE_DISPATCHER = "/company/delete-dispatcher";
@@ -34,6 +40,13 @@ export const DELETE_DRIVERS_DOCUMENT = "/company/delete-document-type";
 export const EDIT_DRIVERS_DOCUMENT = "/company/edit-document-type";
 export const GET_DRIVERS_DOCUMENT_BY_ID = "/company/edit-document-type";
 
+// api for Reviews
+export const GET_CUSTOMER_RATINGS = "/company/customer-ratings"
+export const GET_DRIVER_RATING = "/company/driver-ratings"
+
+// api for Rides Management
+export const GET_RIDE_MANAGEMENT = "/company/booking-list"
+
 // api for plots
 export const GET_PLOTS = "/company/list-plot";
 export const CREATE_PLOT = "/company/create-plot";
@@ -42,6 +55,7 @@ export const DELETE_PLOT = "/company/delete-plot";
 export const GET_PLOT_BY_ID = "/company/edit-plot";
 export const MANAGE_PLOT = "/company/all-plot"
 export const ASSIGN_BACKUP_PLOT = "/company/store-backup-plot"
+export const GET_BACKUP_PLOT = "/company/get-backup-plot"
 
 // api for sub company
 export const GET_SUB_COMPANY_LIST = "/company/list-sub-company";
@@ -56,12 +70,7 @@ export const GET_VEHICLE_TYPE_BY_ID = "/company/edit-vehicle-type";
 export const CREATE_VEHICLE_TYPE = "/company/create-vehicle-type";
 export const EDIT_VEHICLE_TYPE = "/company/edit-vehicle-type";
 export const DELETE_VEHICLE_TYPE = "/company/delete-vehicle-type";
-
-// api for vehicle types
-export const GET_SUB_ADMINS = "/super-admin/subadmin-list";
-export const GET_SUB_ADMIN_BY_ID = "/super-admin/edit-subadmin";
-export const CREATE_SUB_ADMIN = "/super-admin/create-subadmin";
-export const EDIT_SUB_ADMIN = "/super-admin/edit-subadmin";
+export const ALL_VEHICLE_TYPE = "/company/all-vehicle-type"
 
 // api for settings configuration
 export const GET_COMPANY_PROFILE = "/company/get-company-profile";
@@ -80,6 +89,15 @@ export const UPDATE_ACCOUNT = "/company/edit-account";
 export const CREATE_ACCOUNT= "/company/create-account";
 export const DELETE_ACCOUNT = "/company/delete-account";
 export const GET_ACCOUNT_BY_ID = "/company/edit-account";
+
+// api for tickets
+export const GET_TICKETS = "/company/list-ticket";
+export const CHANGE_TICKET_STATUS = "/company/change-ticket-status";
+export const REPLY_TICKET = "/company/reply-ticket";
+
+//api for Lost and Found
+export const GET_LOST_FOUND_LIST = "/company/list-lost-found"
+export const CHANGE_STATUS_LOST_FOUND = "/company/change-status-lost-found"
 
 // api for subscriptions
 export const CREATE_SUBSCRIPTION = "/super-admin/create-subscription";

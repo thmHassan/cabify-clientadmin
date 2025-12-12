@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import CompaniesIcon from "../../../../components/svg/CompaniesIcon";
 import SystemUptimeIcon from "../../../../components/svg/SystemUptimeIcon";
 import SubscriptionIcon from "../../../../components/svg/SubscriptionIcon";
@@ -25,6 +25,9 @@ import AndroidUserIcon from "../../../../components/svg/AndroidUserIcon";
 import AdminUsersIcon from "../../../../components/svg/AdminUsersIcon";
 import ChildText from "../../../../components/ui/ChildText.jsx/ChildText";
 import Tag from "../../../../components/ui/Tag/Tag";
+import { lockBodyScroll } from "../../../../utils/functions/common.function";
+import Modal from "../../../../components/shared/Modal/Modal";
+import AddBookingModel from "./components/AddBookingModel";
 
 const DASHBOARD_CARDS = [
   {
@@ -203,6 +206,10 @@ const ALERTS = [
 ];
 
 const Overview = () => {
+  const [isBookingModelOpen, setIsBookingModelOpen] = useState({
+    type: "new",
+    isOpen: false,
+  })
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -217,10 +224,10 @@ const Overview = () => {
           <Button
             type="filled"
             btnSize="2xl"
-            // onClick={() => {
-            //   lockBodyScroll();
-            //   setIsManualRequestModal({ isOpen: true, type: "new" });
-            // }}
+            onClick={() => {
+              lockBodyScroll();
+              setIsBookingModelOpen({ isOpen: true, type: "new" });
+            }}
             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
@@ -303,7 +310,7 @@ const Overview = () => {
               ) => (
                 <CardContainer key={index} type={1} className="!p-[25px]">
                   <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2 min-w-[500px] max-w-[500px]">
+                    <div className="flex flex-col gap-2 w-[500px]">
                       <CardSubtitle type={1} variant={1} subtitle={title} />
                       <ChildText size="md" text={description} />
                     </div>
@@ -325,6 +332,16 @@ const Overview = () => {
           </div>
         </CardContainer>
       </div>
+      <Modal
+        isOpen={isBookingModelOpen.isOpen}
+        className="p-4 sm:p-6 lg:p-10"
+      >
+        <AddBookingModel
+          // initialValue={isBookingModelOpen.type === "edit" ? isBookingModelOpen.accountData : {}}
+          setIsOpen={setIsBookingModelOpen}
+          // onSubCompanyCreated={handleOnSubCompanyCreated}
+        />
+      </Modal>
     </div>
   );
 };

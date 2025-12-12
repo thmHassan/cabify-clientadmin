@@ -1,6 +1,5 @@
-import { GET_VEHICLE_TYPES, CREATE_VEHICLE_TYPE, EDIT_VEHICLE_TYPE, DELETE_VEHICLE_TYPE, GET_VEHICLE_TYPE_BY_ID } from "../constants/api.route.constant";
+import { GET_VEHICLE_TYPES, CREATE_VEHICLE_TYPE, EDIT_VEHICLE_TYPE, DELETE_VEHICLE_TYPE, GET_VEHICLE_TYPE_BY_ID, ALL_VEHICLE_TYPE } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
-import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
 
 export async function apiGetVehicleTypes(params) {
@@ -18,26 +17,18 @@ export async function apiGetVehicleTypes(params) {
 }
 
 export async function apiGetVehicleTypeById(params) {
+    const id = params?.id;
     return ApiService.fetchData({
-        url: params
-            ? replaceSlash(params, GET_VEHICLE_TYPE_BY_ID)
-            : GET_VEHICLE_TYPE_BY_ID,
+        url: id ? `${GET_VEHICLE_TYPE_BY_ID}?id=${id}` : GET_VEHICLE_TYPE_BY_ID,
         method: METHOD_GET,
     });
 }
 
 export async function apiCreateVehicleType(data) {
-    const isFormData = data instanceof FormData;
-
     return ApiService.fetchData({
         url: CREATE_VEHICLE_TYPE,
         method: METHOD_POST,
         data,
-        ...(isFormData && {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        }),
     });
 }
 
@@ -47,17 +38,14 @@ export async function apiEditVehicleType(data) {
 
     if (isFormData) {
         vehicleTypeId = data.get('id');
+    } else if (data && typeof data === 'object' && data.id) {
+        vehicleTypeId = data.id;
     }
 
     return ApiService.fetchData({
         url: vehicleTypeId ? `${EDIT_VEHICLE_TYPE}?id=${vehicleTypeId}` : EDIT_VEHICLE_TYPE,
         method: METHOD_POST,
         data,
-        ...(isFormData && {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        }),
     });
 }
 
@@ -66,4 +54,17 @@ export async function apiDeleteVehicleType(id) {
         url: `${DELETE_VEHICLE_TYPE}?id=${id}`,
         method: METHOD_GET,
     });
+}
+
+export async function apiGetAllVehicleType(params) {
+    try {
+        return ApiService.fetchData({
+            url: ALL_VEHICLE_TYPE,
+            method: METHOD_GET,
+            params,
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
 }

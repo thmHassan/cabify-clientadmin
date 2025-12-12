@@ -7,7 +7,7 @@ import Base from "../../animations/Base";
 const SIZE_CONFIG = {
   sm: "max-w-[95%] sm:max-w-[520px]",
   md: "max-w-[95%] sm:max-w-[720px]",
-  xl: "max-w-[95%] sm:max-w-[1000px]",
+  xl: "max-w-[95%] sm:max-w-[1130px]",
   "2xl": "max-w-[95%] sm:max-w-[1200px]",
 };
 
@@ -33,7 +33,7 @@ const ModalComponent = ({ size = "xl", children, className }) => {
     <div
       ref={parentRef}
       className={classNames(
-        "fixed z-[2000] top-0 left-0 w-full h-screen overflow-y-auto bg-[#00000050] flex justify-center",
+        "fixed z-[2000] top-0 left-0 w-full h-full overflow-y-auto bg-[#00000050] flex justify-center",
         isChildGreater 
           ? "py-4 sm:py-8 md:py-[60px] lg:py-[140px]" 
           : "items-start sm:items-center py-4 sm:py-8"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
@@ -6,7 +6,7 @@ import CancellationsCard from "./CancellationsCard";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../constants/selectOptions";
 import { useAppSelector } from "../../../../store";
-
+import { apiGetCancelledBooking } from "../../../../services/AddBookingServices";
 
 const Cancellations = () => {
   const [_searchQuery, setSearchQuery] = useState("");
@@ -22,6 +22,48 @@ const Cancellations = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
+  const [cancellationsData, setCancellationsData] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(_searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [_searchQuery]);
+
+  const fetchCancellationsBooking = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+      };
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      const response = await apiGetCancelledBooking(params);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.bookings;
+        setCancellationsData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching sub-companies:", error);
+      setCancellationsData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => {
+    fetchCancellationsBooking();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchCancellationsBooking, refreshTrigger]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -32,100 +74,6 @@ const Cancellations = () => {
     setCurrentPage(1);
   };
 
-  const customerReviews = [
-    {
-      rideId: "MR12345",
-      userName: "Dianne Russell",
-      driverName: "Marvin McKinney",
-      initiatedAt: "2023-08-15 14:30",
-      cancelledBy: "User",
-      reason: "Change of plans",
-      amount: "$15.00",
-      services: "Standard Ride",
-    },
-    {
-      rideId: "MR12346",
-      userName: "Kathryn Murphy",
-      driverName: "Eleanor Pena",
-      initiatedAt: "2023-08-16 10:15",
-      cancelledBy: "Driver",
-      reason: "Vehicle issue",
-      amount: "$22.50",
-      services: "Premium Ride",
-    },
-    {
-      rideId: "MR12347",
-      userName: "Darlene Robertson",
-      driverName: "Jane Cooper",
-      initiatedAt: "2023-08-17 09:45",
-      cancelledBy: "User",
-      reason: "Found alternative transport",
-      amount: "$18.75",
-      services: "Standard Ride",
-    },
-    {
-      rideId: "MR12346",
-      userName: "Kathryn Murphy",
-      driverName: "Eleanor Pena",
-      initiatedAt: "2023-08-16 10:15",
-      cancelledBy: "Driver",
-      reason: "Vehicle issue",
-      amount: "$22.50",
-      services: "Premium Ride",
-    },
-    {
-      rideId: "MR12347",
-      userName: "Darlene Robertson",
-      driverName: "Jane Cooper",
-      initiatedAt: "2023-08-17 09:45",
-      cancelledBy: "User",
-      reason: "Found alternative transport",
-      amount: "$18.75",
-      services: "Standard Ride",
-    },
-    {
-      rideId: "MR12346",
-      userName: "Kathryn Murphy",
-      driverName: "Eleanor Pena",
-      initiatedAt: "2023-08-16 10:15",
-      cancelledBy: "Driver",
-      reason: "Vehicle issue",
-      amount: "$22.50",
-      services: "Premium Ride",
-    },
-    {
-      rideId: "MR12347",
-      userName: "Darlene Robertson",
-      driverName: "Jane Cooper",
-      initiatedAt: "2023-08-17 09:45",
-      cancelledBy: "User",
-      reason: "Found alternative transport",
-      amount: "$18.75",
-      services: "Standard Ride",
-    },
-    {
-      rideId: "MR12346",
-      userName: "Kathryn Murphy",
-      driverName: "Eleanor Pena",
-      initiatedAt: "2023-08-16 10:15",
-      cancelledBy: "Driver",
-      reason: "Vehicle issue",
-      amount: "$22.50",
-      services: "Premium Ride",
-    },
-  ];
-
-  const reviews = activeTab === "customer" ? customerReviews : driverReviews;
-
-  const filtered = reviews.filter((r) => {
-    const q = _searchQuery.toLowerCase();
-    return (
-      r.rideId.toLowerCase().includes(q) ||
-      r.userName.toLowerCase().includes(q) ||
-      r.driverName.toLowerCase().includes(q) ||
-      (r.comment && r.comment.toLowerCase().includes(q))
-    );
-  });
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -144,15 +92,16 @@ const Cancellations = () => {
               />
             </div>
           </div>
-          <div className="space-y-4">
-            {filtered.length === 0 ? (
-              <p className="text-gray-500">No reviews found</p>
-            ) : (
-              filtered.map((review, idx) => <CancellationsCard key={idx} review={review} />)
-            )}
+          <div className="space-y-4 mt-6">
+            {cancellationsData?.map((cancellations) => (
+              <CancellationsCard
+                key={cancellations.id}
+                cancellations={cancellations}
+              />
+            ))}
           </div>
-          {Array.isArray(filtered) &&
-            filtered.length > 0 ? (
+          {Array.isArray(cancellationsData) &&
+            cancellationsData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -161,7 +110,7 @@ const Cancellations = () => {
                 onPageChange={handlePageChange}
                 onItemsPerPageChange={handleItemsPerPageChange}
                 itemsPerPageOptions={PAGE_SIZE_OPTIONS}
-                pageKey="companies"
+                pageKey="cancellations"
               />
             </div>
           ) : null}

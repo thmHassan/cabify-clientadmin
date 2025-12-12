@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
 import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import { useAppSelector } from '../../../../store';
@@ -8,15 +8,15 @@ import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import CustomSelect from '../../../../components/ui/CustomSelect';
 import Loading from '../../../../components/shared/Loading/Loading';
-import DriverManagementCard from '../DriversManagement/components/DriversManagementCard';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
-import { distance, time } from 'framer-motion';
 import RidesManagementCard from './components/RidesManagementCard';
+import { apiGetRidesManagement } from '../../../../services/RidesManagementServices';
 
 const RidesManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [_selectedDate, setSelectedDate] = useState("");
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -31,6 +31,53 @@ const RidesManagement = () => {
   );
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [rideManagementData, setRideManagementData] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(_searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [_searchQuery]);
+
+  const fetchRidesManagement = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        perPage: itemsPerPage,
+        status: _selectedStatus?.value === "all" ? "" : _selectedStatus?.value,
+      };
+
+      if (debouncedSearchQuery?.trim()) {
+        params.search = debouncedSearchQuery.trim();
+      }
+
+      if (_selectedDate) {
+        params.date = _selectedDate; // pass selected date
+      }
+
+      const response = await apiGetRidesManagement(params);
+
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.rides;
+        setRideManagementData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching rides:", error);
+      setRideManagementData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, _selectedDate, _selectedStatus]);
+
+  useEffect(() => {
+    fetchRidesManagement();
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, _selectedDate, _selectedStatus, fetchRidesManagement, refreshTrigger]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -41,38 +88,13 @@ const RidesManagement = () => {
     setCurrentPage(1);
   };
 
-  const staticRides = [
-    {
-      id: "MR12345",
-      driverName: "Alex Rodriguez",
-      customerName: "John Doe",
-      route: "Downtown to Airport",
-      time: "10:30 AM",
-      fare: "$25.00",
-      status: "Onboarding",
-      distance: "15 miles",
-    },
-    {
-      id: "MR12346",
-      driverName: "Alex Rodriguez",
-      customerName: "John Doe",
-      route: "Downtown to Airport",
-      time: "10:30 AM",
-      fare: "$25.00",
-      status: "Cancelled",
-      distance: "15 miles",
-    },
-    {
-      id: "MR12347",
-      driverName: "Alex Rodriguez",
-      customerName: "John Doe",
-      route: "Downtown to Airport",
-      time: "10:30 AM",
-      fare: "$25.00",
-      status: "Rescheduled",
-      distance: "15 miles",
-    },
-  ];
+  const filteredRides = activeTab === "all"
+    ? rideManagementData
+    : rideManagementData.filter(
+      (item) =>
+        item.booking_status?.toLowerCase() === activeTab.toLowerCase()
+    );
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -92,6 +114,7 @@ const RidesManagement = () => {
         >
           All
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
@@ -100,6 +123,7 @@ const RidesManagement = () => {
         >
           POB
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
@@ -108,6 +132,7 @@ const RidesManagement = () => {
         >
           Pending
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
@@ -116,6 +141,7 @@ const RidesManagement = () => {
         >
           Waiting
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
@@ -124,6 +150,7 @@ const RidesManagement = () => {
         >
           Arrived
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
@@ -132,10 +159,11 @@ const RidesManagement = () => {
         >
           Cancelled
         </Button>
+
         <Button
           type="filled"
           btnSize="2xl"
-          className={`${activeTab === "no-Show" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
+          className={`${activeTab === "no-show" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
           onClick={() => setActiveTab("no-show")}
         >
           No-show
@@ -147,36 +175,36 @@ const RidesManagement = () => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
             <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
-              <CustomSelect
+              {/* <CustomSelect
                 variant={2}
                 options={STATUS_OPTIONS}
                 value={_selectedStatus}
-                // onChange={handleStatusChange}
+                onChange={(option) => setSelectedStatus(option)}
                 placeholder="All Status"
-              />
-              <CustomSelect
-                variant={2}
-                options={STATUS_OPTIONS}
-                value={_selectedStatus}
-                // onChange={handleStatusChange}
+              /> */}
+              <input
+                type="date"
+                className="border rounded px-3 py-2"
+                value={_selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 placeholder="Select Date"
               />
             </div>
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
-              {staticRides.map((ride) => (
+              {filteredRides.map((ride) => (
                 <RidesManagementCard key={ride.id} ride={ride} />
               ))}
             </div>
           </Loading>
-          {Array.isArray(staticRides) &&
-            staticRides.length > 0 ? (
+          {Array.isArray(rideManagementData) &&
+            rideManagementData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -191,12 +219,6 @@ const RidesManagement = () => {
           ) : null}
         </CardContainer>
       </div>
-      {/* <Modal
-        isOpen={isDriversManagementModalOpen.isOpen}
-        className="p-4 sm:p-6 lg:p-10"
-      >
-        <AddDriversManagementModal setIsOpen={setIsDriversManagementModalOpen} />
-      </Modal> */}
     </div>
   );
 }

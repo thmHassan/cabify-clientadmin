@@ -1,14 +1,17 @@
 import CardContainer from "../../../../../../components/shared/CardContainer";
 import PageTitle from "../../../../../../components/ui/PageTitle/PageTitle";
-import { useParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import Button from "../../../../../../components/ui/Button/Button";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
-import { apiGetVehicleTypeById, apiCreateVehicleType, apiEditVehicleType } from "../../../../../../services/VehicleTypeServices";
-
+import { apiGetVehicleTypeById, apiCreateVehicleType, apiEditVehicleType, apiGetVehicleTypes, apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
+import { VEHICLE_TYPE_PATH } from "../../../../../../constants/routes.path.constant/client.route.path.constant";
+import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
+import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
 
 const AddVehicleType = () => {
-  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get('id');
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -17,16 +20,48 @@ const AddVehicleType = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [vehicleImage, setVehicleImage] = useState(null);
+  const [existingVehicleImageUrl, setExistingVehicleImageUrl] = useState(null);
   const [backupBidTypes, setBackupBidTypes] = useState([]);
+  const [availableVehicleTypes, setAvailableVehicleTypes] = useState([]);
+  const [allVehicleType, setAllVehicleType] = useState([]);
   const [pricingTiers, setPricingTiers] = useState([{ from: "", to: "", price: "" }]);
   const [attributes, setAttributes] = useState({
-    smoking: "no",
-    ac: "no",
-    child_seat: "no",
-    pets: "no",
-    wheel_chair: "no",
-    lady_driver: "no",
+    smoking: "",
+    ac: "",
+    child_seat: "",
+    pets: "",
+    wheel_chair: "",
+    lady_driver: "",
   });
+
+  useEffect(() => {
+    const fetchAllVehicleType = async () => {
+      try {
+        const response = await apiGetAllVehicleType();
+        console.log("All Vehicle Types Response:", response);
+        console.log("Response data:", response?.data);
+        console.log("Response data.list:", response?.data?.list);
+
+        if (response?.data?.success === 1) {
+          const vehicleTypes = Array.isArray(response?.data?.list)
+            ? response.data.list
+            : response?.data?.list?.data || [];
+
+          if (vehicleTypes.length > 0) {
+            console.log("First vehicle type:", vehicleTypes[0]);
+          }
+
+          setAllVehicleType(vehicleTypes);
+        } else {
+          console.warn("API response success is not 1:", response?.data);
+        }
+      } catch (error) {
+        console.error("Error fetching vehicle types:", error);
+        console.error("Error details:", error?.response?.data);
+      }
+    };
+    fetchAllVehicleType();
+  }, []);
 
   const [formData, setFormData] = useState({
     vehicle_type_name: "",
@@ -47,14 +82,27 @@ const AddVehicleType = () => {
     order_no: "",
   });
 
-  const [tableLoading, setTableLoading] = useState(false);
-
   useEffect(() => {
+    loadAvailableVehicleTypes();
     if (id) {
       loadVehicleTypeData();
       setIsEditMode(true);
+    } else {
+      setIsEditMode(false);
     }
   }, [id]);
+
+  const loadAvailableVehicleTypes = useCallback(async () => {
+    try {
+      const response = await apiGetVehicleTypes({ page: 1, perPage: 100 });
+      if (response?.data?.success === 1) {
+        const vehicleTypes = response?.data?.list?.data || [];
+        setAvailableVehicleTypes(vehicleTypes);
+      }
+    } catch (error) {
+      console.error("Error loading vehicle types:", error);
+    }
+  }, []);
 
   const loadVehicleTypeData = useCallback(async () => {
     setIsLoading(true);
@@ -62,9 +110,28 @@ const AddVehicleType = () => {
 
     try {
       const result = await apiGetVehicleTypeById({ id });
+      let vehicleData = null;
 
-      if (result?.status === 200 && result?.data?.data) {
-        const vehicleData = result.data.data;
+      if (result?.status === 200) {
+        if (result?.data?.data && typeof result.data.data === 'object') {
+          vehicleData = result.data.data;
+        }
+        else if (result?.data?.success === 1 && result?.data?.data) {
+          vehicleData = result.data.data;
+        }
+        else if (result?.data?.success === 1) {
+          const { success, message, ...rest } = result.data;
+          vehicleData = rest;
+          console.log("Extracted vehicle data (removed success/message flags):", vehicleData);
+        }
+        else if (result?.data && typeof result.data === 'object' && result.data.vehicle_type_name) {
+          vehicleData = result.data;
+        }
+      }
+
+      if (vehicleData) {
+        console.log("Vehicle data extracted successfully:", vehicleData);
+
         setFormData({
           vehicle_type_name: vehicleData.vehicle_type_name || "",
           vehicle_type_service: vehicleData.vehicle_type_service || "",
@@ -84,17 +151,60 @@ const AddVehicleType = () => {
           order_no: vehicleData.order_no || "",
         });
         if (vehicleData.backup_bid_vehicle_type) {
-          setBackupBidTypes(Array.isArray(vehicleData.backup_bid_vehicle_type) ? vehicleData.backup_bid_vehicle_type : []);
+          const backupTypes = Array.isArray(vehicleData.backup_bid_vehicle_type)
+            ? vehicleData.backup_bid_vehicle_type.map(id => id?.toString())
+            : [];
+          setBackupBidTypes(backupTypes);
         }
         if (vehicleData.attributes) {
           setAttributes(vehicleData.attributes);
         }
+        if (vehicleData.vehicle_image) {
+          setExistingVehicleImageUrl(vehicleData.vehicle_image);
+        }
+        if (vehicleData.from_array && vehicleData.to_array && vehicleData.price_array) {
+          const tiers = [];
+          const maxLength = Math.max(
+            vehicleData.from_array.length || 0,
+            vehicleData.to_array.length || 0,
+            vehicleData.price_array.length || 0
+          );
+          for (let i = 0; i < maxLength; i++) {
+            tiers.push({
+              from: vehicleData.from_array[i] || "",
+              to: vehicleData.to_array[i] || "",
+              price: vehicleData.price_array[i] || "",
+            });
+          }
+          if (tiers.length > 0) {
+            setPricingTiers(tiers);
+          }
+        }
       } else {
-        setSubmitError("Failed to load vehicle type data");
+        const errorMsg = result?.data?.message ||
+          (result?.status !== 200 ? `API returned status ${result?.status}` : null) ||
+          "Failed to load vehicle type data. Please check the console for details.";
+        console.error("Failed to load vehicle type - Response structure:", {
+          status: result?.status,
+          data: result?.data,
+          hasData: !!result?.data?.data,
+          hasSuccess: result?.data?.success,
+        });
+        setSubmitError(errorMsg);
       }
     } catch (error) {
       console.error("Error loading vehicle type:", error);
-      setSubmitError(error?.response?.data?.message || "Error loading vehicle type data");
+      console.error("Error details:", {
+        message: error?.message,
+        response: error?.response,
+        responseData: error?.response?.data,
+        responseStatus: error?.response?.status,
+      });
+      setSubmitError(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error loading vehicle type data"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +237,10 @@ const AddVehicleType = () => {
       ...prev,
       [attr]: value,
     }));
+  };
+
+  const handleBackupBidTypeChange = (selectedValues) => {
+    setBackupBidTypes(selectedValues || []);
   };
 
   const handleSave = async () => {
@@ -187,6 +301,15 @@ const AddVehicleType = () => {
         vehicleFormData.append(`attribute_array[${key}]`, attributes[key]);
       });
 
+      // Log FormData contents for debugging (edit mode)
+      if (isEditMode) {
+        console.log("Edit Mode - Form Data being sent:");
+        console.log("ID:", id);
+        for (let pair of vehicleFormData.entries()) {
+          console.log(pair[0] + ': ' + pair[1]);
+        }
+      }
+
       const response = isEditMode
         ? await apiEditVehicleType(vehicleFormData)
         : await apiCreateVehicleType(vehicleFormData);
@@ -194,7 +317,7 @@ const AddVehicleType = () => {
       if (response?.data?.success === 1 || response?.status === 200) {
         setSuccessMessage(`Vehicle type ${isEditMode ? 'updated' : 'created'} successfully!`);
         setTimeout(() => {
-          navigate("/vehicle-type");
+          navigate(VEHICLE_TYPE_PATH);
         }, 1500);
       } else {
         setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} vehicle type`);
@@ -209,7 +332,7 @@ const AddVehicleType = () => {
 
   const handleCancel = () => {
     unlockBodyScroll();
-    navigate("/vehicle-type");
+    navigate(VEHICLE_TYPE_PATH);
   };
 
   return (
@@ -235,6 +358,18 @@ const AddVehicleType = () => {
               {successMessage && (
                 <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
                   {successMessage}
+                </div>
+              )}
+
+              {isEditMode && isLoading && (
+                <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+                  Loading vehicle type data...
+                </div>
+              )}
+
+              {isEditMode && !isLoading && formData.vehicle_type_name && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded">
+                  <strong>Editing:</strong> {formData.vehicle_type_name} (ID: {id})
                 </div>
               )}
 
@@ -278,7 +413,7 @@ const AddVehicleType = () => {
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label class="block text-gray-700 font-medium mb-1">Minimum Price *</label>
                       <input
@@ -301,28 +436,63 @@ const AddVehicleType = () => {
                         class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-                    <div>
-                      <label class="block text-gray-700 font-medium mb-1">Vehicle Type Image</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setVehicleImage(e.target.files?.[0] || null)}
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white"
-                      />
-                    </div>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-2">
-                      <label class="block text-gray-700 font-medium mb-1">Vehicle Type Image *</label>
-                      <input type="file"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white" />
+                      <label class="block text-gray-700 font-medium mb-1">Vehicle Type Image</label>
+                      {existingVehicleImageUrl && !vehicleImage && (
+                        <div class="mb-3">
+                          <p class="text-sm text-gray-600 mb-2">Current Image:</p>
+                          <img
+                            src={existingVehicleImageUrl}
+                            alt="Current vehicle type"
+                            class="w-32 h-32 object-contain border border-gray-300 rounded-lg"
+                          />
+                        </div>
+                      )}
+                      {vehicleImage && (
+                        <div class="mb-3">
+                          <p class="text-sm text-gray-600 mb-2">New Image Preview:</p>
+                          <img
+                            src={URL.createObjectURL(vehicleImage)}
+                            alt="Preview"
+                            class="w-32 h-32 object-contain border border-gray-300 rounded-lg"
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setVehicleImage(file);
+                          if (file) {
+                            setExistingVehicleImageUrl(null); // Clear existing image when new one is selected
+                          }
+                        }}
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white"
+                      />
+                      {isEditMode && !vehicleImage && (
+                        <p class="text-xs text-gray-500 mt-1">Leave empty to keep current image</p>
+                      )}
                     </div>
                     <div>
-                      <label class="block text-gray-700 font-medium mb-1">Backup Bid Vehicle Type *</label>
-                      <select class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-blue-500">
-                        <option>Select Bid Backup Vehicle Type</option>
-                      </select>
+                      <FormLabel htmlFor="backupBidTypes">Backup Bid Vehicle Type</FormLabel>
+                      <div className="h-16 md:w-80 w-full">
+                        <FormSelection
+                          label="Backup Bid Vehicle Type"
+                          name="backupBidTypes"
+                          value={backupBidTypes.map(id => id?.toString())}
+                          onChange={handleBackupBidTypeChange}
+                          placeholder="Select Backup Bid Vehicle Type"
+                          options={allVehicleType.map(vehicle => ({
+                            label: vehicle.vehicle_type_name || `Vehicle ${vehicle.id}`,
+                            value: vehicle.id?.toString() || ""
+                          }))}
+                          isMulti={true}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -517,17 +687,17 @@ const AddVehicleType = () => {
                 </div>
               </div>
             </div>
-            {/* <div>dnfi</div> */}
+
             <div class="p-6 bg-white rounded-xl shadow-sm mt-6">
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Pricing Tiers</h3>
                 <Button
                   type="button"
                   onClick={handleAddPricingTier}
-                  className="text-sm px-3 py-1"
+                  className="text-sm px-3 py-1 border border-blue"
                   btnSize="sm"
                 >
-                  Add Tier
+                  Add Range
                 </Button>
               </div>
               <div class="flex-1 space-y-6">
@@ -582,6 +752,7 @@ const AddVehicleType = () => {
                 ))}
               </div>
             </div>
+
             <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-5 justify-start">
               <Button
                 btnSize="md"
@@ -604,25 +775,8 @@ const AddVehicleType = () => {
               </Button>
             </div>
           </CardContainer>
-          <div class="flex items-center justify-between w-full px-6 py-4 my-10">
-            {/* <!-- Left Section: Title + Toggle --> */}
-            <div class="flex items-center gap-4">
-              <h2 class="text-xl font-semibold text-black">Attributes</h2>
 
-              {/* <!-- Toggle Switch --> */}
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" class="sr-only peer" />
-                <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
-                <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
-              </label>
-            </div>
-
-            {/* <!-- Right Section: Button --> */}
-            <Button class="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm">
-              <span class="text-lg">+</span> Add Attribute
-            </Button>
-          </div>
-          <div>
+          <div className="w-full my-10">
             <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
               <div class="">
                 <div class="grid grid-cols-3 gap-6">
@@ -683,124 +837,6 @@ const AddVehicleType = () => {
                       </label>
                     </div>
                   </div>
-
-                  <div class="bg-white rounded-xl p-3 shadow-sm border">
-                    <p class="font-semibold mb-3 text-gray-800">Child Seat</p>
-                    <div class="flex items-center gap-6">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="child_seat"
-                          value="yes"
-                          checked={attributes.child_seat === "yes"}
-                          onChange={(e) => handleAttributeChange('child_seat', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>Yes</span>
-                      </label>
-
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="child_seat"
-                          value="no"
-                          checked={attributes.child_seat === "no"}
-                          onChange={(e) => handleAttributeChange('child_seat', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-xl p-3 shadow-sm border">
-                    <p class="font-semibold mb-3 text-gray-800">Pets</p>
-                    <div class="flex items-center gap-6">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="pets"
-                          value="yes"
-                          checked={attributes.pets === "yes"}
-                          onChange={(e) => handleAttributeChange('pets', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>Yes</span>
-                      </label>
-
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="pets"
-                          value="no"
-                          checked={attributes.pets === "no"}
-                          onChange={(e) => handleAttributeChange('pets', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-xl p-3 shadow-sm border">
-                    <p class="font-semibold mb-3 text-gray-800">Wheel Chair</p>
-                    <div class="flex items-center gap-6">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="wheel_chair"
-                          value="yes"
-                          checked={attributes.wheel_chair === "yes"}
-                          onChange={(e) => handleAttributeChange('wheel_chair', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>Yes</span>
-                      </label>
-
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="wheel_chair"
-                          value="no"
-                          checked={attributes.wheel_chair === "no"}
-                          onChange={(e) => handleAttributeChange('wheel_chair', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-xl p-3 shadow-sm border">
-                    <p class="font-semibold mb-3 text-gray-800">Lady Driver</p>
-                    <div class="flex items-center gap-6">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="lady_driver"
-                          value="yes"
-                          checked={attributes.lady_driver === "yes"}
-                          onChange={(e) => handleAttributeChange('lady_driver', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>Yes</span>
-                      </label>
-
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="lady_driver"
-                          value="no"
-                          checked={attributes.lady_driver === "no"}
-                          onChange={(e) => handleAttributeChange('lady_driver', e.target.value)}
-                          class="accent-blue-600"
-                        />
-                        <span>No</span>
-                      </label>
-
-                    </div>
-                  </div>
-
                 </div>
 
                 <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-5 justify-start">
@@ -825,16 +861,10 @@ const AddVehicleType = () => {
                   </Button>
                 </div>
               </div>
-
             </CardContainer>
           </div>
+
         </div>
-        {/* <Modal
-        isOpen={isUserModalOpen.isOpen}
-        className="p-4 sm:p-6 lg:p-10"
-      >
-        <AddUserModel setIsOpen={setIsUserModalOpen} />
-      </Modal> */}
       </div>
     </div>
   )

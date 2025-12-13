@@ -9,9 +9,9 @@ import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import CustomSelect from '../../../../components/ui/CustomSelect';
 import TicketsCard from './components/TicketsCard';
-import { apiGetTicketList, apiChangeTicketStatus } from '../../../../services/TicketServices';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddTicketModel from './components/AddTicketModel';
+import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/TicketServices';
 
 const Tickets = () => {
   const [isTicketsModelOpen, setIsTicketsModelOpen] = useState({

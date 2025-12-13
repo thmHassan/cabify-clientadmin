@@ -1,4 +1,5 @@
-import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_MOBILE_APP_SETTINGS, UPDATE_PASWORD } from "../constants/api.route.constant";
+
+import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GATE_INVOICE_HISTORY, GATE_PLAN_DETAILS, GATE_STRIPE_INFORMATION, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, GET_THIRD_PARTY_INFORMATION, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_MOBILE_APP_SETTINGS, SAVE_STRIPE_INFORMATION, SAVE_THIRD_PARTY_INFORMATION, UPDATE_PASWORD } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import ApiService from "./ApiService";
 
@@ -144,4 +145,84 @@ export async function apiEditPackageToPup(data) {
     });
 }
 
+export async function apiSaveThirdPartyInformation(data) {
+    const isFormData = data instanceof FormData;
 
+    return ApiService.fetchData({
+        url: SAVE_THIRD_PARTY_INFORMATION,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiGetThirdPartyInformation() {
+    try {
+        return ApiService.fetchData({
+            url: GET_THIRD_PARTY_INFORMATION,
+            method: METHOD_GET,
+
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
+}
+
+export async function apiGetPlanDetails() {
+    try {
+        return ApiService.fetchData({
+            url: GATE_PLAN_DETAILS,
+            method: METHOD_GET,
+
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
+}
+
+export async function apiGetInvoiceHistory() {
+    try {
+        return ApiService.fetchData({
+            url: GATE_INVOICE_HISTORY,
+            method: METHOD_GET,
+
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
+}
+
+export async function apiSaveStripeInformation(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: SAVE_STRIPE_INFORMATION,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiGetStripeInformation() {
+    try {
+        return ApiService.fetchData({
+            url: GATE_STRIPE_INFORMATION,
+            method: METHOD_GET,
+
+        });
+    } catch (error) {
+        console.log("Error in API call:", error);
+        throw error;
+    }
+}

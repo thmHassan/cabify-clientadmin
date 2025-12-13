@@ -24,6 +24,7 @@ export const GET_USER_BY_ID = "/company/edit-user";
 export const POST_EDIT_USER_STATUS = "/company/change-user-status";
 export const EDIT_USER = "/company/edit-user";
 export const DELETE_USER = "/company/delete-user";
+export const RIDE_HISTORY = "/company/ride-history"
 
 //api for drivers management
 export const GET_DRIVERS_MANAGEMENT = "/company/list-driver";
@@ -83,6 +84,12 @@ export const SAVE_COMMISSION = "/company/save-main-commission";
 export const CREATE_PACKAGE_TOPUP = "/company/save-package-topup";
 export const EDIT_PACKAGE_TOPUP = "/company/edit-package-topup";
 export const DELETE_PACKAGE_TOPUPS = "/company/delete-package-topup";
+export const GATE_PLAN_DETAILS = "/company/plan-detail"
+export const SAVE_STRIPE_INFORMATION = "/company/stripe-information"
+export const GATE_STRIPE_INFORMATION = "/company/stripe-information"
+export const GATE_INVOICE_HISTORY = "/company/payment-history"
+export const GET_THIRD_PARTY_INFORMATION = "/company/third-party-information"
+export const SAVE_THIRD_PARTY_INFORMATION = "/company/third-party-information"
 
 //api for account
 export const GET_ACCOUNT= "/company/list-account";

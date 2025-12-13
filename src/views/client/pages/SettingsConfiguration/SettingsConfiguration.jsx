@@ -94,7 +94,7 @@ const SettingsConfiguration = () => {
       {/* Body */}
       <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
         <Loading loading={tableLoading} type="cover">
-          <div className='flex flex-row gap-4 '>
+          <div className='flex md:flex-row flex-col gap-4 '>
 
             <div className="flex gap-4 pt-4">
 

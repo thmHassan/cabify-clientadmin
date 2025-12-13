@@ -183,7 +183,7 @@ const Users = () => {
         <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4">
           <SearchBar
             value={_searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onSearchChange={setSearchQuery}
             className="w-full md:max-w-[400px]"
           />
 

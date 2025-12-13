@@ -11,13 +11,14 @@ import CustomSelect from '../../../../components/ui/CustomSelect';
 import TicketsCard from './components/TicketsCard';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddTicketModel from './components/AddTicketModel';
-import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/TicketServices';
+import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/Ticketservices';
 
 const Tickets = () => {
   const [isTicketsModelOpen, setIsTicketsModelOpen] = useState({
     type: "new",
     isOpen: false,
   });
+
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);

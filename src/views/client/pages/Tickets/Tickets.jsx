@@ -18,6 +18,7 @@ const Tickets = () => {
     type: "new",
     isOpen: false,
   });
+  
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);

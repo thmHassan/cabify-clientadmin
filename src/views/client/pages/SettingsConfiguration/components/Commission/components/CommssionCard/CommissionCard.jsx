@@ -22,12 +22,12 @@ const CommissionCard = ({ commission, onEdit, onDelete }) => {
     return (
         <div className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto">
             <div className="flex items-center gap-3">
-                <div className="w-60">
+                <div className="w-auto">
                     <p className="font-semibold text-xl">{commission.package_name}</p>
                 </div>
             </div>
 
-            <div className="flex items-center justify-center gap-3 flex-wrap">
+            <div className="flex items-center justify-center gap-3">
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Package Type</p>
                     <p className="text-black font-semibold text-sm">{commission.package_type}</p>

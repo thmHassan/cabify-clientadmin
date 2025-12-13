@@ -11,8 +11,7 @@ import RideHistory from "./components/RideHistory";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../../../store";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
-import { apiGetUserById, apiEditUser } from "../../../../../../services/UserService";
-import FormLabel from "../../../../../../components/ui/FormLabel";
+import { apiGetUserById, apiEditUser, apiGetRideHistory } from "../../../../../../services/UserService";
 
 const EditUserDetails = () => {
     const { id } = useParams();
@@ -27,6 +26,7 @@ const EditUserDetails = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const [rideHistory, setRideHistory] = useState([]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -62,11 +62,6 @@ const EditUserDetails = () => {
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1);
     };
-    useEffect(() => {
-        if (id) {
-            loadUserData();
-        }
-    }, [id]);
 
     const loadUserData = useCallback(async () => {
         setIsLoading(true);
@@ -94,6 +89,35 @@ const EditUserDetails = () => {
             setIsLoading(false);
         }
     }, [id]);
+
+    const loadRideHistory = useCallback(async () => {
+        if (!id) return;
+
+        setTableLoading(true);
+        try {
+            const response = await apiGetRideHistory(id);
+
+            if (response?.status === 200 && Array.isArray(response?.data?.data)) {
+                setRideHistory(response.data.data);
+                setTotalItems(response.data.total || response.data.data.length);
+                setTotalPages(response.data.last_page || 1);
+            } else {
+                setRideHistory([]);
+            }
+        } catch (error) {
+            console.error("Error loading ride history", error);
+            setRideHistory([]);
+        } finally {
+            setTableLoading(false);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            loadUserData();
+            loadRideHistory();
+        }
+    }, [id, loadRideHistory]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -142,40 +166,6 @@ const EditUserDetails = () => {
         unlockBodyScroll();
         navigate("/users");
     };
-
-
-    const staticRides = [
-        {
-            id: "MR12345",
-            driverName: "Alex Rodriguez",
-            customerName: "John Doe",
-            route: "Downtown to Airport",
-            time: "10:30 AM",
-            fare: "$25.00",
-            status: "Onboarding",
-            distance: "15 miles",
-        },
-        {
-            id: "MR12346",
-            driverName: "Alex Rodriguez",
-            customerName: "John Doe",
-            route: "Downtown to Airport",
-            time: "10:30 AM",
-            fare: "$25.00",
-            status: "Cancelled",
-            distance: "15 miles",
-        },
-        {
-            id: "MR12347",
-            driverName: "Alex Rodriguez",
-            customerName: "John Doe",
-            route: "Downtown to Airport",
-            time: "10:30 AM",
-            fare: "$25.00",
-            status: "Rescheduled",
-            distance: "15 miles",
-        },
-    ];
 
     return (
         <div>
@@ -329,17 +319,13 @@ const EditUserDetails = () => {
                         </div>
                         <Loading loading={tableLoading} type="cover">
                             <div className="flex flex-col gap-4 pt-4">
-                                {staticRides.map((user) => (
-                                    <RideHistory
-                                        key={user.id}
-                                        user={user}
-                                    />
+                                {rideHistory.map((user) => (
+                                    <RideHistory key={user.id} user={user} />
                                 ))}
                             </div>
                         </Loading>
-                        {Array.isArray(staticRides) &&
-                            staticRides.length > 0 ? (
-                            <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
+                        {Array.isArray(rideHistory) && rideHistory.length > 0 && (
+                            <div className="mt-4 border-t border-[#E9E9E9] pt-3">
                                 <Pagination
                                     currentPage={currentPage}
                                     totalPages={totalPages}
@@ -347,10 +333,10 @@ const EditUserDetails = () => {
                                     onPageChange={handlePageChange}
                                     onItemsPerPageChange={handleItemsPerPageChange}
                                     itemsPerPageOptions={PAGE_SIZE_OPTIONS}
-                                    pageKey="companies"
+                                    pageKey="ride-history"
                                 />
                             </div>
-                        ) : null}
+                        )}
                     </CardContainer>
                 </div>
                 {/* <Modal

@@ -11,7 +11,7 @@ import CustomSelect from '../../../../components/ui/CustomSelect';
 import TicketsCard from './components/TicketsCard';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddTicketModel from './components/AddTicketModel';
-import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/Ticketservices';
+import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/TicketServices';
 
 const Tickets = () => {
   const [isTicketsModelOpen, setIsTicketsModelOpen] = useState({

@@ -75,6 +75,7 @@ export const ALL_VEHICLE_TYPE = "/company/all-vehicle-type"
 // api for settings configuration
 export const GET_COMPANY_PROFILE = "/company/get-company-profile";
 export const SAVE_COMPANY_PROFILE = "/company/save-company-profile";
+export const UPDATE_PASWORD = "/company/update-password"
 export const GET_MOBILE_APP_SETTINGS = "/company/get-mobile-setting";
 export const SAVE_MOBILE_APP_SETTINGS = "/company/update-mobile-setting";
 export const GET_COMMISSION = "/company/get-commission-data";

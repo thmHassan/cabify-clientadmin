@@ -1,6 +1,5 @@
-import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_MOBILE_APP_SETTINGS } from "../constants/api.route.constant";
+import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_MOBILE_APP_SETTINGS, UPDATE_PASWORD } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
-import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
 
 export async function apiSaveCompanyProfile(data) {
@@ -30,6 +29,21 @@ export async function apiGetCompanyProfile() {
         console.log("Error in API call:", error);
         throw error;
     }
+}
+
+export async function apiSaveUpdatePassword(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: UPDATE_PASWORD,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }),
+    });
 }
 
 export async function apiSaveMobileAppSetting(data) {

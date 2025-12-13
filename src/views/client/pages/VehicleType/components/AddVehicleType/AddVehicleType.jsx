@@ -361,18 +361,6 @@ const AddVehicleType = () => {
                 </div>
               )}
 
-              {isEditMode && isLoading && (
-                <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-                  Loading vehicle type data...
-                </div>
-              )}
-
-              {isEditMode && !isLoading && formData.vehicle_type_name && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded">
-                  <strong>Editing:</strong> {formData.vehicle_type_name} (ID: {id})
-                </div>
-              )}
-
               <div class="max-w-6xl mx-auto">
                 <div class=" space-y-4">
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -479,7 +467,7 @@ const AddVehicleType = () => {
                     </div>
                     <div>
                       <FormLabel htmlFor="backupBidTypes">Backup Bid Vehicle Type</FormLabel>
-                      <div className="h-16 md:w-80 w-full">
+                      <div className="h-16 w-full">
                         <FormSelection
                           label="Backup Bid Vehicle Type"
                           name="backupBidTypes"
@@ -691,26 +679,26 @@ const AddVehicleType = () => {
             <div class="p-6 bg-white rounded-xl shadow-sm mt-6">
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Pricing Tiers</h3>
-                <Button
+                {/* <Button
                   type="button"
                   onClick={handleAddPricingTier}
                   className="text-sm px-3 py-1 border border-blue"
                   btnSize="sm"
                 >
                   Add Range
-                </Button>
+                </Button> */}
               </div>
               <div class="flex-1 space-y-6">
                 {pricingTiers.map((tier, index) => (
                   <div key={index} class="grid grid-cols-4 gap-4 items-end">
+
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">From</label>
                       <input
                         type="number"
                         value={tier.from}
                         onChange={(e) => handlePricingTierChange(index, 'from', e.target.value)}
-                        placeholder="From km"
-                        class="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full p-2 border rounded-md"
                       />
                     </div>
 
@@ -720,8 +708,7 @@ const AddVehicleType = () => {
                         type="number"
                         value={tier.to}
                         onChange={(e) => handlePricingTierChange(index, 'to', e.target.value)}
-                        placeholder="To km"
-                        class="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full p-2 border rounded-md"
                       />
                     </div>
 
@@ -731,26 +718,42 @@ const AddVehicleType = () => {
                         type="number"
                         value={tier.price}
                         onChange={(e) => handlePricingTierChange(index, 'price', e.target.value)}
-                        placeholder="Price"
-                        class="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full p-2 border rounded-md"
                       />
                     </div>
 
-                    <div>
-                      {pricingTiers.length > 1 && (
+                    {/* BUTTON COLUMN */}
+                    <div className="flex flex-col gap-2">
+
+                      {/* FIRST ROW → ADD */}
+                      {index === 0 && (
+                        <Button
+                          type="button"
+                          onClick={handleAddPricingTier}
+                          className="text-blue-500 px-3 py-2 border border-blue-500 rounded-md w-28 "
+                          btnSize="sm"
+                        >
+                          Add Range
+                        </Button>
+                      )}
+
+                      {/* OTHER ROWS → REMOVE */}
+                      {index !== 0 && (
                         <Button
                           type="button"
                           onClick={() => handleRemovePricingTier(index)}
-                          className="text-red-500 px-3 py-2 border border-red-500 rounded-md"
+                          className="text-red-500 px-3 py-2 border border-red-500 rounded-md w-28"
                           btnSize="sm"
                         >
                           Remove
                         </Button>
                       )}
                     </div>
+
                   </div>
                 ))}
               </div>
+
             </div>
 
             <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-5 justify-start">

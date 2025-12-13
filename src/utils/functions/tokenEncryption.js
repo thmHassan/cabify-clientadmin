@@ -182,7 +182,7 @@ export const getUserDataFromToken = () => {
     return {
       id: 1,
       name: "Super Admin",
-      email: "divonyx@gmail.com",
+      email: "divonyx23@gmail.com",
       // role: "superadmin",
       avatar: ""
     };

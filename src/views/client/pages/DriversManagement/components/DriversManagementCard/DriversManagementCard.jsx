@@ -100,9 +100,18 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                         <p className="font-semibold text-sm">
                             {loading ? "Updating..." : status.charAt(0).toUpperCase() + status.slice(1)}
                         </p>
+                        <svg
+                            className="w-4 h-4 text-black ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
                 </UserDropdown>
-                
+
                 <UserDropdown options={actionOptions} itemData={driver}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
                         <ThreeDotsIcon />

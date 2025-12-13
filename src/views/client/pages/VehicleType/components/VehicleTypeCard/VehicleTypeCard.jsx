@@ -20,7 +20,7 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         >
             <div className="flex items-center gap-3">
                 <img
-                    src={vehicle.vehicle_image}
+                    src={`${import.meta.env.VITE_BACKEND_URL}${vehicle.vehicle_image}`}
                     className="w-14 h-14 rounded-md object-cover"
                     alt="vehicle"
                 />

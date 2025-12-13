@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { apiReplyTicket } from "../../../../../../services/TicketServices";
-
+import { apiReplyTicket } from "../../../../../../services/TicketsServices";
 
 const AddTicketModel = ({ ticket, onClose, refreshList }) => {
     const [message, setMessage] = useState("");

@@ -115,14 +115,14 @@ const RidesManagement = () => {
           All
         </Button>
 
-        <Button
+        {/* <Button
           type="filled"
           btnSize="2xl"
           className={`${activeTab === "pob" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
           onClick={() => setActiveTab("pob")}
         >
           POB
-        </Button>
+        </Button> */}
 
         <Button
           type="filled"
@@ -160,14 +160,14 @@ const RidesManagement = () => {
           Cancelled
         </Button>
 
-        <Button
+        {/* <Button
           type="filled"
           btnSize="2xl"
           className={`${activeTab === "no-show" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
           onClick={() => setActiveTab("no-show")}
         >
           No-show
-        </Button>
+        </Button> */}
       </div>
       <div>
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">

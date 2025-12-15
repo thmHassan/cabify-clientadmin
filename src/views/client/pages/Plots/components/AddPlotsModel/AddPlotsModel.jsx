@@ -23,12 +23,12 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [clickedCoord, setClickedCoord] = useState(null);
-    
+
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const polygonRef = useRef(null);
     const markersRef = useRef([]);
-    const coordinatesRef = useRef([]); 
+    const coordinatesRef = useRef([]);
 
     useEffect(() => {
         setIsEditMode(!!initialValue?.id);
@@ -72,9 +72,9 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
             formDataObj.append('features[properties][name]', values.name);
             formDataObj.append('features[geometry][type]', 'Polygon');
             const closedCoordinates = [...values.coordinates, values.coordinates[0]];
-            
+
             const polygonCoordinates = [closedCoordinates];
-            
+
             formDataObj.append('features[geometry][coordinates]', JSON.stringify(polygonCoordinates));
 
             console.log('Sending coordinates to API:');
@@ -113,7 +113,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
             <Formik
                 initialValues={{
                     name: initialValue?.name || "",
-                    coordinates: initialValue?.coordinates || [],
+                    coordinates: Array.isArray(initialValue?.coordinates) ? initialValue.coordinates : [],
                 }}
                 validationSchema={PLOT_VALIDATION_SCHEMA}
                 onSubmit={handleSubmit}
@@ -125,7 +125,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 
                     useEffect(() => {
                         if (mapLoaded && mapRef.current && !mapInstanceRef.current && window.L) {
-                        
+
                             const map = window.L.map(mapRef.current).setView([21.1702, 72.8311], 12);
                             window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                 attribution: '© OpenStreetMap contributors',
@@ -134,7 +134,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 
                             map.on('click', (e) => {
                                 console.log("clicked");
-                                
+
                                 const { lat, lng } = e.latlng;
                                 setClickedCoord({ lat, lng });
 
@@ -190,10 +190,10 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                             mapInstanceRef.current = map;
 
                             // If editing, draw existing coordinates
-                            const initialCoords = coordinatesRef.current;
+                            const initialCoords = Array.isArray(coordinatesRef.current) ? coordinatesRef.current : [];
                             if (initialCoords.length >= 3) {
                                 const latLngs = initialCoords.map(coord => [coord[1], coord[0]]);
-                                
+
                                 // Add markers for existing points
                                 initialCoords.forEach((coord, index) => {
                                     const marker = window.L.circleMarker([coord[1], coord[0]], {
@@ -353,7 +353,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                 </div>
 
                                 {/* Clicked Coordinate Display */}
-                                {clickedCoord && (
+                                {/* {clickedCoord && (
                                     <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm">
                                         <div className="font-semibold text-green-900 mb-1">Last Clicked Point:</div>
                                         <div className="text-green-700 text-xs">
@@ -361,12 +361,12 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                             <span className="font-medium ml-2">Lng:</span> {clickedCoord.lng.toFixed(6)}
                                         </div>
                                     </div>
-                                )}
+                                )} */}
 
                                 {/* Map Container */}
                                 <div className="relative w-full h-[300px] rounded-xl overflow-hidden border border-gray-200 mb-3">
-                                    <div 
-                                        ref={mapRef} 
+                                    <div
+                                        ref={mapRef}
                                         className="w-full h-full"
                                     >
                                         {!mapLoaded && (
@@ -387,11 +387,11 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                     </p>
                                 )} */}
 
-                                {values.coordinates.length >= 3 && (
+                                {/* {values.coordinates.length >= 3 && (
                                     <p className="text-green-600 text-sm mb-3 p-2 bg-green-50 border border-green-200 rounded">
                                         ✓ Polygon is ready with {values.coordinates.length} points
                                     </p>
-                                )}
+                                )} */}
 
                                 <ErrorMessage
                                     name="coordinates"
@@ -434,8 +434,8 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         disabled={isLoading || values.coordinates.length < 3}
                                     >
                                         <span>
-                                            {isLoading 
-                                                ? (isEditMode ? "Updating..." : "Creating...") 
+                                            {isLoading
+                                                ? (isEditMode ? "Updating..." : "Creating...")
                                                 : (isEditMode ? "Update" : "Create")
                                             }
                                         </span>

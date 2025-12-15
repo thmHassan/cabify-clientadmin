@@ -22,6 +22,7 @@ import {
   isAuthenticated,
   getUserDataFromToken,
   storeTenantId,
+  storeTenantData,
 } from "../functions/tokenEncryption";
 
 function useAuth() {
@@ -50,6 +51,26 @@ function useAuth() {
             )
           );
         }
+
+        // Persist tenant metadata if present
+        try {
+          const tenantId =
+            resp.data?.tenant_id ||
+            resp.data?.tenantId ||
+            resp.data?.data?.tenant_id ||
+            resp.data?.data?.tenantId ||
+            null;
+          if (tenantId) {
+            storeTenantId(tenantId);
+          }
+          const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+          if (tenantData) {
+            storeTenantData(tenantData);
+          }
+        } catch (e) {
+          // ignore tenant storage errors
+        }
+
         const redirectUrl = query.get(REDIRECT_URL_KEY);
         navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath);
         return {
@@ -111,6 +132,10 @@ function useAuth() {
           const tenantId = data.tenant_id || data.tenantId || data.data?.tenant_id || data.data?.tenantId || null;
           if (tenantId) {
             storeTenantId(tenantId);
+          }
+          const tenantData = data.tenant_data || data.data?.tenant_data || null;
+          if (tenantData) {
+            storeTenantData(tenantData);
           }
         } catch (e) {
           // ignore tenant storage errors

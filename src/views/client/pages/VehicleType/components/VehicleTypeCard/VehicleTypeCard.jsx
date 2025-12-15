@@ -32,22 +32,13 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Distance</p>
-                    <p className="text-black font-semibold text-sm">{vehicle.minimum_distance}</p>
+                    <p className="text-black font-semibold text-sm text-center">{vehicle.minimum_distance}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">System</p>
-                    <p className="text-black font-semibold text-sm">{vehicle.mileage_system}</p>
+                    <p className="text-black font-semibold text-sm text-center">{vehicle.mileage_system}</p>
                 </div>
-
-                <Button
-                    type="filled"
-                    btnSize="md"
-                    onClick={() => onEdit(vehicle)}
-                    className="px-6 py-2"
-                >
-                    <span>View</span>
-                </Button>
 
                 <UserDropdown options={actionOptions} itemData={vehicle}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">

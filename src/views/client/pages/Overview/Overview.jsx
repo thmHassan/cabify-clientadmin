@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CompaniesIcon from "../../../../components/svg/CompaniesIcon";
 import SystemUptimeIcon from "../../../../components/svg/SystemUptimeIcon";
 import SubscriptionIcon from "../../../../components/svg/SubscriptionIcon";
@@ -28,6 +28,7 @@ import Tag from "../../../../components/ui/Tag/Tag";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Modal from "../../../../components/shared/Modal/Modal";
 import AddBookingModel from "./components/AddBookingModel";
+import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 
 const DASHBOARD_CARDS = [
   {
@@ -210,13 +211,47 @@ const Overview = () => {
     type: "new",
     isOpen: false,
   })
+  const [companyName, setCompanyName] = useState("Autocare Services");
+
+  const resolveTenantData = () => {
+    const stored = getTenantData();
+    if (stored) return stored;
+    const raw =
+      window.localStorage.getItem("tenant_data") ||
+      window.sessionStorage.getItem("tenant_data") ||
+      window.localStorage.getItem("tenant") ||
+      null;
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn("Failed to parse tenant data from storage", raw, e);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const tenantData = resolveTenantData();
+    console.debug("Resolved tenant data for overview:", tenantData);
+    if (tenantData) {
+      const detectedName =
+        tenantData.company_name ||
+        tenantData.company_admin_name ||
+        tenantData.company ||
+        tenantData.user_name;
+      console.debug("Detected company name:", detectedName);
+      if (detectedName) {
+        setCompanyName(detectedName);
+      }
+    }
+  }, []);
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
         <div className="sm:mb-[30px] mb-1 sm:w-[calc(100%-240px)] w-full flex gap-5 items-center">
           <div className="w-20 h-20 rounded-full bg-[#000000]"></div>
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
-            <PageTitle title="Autocare Services" />
+            <PageTitle title={companyName} />
             <PageSubTitle title="Welcome back! (Admin Name), Here's what's happening with your transportation business today." />
           </div>
         </div>

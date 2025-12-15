@@ -18,6 +18,7 @@ import DrawerIcon from "../../svg/DrawerIcon";
 import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
+import { getTenantData } from "../../../utils/functions/tokenEncryption";
 
 const UserPageContainer = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -26,6 +27,12 @@ const UserPageContainer = ({ children }) => {
 
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
+  const tenantHybrid = (() => {
+    const data = getTenantData();
+    return (data?.uber_plot_hybrid || "").toLowerCase();
+  })();
+  const userHybrid = (user?.uber_plot_hybrid || "").toLowerCase();
+  const hybridMode = tenantHybrid || userHybrid;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -136,36 +143,46 @@ const UserPageContainer = ({ children }) => {
                 <DrawerIcon width={24} height={24} fill="#000000" />
               </span>
             </button>
-            <button
-              className="flex sm:hidden min-w-[40px] h-[40px] sm:min-w-[50px] sm:h-[50px] rounded-full bg-[#FFFFFF] justify-center items-center flex-shrink-0"
-              aria-label="Open search"
-              onClick={() => setIsMobileSearchOpen(true)}
-            >
-              <SearchIcon width={18} height={18} />
-            </button>
-            <div className="xl:min-w-[400px] xl:w-full flex-1 hidden sm:block">
-              <SearchBar />
-            </div>
           </div>
           <div className="flex gap-2.5 items-center">
-            <PageSubTitle
-              title="Auto Dispatch System"
-              className="!leading-[22px]"
-              textColor={2}
-            />
-            <PlainSwitch />
-            <PageSubTitle
-              title="Bidding System"
-              className="!leading-[22px]"
-              textColor={2}
-            />
+            {hybridMode === "both" && (
+              <>
+                <PageSubTitle
+                  title="Auto Dispatch System"
+                  className="!leading-[22px]"
+                  textColor={2}
+                />
+                <PlainSwitch />
+                <PageSubTitle
+                  title="Bidding System"
+                  className="!leading-[22px]"
+                  textColor={2}
+                />
+                <PlainSwitch />
+              </>
+            )}
+            {hybridMode === "auto" && (
+              <>
+                <PageSubTitle
+                  title="Auto Dispatch System"
+                  className="!leading-[22px]"
+                  textColor={2}
+                />
+               
+              </>
+            )}
+            {hybridMode !== "auto" && hybridMode !== "both" && (
+              <>
+                <PageSubTitle
+                  title="Bidding System"
+                  className="!leading-[22px]"
+                  textColor={2}
+                />
+               
+              </>
+            )}
           </div>
           <div className="flex gap-1.5 sm:gap-3 lg:gap-5 items-center flex-shrink-0">
-            <div className="flex min-w-[40px] h-[40px] sm:min-w-[50px] sm:h-[50px] rounded-full bg-[#FFFFFF] justify-center items-center">
-              <div className="w-[18px] h-[18px] sm:w-[25px] sm:h-[26px] flex items-center justify-center">
-                <SettingIcon width={18} height={18} className="w-full h-full" />
-              </div>
-            </div>
             <div className="flex min-w-[40px] h-[40px] sm:min-w-[50px] sm:h-[50px] rounded-full bg-[#FFFFFF] justify-center items-center">
               <div className="w-[18px] h-[20px] sm:w-[22px] sm:h-[24px] flex items-center justify-center">
                 <NotificationIcon

@@ -321,14 +321,14 @@ const Dispatcher = () => {
                         <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
                           <p className="text-xs text-gray-500">Active Rides</p>
                           <p className="text-[#1F41BB] font-semibold text-sm">
-                            {d.active_rides}
+                            {d.active_rides || 12}
                           </p>
                         </div>
 
                         <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
                           <p className="text-xs text-gray-500">Completed Today</p>
                           <p className="text-[#00cc66] font-semibold text-sm">
-                            {d.completed_today}
+                            {d.completed_today || 12}
                           </p>
                         </div>
                       </div>

@@ -3,7 +3,7 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const PlotsCard = ({ plot, onEdit, onDelete }) => {
+const PlotsCard = ({ plot, onEdit, onDelete, onSelect }) => {
     const actionOptions = [
         {
             label: "Edit",
@@ -15,7 +15,10 @@ const PlotsCard = ({ plot, onEdit, onDelete }) => {
         },
     ];
     return (
-        <div className="flex items-center justify-between bg-white rounded-xl p-4 border hover:shadow transition">
+        <div
+            className="flex items-center justify-between bg-white rounded-xl p-4 border hover:shadow transition cursor-pointer"
+            onClick={() => onSelect?.(plot)}
+        >
             <div className="text-lg font-semibold text-[#252525]">
                 {plot.name}
             </div>

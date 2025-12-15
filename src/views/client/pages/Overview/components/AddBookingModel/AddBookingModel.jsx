@@ -332,8 +332,6 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                 </div>
                                                 <div className="flex md:flex-row flex-col gap-4">
                                                     <div className="w-full gap-3 grid">
-
-                                                        {/* Name / Email */}
                                                         <div className="flex md:flex-row flex-col gap-4">
                                                             <div className="text-center flex items-center gap-2 w-full">
                                                                 <label className="text-sm font-semibold mb-1">Name</label>
@@ -425,62 +423,9 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                                 </select>
                                                             </div>
                                                         </div>
-
-                                                        {/* Passenger / Luggage */}
-                                                        <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1">Passenger</label>
-                                                                <input
-                                                                    type="number"
-                                                                    className="border rounded-lg px-3 py-2 w-full"
-                                                                    defaultValue="0"
-                                                                />
-                                                            </div>
-
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1">Luggage</label>
-                                                                <input
-                                                                    type="number"
-                                                                    className="border rounded-lg px-3 py-2 w-full"
-                                                                    defaultValue="0"
-                                                                />
-                                                            </div>
-
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1">
-                                                                    Hand Luggage
-                                                                </label>
-                                                                <input
-                                                                    type="number"
-                                                                    className="border rounded-lg px-3 py-2 w-full"
-                                                                    defaultValue="0"
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Special Req */}
-                                                        <div className=" grid md:grid-cols-3 grid-cols-1 gap-4">                                                            <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1">Special Req</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Write here..."
-                                                                className="border rounded-lg px-3 py-2 w-full"
-                                                            />
-                                                        </div>
-
-                                                            {/* Payment Ref */}
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1">Payment Ref</label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Write here..."
-                                                                    className="border rounded-lg px-3 py-2 w-full"
-                                                                />
-                                                            </div>
-                                                        </div>
                                                     </div>
                                                     {/* Auto Dispatch + Bidding */}
-                                                    <div className="border rounded-lg  h-24 md:t-20 px-4 py-4 md:w-52 w-full bg-white shadow-sm">
+                                                    <div className="border rounded-lg h-24 md:mt-14 px-4 py-4 md:w-52 w-full bg-white shadow-sm">
                                                         <div className="flex flex-col gap-3">
                                                             <label className="flex items-center gap-2">
                                                                 <input type="checkbox" defaultChecked />
@@ -494,11 +439,59 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {/* Passenger / Luggage */}
+                                                <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+                                                    <div className="text-center flex items-center gap-2">
+                                                        <label className="text-sm font-semibold mb-1">Passenger</label>
+                                                        <input
+                                                            type="number"
+                                                            className="border rounded-lg px-3 py-2 w-full"
+                                                            defaultValue="0"
+                                                        />
+                                                    </div>
+
+                                                    <div className="text-center flex items-center gap-2">
+                                                        <label className="text-sm font-semibold mb-1">Luggage</label>
+                                                        <input
+                                                            type="number"
+                                                            className="border rounded-lg px-3 py-2 w-full"
+                                                            defaultValue="0"
+                                                        />
+                                                    </div>
+
+                                                    <div className="text-center flex items-center gap-2">
+                                                        <label className="text-sm font-semibold mb-1">
+                                                            Hand Luggage
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            className="border rounded-lg px-3 py-2 w-full"
+                                                            defaultValue="0"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid md:grid-cols-2 grid-cols-1 gap-4 ">                                                            <div className="text-center flex items-center gap-2">
+                                                    <label className="text-sm font-semibold mb-1">Special Req</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Write here..."
+                                                        className="border rounded-lg px-3 py-2 w-full"
+                                                    />
+                                                </div>
+                                                    <div className="text-center flex items-center gap-2">
+                                                        <label className="text-sm font-semibold mb-1">Payment Ref</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Write here..."
+                                                            className="border rounded-lg px-3 py-2 w-full"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* ------------------ RIGHT SIDE MAP ------------------ */}
                                             <div>
-                                                <div className="w-full h-ful rounded-xl overflow-hidden border">
+                                                <div className="w-full h-full rounded-xl overflow-hidden border">
                                                     <iframe
                                                         title="map"
                                                         width="100%"
@@ -510,117 +503,85 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="w-full bg-[#e9f1ff] p-4 rounded-xl mt-4">
-                                            <h2 class="text-2xl font-semibold mb-6">Charges</h2>
+                                        {/* ===================== CHARGES ===================== */}
+                                        <div className="bg-blue-50 p-4 rounded-lg space-y-4 mt-7">
 
-                                            {/* <!-- Top Row --> */}
-                                            <div class="flex flex-wrap items-center gap-4 mb-6">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="font-medium">Payment Ref</span>
-                                                    <input type="checkbox" class="w-4 h-4 mt-1.5 rounded border-gray-300 checked:bg-blue-600" />
-                                                    <span class="font-medium">Quoted</span>
+                                            {/* Header */}
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="font-semibold text-xl">Charges</h3>
+
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        className="px-4 py-3 text-xs bg-blue-600 text-white rounded"
+                                                    >
+                                                        Calculate Fares
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        className="px-4 py-3 text-xs bg-blue-600 text-white rounded"
+                                                    >
+                                                        Show Map
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {/* Payment Row */}
+                                            <div className="flex  gap-4 items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-sm font-medium">Payment Ref</label>
                                                 </div>
 
-                                                {/* <!-- Select --> */}
-                                                <select class="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-blue-400 w-full sm:w-56">
-                                                    <option>Cash</option>
-                                                    <option>Card</option>
-                                                    <option>Online</option>
+                                                <label className="flex items-center gap-2 text-sm">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={values.quoted || false}
+                                                        onChange={(e) =>
+                                                            setFieldValue("quoted", e.target.checked)
+                                                        }
+                                                    />
+                                                    Quoted
+                                                </label>
+
+                                                <select
+                                                    value={values.payment_mode}
+                                                    onChange={(e) =>
+                                                        setFieldValue("payment_mode", e.target.value)
+                                                    }
+                                                    className="border rounded px-2 py-1 w-48"
+                                                >
+                                                    <option value="cash">Cash</option>
+                                                    <option value="card">Card</option>
+                                                    <option value="upi">UPI</option>
                                                 </select>
                                             </div>
 
-                                            {/* <!-- Grid Layout --> */}
-                                            <div class="grid grid-cols-2 xl:grid-cols-4 lg:grid-cols-4 md:grid-cols-2 gap-x-6">
+                                            {/* Charges Grid */}
+                                            <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
 
-                                                {/* <!-- Column 1 --> */}
-                                                <div className="grid gap-2">
-                                                    <div class="md:items-center gap-4 flex max-sm:flex-col w-56 max-sm:w-28 ">
-                                                        <label class="font-medium ">Fares</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
+                                                {/* Row 1 */}
+                                                <ChargeInput label="Fares" name="fares" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Return Fares" name="return_fares" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Parking Charges" name="parking_charges" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Booking Fees Charges" name="booking_fee_charges" {...{ values, setFieldValue }} />
 
-                                                    <div class="md:items-center gap-4 flex max-sm:flex-col w-56 max-sm:w-28">
-                                                        <label class="font-medium">AC Fares</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
+                                                {/* Row 2 */}
+                                                <ChargeInput label="AC Fares" name="ac_fares" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Return AC Fares" name="return_ac_fares" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="AC Parking Charges" name="ac_parking_charges" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Waiting Charges" name="waiting_charges" {...{ values, setFieldValue }} />
 
-                                                    <div class="md:items-center gap-2 max-sm:flex-col flex">
-                                                        <label class="font-medium">Extra Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
+                                                {/* Row 3 */}
+                                                <ChargeInput label="Extra Charges" name="extra_charges" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Congestion / Toll" name="congestion_toll" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="Total Charges" name="total_charges" {...{ values, setFieldValue }} />
+                                                <ChargeInput label="AC Waiting Charges" name="ac_waiting_charges" {...{ values, setFieldValue }} />
 
-                                                </div>
-                                                {/* <!-- Column 2 --> */}
-                                                <div className="grid gap-2">
-                                                    <div class="md:items-center gap-2 flex max-sm:flex-col">
-                                                        <label class="font-medium">Return Fares</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="md:items-center gap-2 flex max-sm:flex-col">
-                                                        <label class="font-medium">Return AC Fares</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="md:items-center gap-2 flex max-sm:flex-col">
-                                                        <label class="font-medium">Congestion/Toll</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-                                                </div>
-
-                                                {/* <!-- Column 3 --> */}
-                                                <div className="grid gap-2">
-                                                    <div class="md:items-center gap-2">
-                                                        <label class="font-medium">Parking Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="md:items-center gap-2">
-                                                        <label class="font-medium">AC Parking Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="md:items-center gap-2">
-                                                        <label class="font-medium">Total Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-                                                </div>
-
-                                                {/* <!-- Column 4 --> */}
-                                                <div className="grid gap-2">
-                                                    <div class="flex md:items-center gap-2  max-sm:flex-col">
-                                                        <label class="font-medium">Booking Fees Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="flex md:items-center gap-2  mt-4 max-sm:flex-col">
-                                                        <label class="font-medium">Waiting Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="flex md:items-center gap-2  mt-4 max-sm:flex-col">
-                                                        <label class="font-medium">AC Waiting Charges</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-
-                                                    <div class="flex md:items-center gap-2  mt-4 max-sm:flex-col">
-                                                        <label class="font-medium">Waiting Time</label>
-                                                        <input class="px-3 py-2 bg-white border border-gray-300 rounded-md md:w-20 w-28" value="0" />
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                            {/* <!-- Buttons --> */}
-                                            <div class="flex flex-wrap justify-end gap-4 mt-8">
-                                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700">
-                                                    Calculate Fares
-                                                </button>
-                                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700">
-                                                    Show Map
-                                                </button>
+                                                {/* Row 4 */}
+                                                <ChargeInput label="Waiting Time" name="waiting_time" {...{ values, setFieldValue }} />
                                             </div>
                                         </div>
+
 
                                     </div>
                                 </div>
@@ -656,3 +617,16 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
 };
 
 export default AddBookingModel;
+const ChargeInput = ({ label, name, values, setFieldValue }) => (
+    <div className="flex items-center gap-2">
+        <label className="text-sm font-medium w-40">{label}</label>
+        <input
+            type="number"
+            value={values[name] || 0}
+            onChange={(e) =>
+                setFieldValue(name, Number(e.target.value))
+            }
+            className="border rounded px-2 py-1 w-full"
+        />
+    </div>
+);

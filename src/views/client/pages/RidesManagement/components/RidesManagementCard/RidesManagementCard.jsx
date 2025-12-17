@@ -11,21 +11,24 @@ const RidesManagementCard = ({ ride }) => {
     };
 
     return (
-        
+
         <div className="bg-white rounded-[15px] p-4 mx-4 hover:shadow-md w-full overflow-x-auto">
-            <div className="flex flex-nowrap items-center gap-3 ">
+            <div className="flex items-center gap-3">
 
                 {/* Ride ID and Status */}
-                <div className="flex flex-col  items-center gap-2 w-44 flex-shrink-0">
-                    <p className="font-semibold text-xl text-center">{ride.id}</p>
-                    <p
-                        className={`text-[10px] px-3 py-1 rounded-full inline-block 
-        ${statusColors[ride.booking_status] || statusColors.default}`}
-                    >
-                        {ride.booking_status}
-                    </p>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                    <div className="w-40 text-center">
+                        <p className="font-semibold text-xl">{ride.id}</p>
+                        <p
+                            className={`text-[10px] px-3 py-1 rounded-full inline-block
+                        ${statusColors[ride.booking_status] || statusColors.default}`}
+                        >
+                            {ride.booking_status}
+                        </p>
+                    </div>
                 </div>
 
+                {/* <div className=""> */}
                 {/* Driver */}
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 flex-shrink-0">
                     <p className="text-xs font-semibold text-gray-500 text-center">Driver</p>
@@ -41,8 +44,10 @@ const RidesManagementCard = ({ ride }) => {
                 {/* Route */}
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 flex-shrink-0">
                     <p className="text-xs font-semibold text-gray-500 text-center">Route</p>
-                    <p className="text-black text-center text-sm">
-                        {ride.pickup_location} → {ride.destination_location}
+                    <p className="flex flex-col text-black text-center text-sm">
+                        {/* {ride.pickup_location} → {ride.destination_location} */}
+                        <span>{ride.pickup_location}</span>
+                        <span>{ride.destination_location}</span>
                     </p>
                 </div>
 
@@ -63,7 +68,7 @@ const RidesManagementCard = ({ ride }) => {
                     <p className="text-xs font-semibold text-gray-500 text-center">Distance</p>
                     <p className="text-black text-center text-sm">{ride.distance} km</p>
                 </div>
-
+                {/* </div> */}
             </div>
         </div>
 

@@ -121,5 +121,5 @@ export const GET_USAGE_MONITORING = "/super-admin/usage-monitoring";
 export const CHANGE_PASSWORD = "/super-admin/change-password";
 export const UPDATE_PROFILE = "/super-admin/update-profile";
 
-// api for API Keys
-export const GET_API_KEY = "/super-admin/api-keys";
+//api for General Notification
+export const SEND_NOTIFICATION = "/company/send-notification"

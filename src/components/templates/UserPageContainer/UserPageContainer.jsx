@@ -27,10 +27,8 @@ const UserPageContainer = ({ children }) => {
 
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
-  const tenantHybrid = (() => {
-    const data = getTenantData();
-    return (data?.uber_plot_hybrid || "").toLowerCase();
-  })();
+  const tenantData = getTenantData();
+  const tenantHybrid = (tenantData?.uber_plot_hybrid || "").toLowerCase();
   const userHybrid = (user?.uber_plot_hybrid || "").toLowerCase();
   const hybridMode = tenantHybrid || userHybrid;
   const navigate = useNavigate();
@@ -217,7 +215,7 @@ const UserPageContainer = ({ children }) => {
                   />
                 </div>
                 <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] min-w-[119px] truncate capitalize">
-                  <span>{user.name}</span>
+                  <span>{tenantData?.company_name || user?.name || "Admin"}</span>
                 </div>
               </div>
             </UserDropdown>

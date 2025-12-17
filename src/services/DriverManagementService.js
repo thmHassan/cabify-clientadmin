@@ -21,7 +21,6 @@ export async function apiCreateDriveManagement(data) {
 
 export async function apiGetDriverManagement(params) {
     try {
-        console.log("Making API call to:", GET_DRIVERS_MANAGEMENT, "with params:", params);
         return ApiService.fetchData({
             url: GET_DRIVERS_MANAGEMENT,
             method: METHOD_GET,

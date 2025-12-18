@@ -24,25 +24,33 @@ const DriverDocumentCard = ({ doc, onEdit, onDelete }) => {
                     <div className="flex justify-center items-start gap-2 flex-wrap">
                         {doc.frontPhoto && (
                             <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
-                                <span className="bg-[#10B981] rounded-sm text-white">✔</span>
+                                <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span className="text-sm font-medium">Front Photo</span>
                             </div>
                         )}
                         {doc.backPhoto && (
                             <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
-                                <span className="bg-[#10B981] rounded-sm text-white">✔</span>
+                                <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span className="text-sm font-medium">Back Photo</span>
                             </div>
                         )}
                         {doc.issueDate && (
                             <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
-                                <span className="bg-[#10B981] rounded-sm text-white">✔</span>
+                                <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span className="text-sm font-medium">Issue Date</span>
                             </div>
                         )}
                         {doc.expiryDate && (
                             <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
-                                <span className="bg-[#10B981] rounded-sm text-white">✔</span>
+                                <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span className="text-sm font-medium">Expiry Date</span>
                             </div>
                         )}

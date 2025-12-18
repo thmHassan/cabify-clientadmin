@@ -10,6 +10,7 @@ import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const AddVehicleType = () => {
   const [searchParams] = useSearchParams();
@@ -32,6 +33,19 @@ const AddVehicleType = () => {
   const [attributesEnabled, setAttributesEnabled] = useState(true);
   const [isAttributeModalOpen, setIsAttributeModalOpen] = useState(false);
   const [newAttributeName, setNewAttributeName] = useState("");
+  const [distanceUnit, setDistanceUnit] = useState("Miles");
+
+  useEffect(() => {
+    const tenant = getTenantData();
+    if (tenant?.units) {
+      const unit =
+        tenant.units.toLowerCase() === "km"
+          ? "Km"
+          : "Miles";
+
+      setDistanceUnit(unit);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchAllVehicleType = async () => {
@@ -481,7 +495,7 @@ const AddVehicleType = () => {
                             <ErrorMessage name="minimum_price" component="div" className="text-red-500 text-sm mt-1" />
                           </div>
                           <div>
-                            <FormLabel htmlFor="name">Minimum Distance (Miles) *</FormLabel>
+                            <FormLabel htmlFor="name">Minimum Distance ({distanceUnit})*</FormLabel>
                             <div className="h-14">
                               <Field
                                 type="text"
@@ -602,7 +616,9 @@ const AddVehicleType = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                       <div>
-                        <FormLabel htmlFor="name">Base Fare less Than (x) Miles</FormLabel>
+                        <FormLabel htmlFor="name">
+                          Base Fare less Than (x) {distanceUnit}
+                        </FormLabel>
                         <div className="h-14">
                           <Field
                             type="text"
@@ -614,7 +630,7 @@ const AddVehicleType = () => {
                         <ErrorMessage name="base_fare_less_than_x_miles" component="div" className="text-red-500 text-sm mt-1" />
                       </div>
                       <div>
-                        <FormLabel htmlFor="name">Base Fare less Then (x) Miles Price</FormLabel>
+                        <FormLabel htmlFor="name">Base Fare less Then (x) {distanceUnit} Price</FormLabel>
                         <div className="h-14">
                           <Field
                             type="text"
@@ -627,7 +643,7 @@ const AddVehicleType = () => {
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <FormLabel className="text-sm font-medium text-gray-700">Base Fare From (x) Miles to (X) Miles</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Base Fare From (x) {distanceUnit} to (X) {distanceUnit}</FormLabel>
                         <div className="flex flex-row gap-4 w-full">
                           <div>
                             <div className="h-14">
@@ -656,7 +672,7 @@ const AddVehicleType = () => {
                       </div>
 
                       <div>
-                        <FormLabel htmlFor="name">Base Fare From (x) Miles to (X) Miles Price</FormLabel>
+                        <FormLabel htmlFor="name">Base Fare From (x) {distanceUnit} to (X) {distanceUnit} Price</FormLabel>
                         <div className="h-14">
                           <Field
                             type="text"
@@ -668,7 +684,7 @@ const AddVehicleType = () => {
                         <ErrorMessage name="base_fare_from_to_price" component="div" className="text-red-500 text-sm mt-1" />
                       </div>
                       <div>
-                        <FormLabel htmlFor="name">Base Fare Greater Then (x) Miles</FormLabel>
+                        <FormLabel htmlFor="name">Base Fare Greater Then (x) {distanceUnit}</FormLabel>
                         <div className="h-14">
                           <Field
                             type="text"
@@ -681,7 +697,7 @@ const AddVehicleType = () => {
                       </div>
 
                       <div>
-                        <FormLabel htmlFor="name">Base Fare Greater Then (x) Miles Price</FormLabel>
+                        <FormLabel htmlFor="name">Base Fare Greater Then (x) {distanceUnit} Price</FormLabel>
                         <div className="h-14">
                           <Field
                             type="text"
@@ -736,26 +752,26 @@ const AddVehicleType = () => {
                           <ErrorMessage name="mileage_system" component="div" className="text-red-500 text-sm mb-2" />
                         </div>
                         <div className="w-full">
-                          <FormLabel htmlFor="name">First Mile / Km*</FormLabel>
+                          <FormLabel htmlFor="name">First {distanceUnit}*</FormLabel>
                           <div className="h-14">
                             <Field
                               type="text"
                               name="first_mile_km"
                               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                              placeholder="Enter First Mile / Km"
+                              placeholder={`Enter First ${distanceUnit}`}
                               disabled={values.mileage_system !== "fixed"}
                             />
                           </div>
                           <ErrorMessage name="first_mile_km" component="div" className="text-red-500 text-sm mt-1" />
                         </div>
                         <div className="w-full">
-                          <FormLabel htmlFor="name">Second Mile / Km*</FormLabel>
+                          <FormLabel htmlFor="name">Second {distanceUnit}*</FormLabel>
                           <div className="h-14">
                             <Field
                               type="text"
                               name="second_mile_km"
                               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                              placeholder="Enter Second Mile / Km"
+                              placeholder={`Enter Second ${distanceUnit}`}
                               disabled={values.mileage_system !== "fixed"}
                             />
                           </div>
@@ -1002,13 +1018,13 @@ const AddVehicleType = () => {
                       type="text"
                       value={newAttributeName}
                       onChange={(e) => setNewAttributeName(e.target.value)}
-                      className="w-full border rounded-md px-3 py-2 mb-4"
+                      className="w-full border border-[#8D8D8D] rounded-lg px-4 py-3 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
                       placeholder="Enter attribute"
                     />
-                    <div className="flex justify-end gap-3">
+                    <div className="pt-4 flex justify-end gap-3">
                       <Button
                         type="filledGray"
-                        className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                        className="!px-10 pt-4 pb-[15px] rounded-md leading-[25px] w-full sm:w-auto"
                         onClick={() => {
                           setIsAttributeModalOpen(false);
                           setNewAttributeName("");

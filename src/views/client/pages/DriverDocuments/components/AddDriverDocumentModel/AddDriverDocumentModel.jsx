@@ -166,7 +166,7 @@ const handleSubmit = async (values, { resetForm }) => {
                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                                         disabled={isLoading}
                                     >
-                                        <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Add Document")}</span>
+                                        <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Create")}</span>
                                     </Button>
                                 </div>
                             </Form>

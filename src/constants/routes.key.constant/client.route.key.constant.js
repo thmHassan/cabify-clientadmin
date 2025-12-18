@@ -4,6 +4,7 @@ export const CANCELLATIONS_KEY = "cancellations";
 export const DISPATCHER_KEY = "dispatcher";
 export const DRIVER_DOCUMENTS_KEY = "driver-documents";
 export const DRIVERS_MANAGEMENT_KEY = "drivers-management";
+export const DRIVERS_DETAILS_KEY = "driver-details"
 export const GENERAL_NOTIFICATION_KEY = "general-notification";
 export const LOST_FOUND_KEY = "lost-found";
 export const MANAGE_ZONES_KEY = "manage-zones";

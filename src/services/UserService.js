@@ -41,11 +41,11 @@ export async function apiGetUserById(params) {
     });
 }
 
-export async function apiEditUserStatus(data) {
+export async function apiEditUserStatus(params) {
     return ApiService.fetchData({
         url: POST_EDIT_USER_STATUS,
         method: METHOD_GET,
-        data,
+        params,
     });
 }
 

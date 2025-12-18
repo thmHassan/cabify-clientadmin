@@ -68,11 +68,3 @@ export async function apiDeleteDriverDocument(id) {
         method: METHOD_GET,
     });
 }
-
-export async function apieditDriverStatus(params) {
-    return ApiService.fetchData({
-        url: POST_EDIT_DRIVER_STATUS,
-        method: METHOD_GET,
-        params: params, 
-    });
-}

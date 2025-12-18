@@ -77,7 +77,7 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
           <Form>
             <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
               <span className="w-full text-center block truncate">
-                 {isEditMode ? 'Edit Dispatcher' : 'Add Dispatcher'}</span>
+                {isEditMode ? 'Edit Dispatcher' : 'Add Dispatcher'}</span>
             </div>
 
             {submitError && (
@@ -184,7 +184,8 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
                 className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                 disabled={isSubmitting}
               >
-                <span>{isSubmitting ? "Submitting..." : "Submit"}</span>
+                {/* <span>{isSubmitting ? "Submitting..." : "Submit"}</span> */}
+                <span>{isLoading ? (isEditMode ? "Updating..." : "Submitting...") : (isEditMode ? "Update" : "Submit")}</span>
               </Button>
             </div>
           </Form>

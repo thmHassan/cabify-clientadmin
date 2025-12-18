@@ -4,6 +4,7 @@ export const CANCELLATIONS_PATH = "/cancellations";
 export const DISPATCHER_PATH = "/dispatcher";
 export const DRIVER_DOCUMENTS_PATH = "/driver-documents";
 export const DRIVERS_MANAGEMENT_PATH = "/drivers-management";
+export const DRIVER_DETAILS_PATH = "/driver-management/:id"
 export const GENERAL_NOTIFICATION_PATH = "/general-notification";
 export const LOST_FOUND_PATH = "/lost-found";
 export const MANAGE_ZONES_PATH = "/manage-zones";

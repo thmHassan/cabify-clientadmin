@@ -47,6 +47,7 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
     const destinationBarikoiTimeoutRef = useRef(null);
     const pickupInputRefValue = useRef(null);
     const destinationInputRefValue = useRef(null);
+    const calculatedDistanceRef = useRef(null);
 
     const [fareCalculated, setFareCalculated] = useState(false);
     const [isCalculatingFares, setIsCalculatingFares] = useState(false);
@@ -570,6 +571,8 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                 const calculateFareFromApi = response?.data?.calculate_fare || response?.data?.data?.calculate_fare || 0;
                 setCalculatedFare(Number(calculateFareFromApi) || 0);
 
+                calculatedDistanceRef.current = response?.data?.distance || 0;
+
                 // Update total_charges with calculated fare plus any existing user charges
                 if (setFieldValueRef.current) {
                     const chargeFields = [
@@ -635,16 +638,23 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                 }
             }
 
+            if (calculatedDistanceRef.current == null) {
+                setSubmitError("Distance not calculated. Please calculate fares again.");
+                setIsLoading(false);
+                return;
+            }
+
             const formDataObj = new FormData();
 
             formDataObj.append('sub_company', values.sub_company || "");
+            formDataObj.append("distance", calculatedDistanceRef.current);
             formDataObj.append('multi_booking', values.multi_booking || "no");
             const multiDays = Array.isArray(values.multi_days) ? values.multi_days.join(",") : (values.multi_days || "");
             formDataObj.append('multi_days', values.multi_booking === "yes" ? multiDays : "");
 
             if (values.multi_booking === "yes") {
-                formDataObj.append('start-at', values.multi_start_at || "");
-                formDataObj.append('end-at', values.multi_end_at || "");
+                formDataObj.append('start_at', values.multi_start_at || "");
+                formDataObj.append('end_at', values.multi_end_at || "");
                 formDataObj.append('week', values.week_pattern || "");
             }
 
@@ -1389,7 +1399,7 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                             onChange={(e) => setFieldValue("booking_type", e.target.value)}
                                                         >
                                                             <option value="local">Local</option>
-                                                            <option value="outstation">Outstation</option>
+                                                            {/* <option value="outstation">Outstation</option> */}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -2330,7 +2340,7 @@ const AddBookingModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) 
                                                 <ChargeInput label="Extra Charges" name="extra_charges" values={values} onChange={(v) => updateChargeField("extra_charges", v)} />
                                                 <ChargeInput label="Congestion / Toll" name="congestion_toll" values={values} onChange={(v) => updateChargeField("congestion_toll", v)} />
                                                 <ChargeInput label="AC Waiting Charges" name="ac_waiting_charges" values={values} onChange={(v) => updateChargeField("ac_waiting_charges", v)} />
-                                                <div className="font-bold text-red-600">
+                                                <div className="font-bold text-[#10B981]">
                                                     <ChargeInput label="Total Charges" name="total_charges" values={values} readOnly />
                                                 </div>
                                             </div>

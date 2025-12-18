@@ -11,7 +11,7 @@ import RideHistory from "./components/RideHistory";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../../../store";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
-import { apiGetUserById, apiEditUser, apiGetRideHistory } from "../../../../../../services/UserService";
+import { apiGetUserById, apiEditUser, apiGetRideHistory, apiEditUserStatus } from "../../../../../../services/UserService";
 
 const EditUserDetails = () => {
     const { id } = useParams();
@@ -35,6 +35,7 @@ const EditUserDetails = () => {
         password: "",
         address: "",
         city: "",
+        status: ""
     });
 
     const [tableLoading, setTableLoading] = useState(false);
@@ -78,6 +79,7 @@ const EditUserDetails = () => {
                     phone_no: userData.phone_no || "",
                     address: userData.address || "",
                     city: userData.city || "",
+                    status: userData.status || "",
                 });
             } else {
                 setSubmitError("Failed to load user data");
@@ -167,6 +169,27 @@ const EditUserDetails = () => {
         navigate("/users");
     };
 
+    const handleStatusChange = async (userId, status) => {
+        try {
+            const response = await apiEditUserStatus({
+                id: userId,
+                status: status,
+            });
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                setFormData(prev => ({
+                    ...prev,
+                    status: status,
+                }));
+            } else {
+                console.error("Failed to change user status");
+            }
+        } catch (error) {
+            console.error("Change status error:", error);
+        }
+    };
+
+
     return (
         <div>
             <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -176,7 +199,41 @@ const EditUserDetails = () => {
                             <PageTitle title="User Details" />
                         </div>
                     </div>
-                    <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px]">
+                    <div className="w-full sm:mb-[50px] mb-8">
+                        <div className="flex flex-row justify-end gap-2">
+                            {formData?.status === "deactive" && (
+                                <Button
+                                    onClick={() => handleStatusChange(id, "active")}
+                                    className="border border-[#10b981] text-[#10b981] font-bold py-2 px-4 rounded-md"
+                                >
+                                    Active
+                                </Button>
+                            )}
+
+                            {formData?.status === "active" && (
+                                <Button
+                                    onClick={() => handleStatusChange(id, "deactive")}
+                                    className="border border-[#ff4747] text-[#ff4747] font-bold py-2 px-4 rounded-md"
+                                >
+                                    InActive
+                                </Button>
+                            )}
+
+                            <Button
+                                type="filled"
+                                btnSize="2xl"
+                                onClick={() => {
+                                    lockBodyScroll();
+                                    setIsSendNotificationModalOpen(true);
+                                }}
+                                className="w-full sm:w-auto !py-3.5"
+                            >
+                                Send Notification
+                            </Button>
+                        </div>
+
+                    </div>
+                    {/* <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px]">
                         <Button
                             type="filled"
                             btnSize="2xl"
@@ -190,7 +247,7 @@ const EditUserDetails = () => {
                                 <span>Send Notifiction</span>
                             </div>
                         </Button>
-                    </div>
+                    </div> */}
                 </div>
                 <div>
                     <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">

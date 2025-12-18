@@ -75,17 +75,16 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                         </p>
                     </div>
 
-                    {/* STATUS BUTTON */}
                     <button
                         ref={statusBtnRef}
                         onClick={handleStatusClick}
                         className={`h-12 w-28 px-4 py-2 rounded-full border flex items-center justify-between
-    ${tickets.status === "open"
+                            ${tickets.status === "open"
                                 ? "bg-[#b1f7d8] border-green-500 text-green-700"
                                 : "bg-[#faadad] border-red-500 text-red-700"
                             }`}
                     >
-                        <span className="text-black font-semibold text-sm capitalize">
+                        <span className="font-semibold  text-sm capitalize">
                             {tickets.status}
                         </span>
 

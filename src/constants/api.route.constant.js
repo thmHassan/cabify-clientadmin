@@ -33,6 +33,15 @@ export const CREATE_DRIVER = "/company/create-driver";
 export const EDIT_DRIVER = "/company/edit-driver";
 export const DELETE_DRIVER = "/company/delete-driver";
 export const POST_EDIT_DRIVER_STATUS = "/company/change-driver-status";
+export const ADD_WALLET_BALANCE = "/company/add-wallet-balance"
+export const DRIVER_DOCUMENT_LIST = "/company/driver-document-list"
+export const GET_BY_ID_DRIVER_DOCUMENT = "/company/driver-document"
+export const CHANGE_DRIVER_DOCUMENT_STATUS = "/company/change-status-document"
+export const DELETE_DRIVER_DOCUMENT = "/company/delete-driver-document"
+export const APPROVE_VEHICLE  = "/company/approv-vehicle-details"
+export const REJECT_VAHICLE = "/company/reject-vehicle-details"
+export const DRIVER_RIDE_HISTORY = "/company/driver-ride-history"
+export const SEND_DRIVER_NOTIFICATION = "/company/send-driver-notification"
 
 // api for driver's documents
 export const GET_DRIVERS_DOCUMENT = "/company/list-document-type";

@@ -87,7 +87,7 @@ const Cancellations = () => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>

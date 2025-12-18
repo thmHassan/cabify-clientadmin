@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { apiReplyTicket } from "../../../../../../services/TicketsServices";
+import Button from "../../../../../../components/ui/Button/Button";
 
 const AddTicketModel = ({ ticket, onClose, refreshList }) => {
     const [message, setMessage] = useState("");
@@ -75,25 +76,24 @@ const AddTicketModel = ({ ticket, onClose, refreshList }) => {
                 </>
             )}
 
-            {/* Buttons */}
             <div className="flex justify-end gap-3 mt-5">
 
                 <button
                     onClick={onClose}
-                    className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="px-6 py-2 border border-[#1F41BB] text-[#1F41BB] rounded-lg"
                 >
                     Close
                 </button>
 
-                {/* ONLY SHOW REPLY BUTTON IF NO REPLY */}
                 {!isViewOnly && (
-                    <button
+                    <Button
+                    type="filled"
                         onClick={handleReplySubmit}
                         disabled={loading}
-                        className="px-6 py-2 bg-[#1F41BB] text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="px-6 py-2 bg-[#1F41BB] text-white rounded-lg disabled:opacity-50"
                     >
                         {loading ? "Sending..." : "Reply"}
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>

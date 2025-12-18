@@ -15,8 +15,10 @@ import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import DriverManagementCard from "./components/DriversManagementCard";
 import { apiDeleteDriverManagement, apiGetDriverManagement } from "../../../../services/DriverManagementService";
+import { useNavigate } from "react-router-dom";
 
 const DriversManagement = () => {
+  const navigate = useNavigate()
   const [isDriversManagementModalOpen, setIsDriversManagementModalOpen] = useState({
     type: "new",
     isOpen: false,
@@ -220,14 +222,15 @@ const DriversManagement = () => {
                   key={driver.id}
                   driver={driver}
                   onDelete={handleDeleteClick}
-                  onEdit={(driverToEdit) => {
-                    lockBodyScroll();
-                    setIsDriversManagementModalOpen({
-                      isOpen: true,
-                      type: "edit",
-                      data: driverToEdit,
-                    });
-                  }}
+                  onEdit={(driverToEdit) => navigate(`/driver-management/${driverToEdit.id}`)}
+                  // onEdit={(driverToEdit) => {
+                  //   lockBodyScroll();
+                  //   setIsDriversManagementModalOpen({
+                  //     isOpen: true,
+                  //     type: "edit",
+                  //     data: driverToEdit,
+                  //   });
+                  // }}
                    onStatusChange={handleDriverStatusChange}
                 />
               ))}

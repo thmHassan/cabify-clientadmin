@@ -6,11 +6,13 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectO
 import Button from '../../../../components/ui/Button/Button';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
-import CustomSelect from '../../../../components/ui/CustomSelect';
 import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import RidesManagementCard from './components/RidesManagementCard';
 import { apiGetRidesManagement } from '../../../../services/RidesManagementServices';
+import ViewBookingModel from './components/ViewBookingModel';
+import { lockBodyScroll, unlockBodyScroll } from '../../../../utils/functions/common.function';
+import Modal from '../../../../components/shared/Modal/Modal';
 
 const RidesManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -34,6 +36,8 @@ const RidesManagement = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [rideManagementData, setRideManagementData] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedRide, setSelectedRide] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,6 +98,17 @@ const RidesManagement = () => {
       (item) =>
         item.booking_status?.toLowerCase() === activeTab.toLowerCase()
     );
+
+  const handleViewRide = (ride) => {
+    setSelectedRide(ride);
+    lockBodyScroll();
+    setIsViewOpen(true);
+  };
+  const closeViewModal = () => {
+    unlockBodyScroll();
+    setIsViewOpen(false);
+    setSelectedRide(null);
+  };
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -199,7 +214,8 @@ const RidesManagement = () => {
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
               {filteredRides.map((ride) => (
-                <RidesManagementCard key={ride.id} ride={ride} />
+                <RidesManagementCard key={ride.id} ride={ride}
+                  onView={handleViewRide} />
               ))}
             </div>
           </Loading>
@@ -219,6 +235,13 @@ const RidesManagement = () => {
           ) : null}
         </CardContainer>
       </div>
+
+      <Modal isOpen={isViewOpen} className="p-4 sm:p-6 lg:p-10">
+        <ViewBookingModel
+          initialValue={selectedRide}
+          setIsOpen={closeViewModal}
+        />
+      </Modal>
     </div>
   );
 }

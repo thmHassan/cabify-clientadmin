@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { apieditDriverStatus } from "../../../../../../services/DriversDocumentServices";
+import { apieditDriverStatus } from "../../../../../../services/DriverManagementService";
+
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [status, setStatus] = useState(driver.status);
@@ -75,7 +76,9 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Change Req</p>
-                    <p className="text-black text-center font-semibold text-sm">{driver.changeReq}</p>
+                    <p className="text-black text-center font-semibold text-sm">
+                        {Number(driver.vehicle_change_request) > 0 ? "Yes" : "No"}
+                    </p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
@@ -85,7 +88,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Wallet Balance</p>
-                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm">{driver.walletBalance}</p>
+                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm">{driver.wallet_balance}</p>
                 </div>
 
                 <UserDropdown options={statusOptions} itemData={driver}>

@@ -47,7 +47,8 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
                     <p className="text-xs text-center text-gray-500">Created At</p>
                     <p className="text-black text-center font-semibold text-sm">
                         {user?.createdAt ? formatDate(user.createdAt) : "12/12/2025"}
-                    </p>                </div>
+                    </p>
+                </div>
 
                 <UserDropdown options={actionOptions} itemData={user}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">

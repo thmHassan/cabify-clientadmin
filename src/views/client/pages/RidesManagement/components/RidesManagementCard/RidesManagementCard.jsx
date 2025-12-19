@@ -27,10 +27,10 @@ const RidesManagementCard = ({ ride, onView }) => {
             <div className="flex items-center gap-3">
 
                 <div className="flex flex-col gap-2 flex-shrink-0">
-                    <div className="w-40 text-center">
-                        <p className="font-semibold text-xl">{ride.id}</p>
+                    <div className="w-52">
+                        <p className="font-semibold text-xl">{ride.booking_id}</p>
                         <p
-                            className={`text-[10px] px-3 py-1 rounded-full inline-block
+                            className={`text-[10px] px-4 py-2 font-bold rounded-full inline-block
                         ${statusColors[ride.booking_status] || statusColors.default}`}
                         >
                             {ride.booking_status}
@@ -40,7 +40,7 @@ const RidesManagementCard = ({ ride, onView }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 flex-shrink-0">
                     <p className="text-xs font-semibold text-gray-500 text-center">Driver</p>
-                    <p className="text-black text-center text-sm">{ride.driver}</p>
+                    <p className="text-black text-center text-sm">{ride.driver|| "driver name"}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 flex-shrink-0">

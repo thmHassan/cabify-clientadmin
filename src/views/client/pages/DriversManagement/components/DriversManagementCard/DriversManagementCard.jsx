@@ -71,7 +71,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
             <div className="flex items-center justify-center gap-3">
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Vehicle Type</p>
-                    <p className="text-black text-center font-semibold text-sm">{driver.vahicleType}</p>
+                    <p className="text-black text-center font-semibold text-sm">{driver.vahicleType || "Bike"}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
@@ -83,7 +83,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Referral Code</p>
-                    <p className="text-black text-center font-semibold text-sm">{driver.referralCode}</p>
+                    <p className="text-black text-center font-semibold text-sm">{driver.referralCode || "123456"}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">

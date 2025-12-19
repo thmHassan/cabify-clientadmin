@@ -245,21 +245,8 @@ const ViewBookingModel = ({ initialValue = {}, setIsOpen }) => {
                                                                 )} */}
                                                             </div>
                                                         </div>
-
-
-                                                        <div className="text-center flex items-center max-sm:justify-end gap-2">
-                                                            <button
-                                                                type="button"
-                                                                // onClick={handleAddVia}
-                                                                className="px-2 py-2 w-24 border rounded-lg bg-blue-50 text-blue-600  hover:bg-blue-100"
-                                                            >
-                                                                +Via
-                                                            </button>
-                                                        </div>
                                                     </div>
                                                 </div>
-
-                                          
 
                                                 <div className="flex gap-4">
                                                     <div className="flex gap-2">
@@ -304,17 +291,6 @@ const ViewBookingModel = ({ initialValue = {}, setIsOpen }) => {
                                                                 <span className="text-xs text-gray-500">Loading...</span>
                                                             )} */}
                                                         </div>
-                                                    </div>
-                                                    <div className="text-center flex items-center max-sm:justify-end gap-2">
-                                                        {viaPoints.length > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleSwapDestinationWithLastVia}
-                                                                className="px-2 py-2 w-24 border rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                                            >
-                                                                ⇅ swap
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
 
@@ -581,23 +557,6 @@ const ViewBookingModel = ({ initialValue = {}, setIsOpen }) => {
 
                                             <div className="flex justify-between items-center">
                                                 <h3 className="font-semibold text-xl">Charges</h3>
-
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        type="button"
-                                                        className="px-4 py-3 text-xs bg-blue-600 text-white rounded"
-                                                        // disabled={isCalculatingFares}
-                                                        // onClick={() => handleCalculateFares(values)}
-                                                    >
-                                                        {isCalculatingFares ? "Calculating..." : "Calculate Fares"}
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        className="px-4 py-3 text-xs bg-blue-600 text-white rounded"
-                                                    >
-                                                        Show Map
-                                                    </Button>
-                                                </div>
                                             </div>
 
                                             <div className="flex justify-between">
@@ -668,15 +627,6 @@ const ViewBookingModel = ({ initialValue = {}, setIsOpen }) => {
                                     }}
                                 >
                                     <span>Cancel</span>
-                                </Button>
-                                <Button
-                                    btnType="submit"
-                                    btnSize="md"
-                                    type="filled"
-                                    className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
-                                    // disabled={isLoading || !fareCalculated}
-                                >
-                                    <span>{isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update" : "Add")}</span>
                                 </Button>
                             </div>
                         </Form>

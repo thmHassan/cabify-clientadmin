@@ -214,7 +214,7 @@ const UserPageContainer = ({ children }) => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] min-w-[119px] truncate capitalize">
+                <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] truncate capitalize">
                   <span>{tenantData?.company_name || user?.name || "Admin"}</span>
                 </div>
               </div>

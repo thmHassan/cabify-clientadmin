@@ -29,6 +29,7 @@ import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Modal from "../../../../components/shared/Modal/Modal";
 import AddBookingModel from "./components/AddBookingModel";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
+import AddBooking from "./components/AddBooking/AddBooking";
 
 const DASHBOARD_CARDS = [
   {
@@ -367,7 +368,7 @@ const Overview = () => {
           </div>
         </CardContainer>
       </div>
-      <Modal
+      {/* <Modal
         isOpen={isBookingModelOpen.isOpen}
         className="p-4 sm:p-6 lg:p-10"
       >
@@ -375,6 +376,16 @@ const Overview = () => {
           // initialValue={isBookingModelOpen.type === "edit" ? isBookingModelOpen.accountData : {}}
           setIsOpen={setIsBookingModelOpen}
           // onSubCompanyCreated={handleOnSubCompanyCreated}
+        />
+      </Modal> */}
+      <Modal
+        isOpen={isBookingModelOpen.isOpen}
+        className="p-4 sm:p-6 lg:p-10"
+      >
+        <AddBooking
+          // initialValue={isBookingModelOpen.type === "edit" ? isBookingModelOpen.accountData : {}}
+          setIsOpen={setIsBookingModelOpen}
+        // onSubCompanyCreated={handleOnSubCompanyCreated}
         />
       </Modal>
     </div>

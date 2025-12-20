@@ -9,7 +9,7 @@ import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import RidesManagementCard from './components/RidesManagementCard';
-import { apiGetRidesManagement } from '../../../../services/RidesManagementServices';
+import { apiGetRideById, apiGetRidesManagement } from '../../../../services/RidesManagementServices';
 import ViewBookingModel from './components/ViewBookingModel';
 import { lockBodyScroll, unlockBodyScroll } from '../../../../utils/functions/common.function';
 import Modal from '../../../../components/shared/Modal/Modal';
@@ -38,6 +38,7 @@ const RidesManagement = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,7 +61,7 @@ const RidesManagement = () => {
       }
 
       if (_selectedDate) {
-        params.date = _selectedDate; // pass selected date
+        params.date = _selectedDate;
       }
 
       const response = await apiGetRidesManagement(params);
@@ -99,11 +100,31 @@ const RidesManagement = () => {
         item.booking_status?.toLowerCase() === activeTab.toLowerCase()
     );
 
-  const handleViewRide = (ride) => {
-    setSelectedRide(ride);
+  const handleViewRide = async (ride) => {
+    setIsLoading(true);
     lockBodyScroll();
     setIsViewOpen(true);
+    
+    try {
+      // Fetch detailed ride information
+      const response = await apiGetRideById(ride.id);
+      
+      if (response?.status === 200 && response?.data?.detail) {
+        setSelectedRide(response.data.detail);
+      } else if (response?.data?.detail) {
+        setSelectedRide(response.data.detail);
+      } else {
+        console.error('Error fetching ride details');
+        setSelectedRide(ride); // Fallback to basic ride data
+      }
+    } catch (error) {
+      console.error('Error fetching ride details:', error);
+      setSelectedRide(ride); // Fallback to basic ride data
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   const closeViewModal = () => {
     unlockBodyScroll();
     setIsViewOpen(false);
@@ -129,15 +150,6 @@ const RidesManagement = () => {
         >
           All
         </Button>
-
-        {/* <Button
-          type="filled"
-          btnSize="2xl"
-          className={`${activeTab === "pob" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
-          onClick={() => setActiveTab("pob")}
-        >
-          POB
-        </Button> */}
 
         <Button
           type="filled"
@@ -174,15 +186,6 @@ const RidesManagement = () => {
         >
           Cancelled
         </Button>
-
-        {/* <Button
-          type="filled"
-          btnSize="2xl"
-          className={`${activeTab === "no-show" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
-          onClick={() => setActiveTab("no-show")}
-        >
-          No-show
-        </Button> */}
       </div>
       <div>
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
@@ -195,13 +198,6 @@ const RidesManagement = () => {
               />
             </div>
             <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
-              {/* <CustomSelect
-                variant={2}
-                options={STATUS_OPTIONS}
-                value={_selectedStatus}
-                onChange={(option) => setSelectedStatus(option)}
-                placeholder="All Status"
-              /> */}
               <input
                 type="date"
                 className="border rounded px-3 py-2"
@@ -214,8 +210,11 @@ const RidesManagement = () => {
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
               {filteredRides.map((ride) => (
-                <RidesManagementCard key={ride.id} ride={ride}
-                  onView={handleViewRide} />
+                <RidesManagementCard 
+                  key={ride.id} 
+                  ride={ride}
+                  onView={handleViewRide} 
+                />
               ))}
             </div>
           </Loading>
@@ -237,10 +236,10 @@ const RidesManagement = () => {
       </div>
 
       <Modal isOpen={isViewOpen} className="p-4 sm:p-6 lg:p-10">
-        <ViewBookingModel
-          initialValue={selectedRide}
-          setIsOpen={closeViewModal}
-        />
+          <ViewBookingModel
+            initialValue={selectedRide}
+            setIsOpen={closeViewModal}
+          />
       </Modal>
     </div>
   );

@@ -56,6 +56,7 @@ export const GET_DRIVER_RATING = "/company/driver-ratings"
 
 // api for Rides Management
 export const GET_RIDE_MANAGEMENT = "/company/booking-list"
+export const GET_RIDE_BY_ID = "/company/ride-detail"
 
 // api for plots
 export const GET_PLOTS = "/company/list-plot";

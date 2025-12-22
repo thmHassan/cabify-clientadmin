@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
@@ -20,16 +21,24 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         },
     ];
 
-    const statusOptions = [
-        {
-            label: "Accepted",
-            onClick: () => handleStatusChange("accepted"),
-        },
-        {
-            label: "Rejected",
-            onClick: () => handleStatusChange("rejected"),
-        },
-    ];
+    const getStatusOptions = () => {
+        const allStatuses = [
+            {
+                label: "Accepted",
+                onClick: () => handleStatusChange("accepted"),
+            },
+            {
+                label: "Rejected",
+                onClick: () => handleStatusChange("rejected"),
+            },
+            {
+                label: "Pending",
+                onClick: () => handleStatusChange("pending"),
+            },
+        ];
+
+        return allStatuses.filter(option => option.label.toLowerCase() !== status);
+    };
 
     const handleStatusChange = async (newStatus) => {
         if (newStatus === status) return;
@@ -91,20 +100,20 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     <p className="text-black text-center text-[#1F41BB] font-semibold text-sm">{driver.wallet_balance}</p>
                 </div>
 
-                <UserDropdown options={statusOptions} itemData={driver}>
+                <UserDropdown options={getStatusOptions()} itemData={driver}>
                     <div
                         className={`${status === "accepted"
                             ? "bg-[#10B981] text-white"
                             : status === "rejected"
                                 ? "bg-[#FF4747] text-white"
-                                : "bg-gray-300 text-black"
+                                : "bg-[#F59E0B] text-white"
                             } text-center xl:h-10 lg:h-10 md:h-10 h-10 w-28 xl:py-3 lg:py-3 md:py-3 py-1 rounded-full flex items-center justify-center cursor-pointer`}
                     >
                         <p className="font-semibold text-sm">
                             {loading ? "Updating..." : status.charAt(0).toUpperCase() + status.slice(1)}
                         </p>
                         <svg
-                            className="w-4 h-4 text-black ml-2"
+                            className="w-4 h-4 text-white ml-2"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"

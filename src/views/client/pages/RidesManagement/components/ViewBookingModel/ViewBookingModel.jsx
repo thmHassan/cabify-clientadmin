@@ -86,10 +86,10 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                         {rideData?.booking_status && (
                                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                rideData.booking_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    rideData.booking_status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                        rideData.booking_status === 'waiting' ? 'bg-blue-100 text-blue-800' :
-                                                            rideData.booking_status === 'arrived' ? 'bg-purple-100 text-purple-800' :
+                                                rideData.booking_status === 'pending' ? 'bg-[#F5C60B] text-white' :
+                                                    rideData.booking_status === 'cancelled' ? 'bg-[#FF4747] text-white' :
+                                                        rideData.booking_status === 'waiting' ? 'bg-[#1F41BB] text-white' :
+                                                            rideData.booking_status === 'arrived' ? 'bg-purple-100 text-white' :
                                                                 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {rideData.booking_status.toUpperCase()}
@@ -139,10 +139,19 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                                                                     const isChecked = values.multi_days.includes(day.toLowerCase());
                                                                     return (
-                                                                        <label key={day} className="flex items-center gap-2 text-sm sm:text-base cursor-pointer">
-                                                                            <input type="checkbox" checked={isChecked} disabled className="w-4 h-4" />
+                                                                        <label
+                                                                            key={day}
+                                                                            className="flex items-center gap-2 text-sm sm:text-base cursor-pointer"
+                                                                        >
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={isChecked}
+                                                                                // disabled
+                                                                                className="w-4 h-4 accent-[#1F41BB]"
+                                                                            />
                                                                             {day}
                                                                         </label>
+
                                                                     );
                                                                 })}
                                                             </div>
@@ -186,7 +195,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     <div className="flex w-full items-center gap-2 md:text-center">
                                                         <label className="text-sm font-semibold md:text-center">Pick up Time</label>
                                                         <div className="w-full flex gap-2">
-                                                            <select
+                                                            {/* <select
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                                 value={values.pickup_time_type || ""}
                                                                 disabled
@@ -194,6 +203,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 <option value="asap">ASAP</option>
                                                                 <option value="time">Pick a time</option>
                                                             </select>
+
                                                             {values.pickup_time_type === "time" && (
                                                                 <input
                                                                     type="time"
@@ -201,7 +211,27 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                     value={values.pickup_time || ""}
                                                                     disabled
                                                                 />
+                                                            )} */}
+                                                            {/* ASAP input */}
+                                                            {values.pickup_time_type === "asap" && (
+                                                                <input
+                                                                    type="text"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
+                                                                    value={values.pickup_time || "asap"}
+                                                                // disabled
+                                                                />
                                                             )}
+
+
+                                                            {values.pickup_time_type === "time" && (
+                                                                <input
+                                                                    type="time"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
+                                                                    value={values.pickup_time}
+                                                                    disabled
+                                                                />
+                                                            )}
+
                                                         </div>
                                                     </div>
 
@@ -217,14 +247,28 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                     <div className="flex w-full items-center gap-2 md:text-center">
                                                         <label className="text-sm font-semibold mb-1">Booking Type</label>
-                                                        <select
+                                                        {/* <select
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                             value={values.booking_type || ""}
                                                             disabled
                                                         >
                                                             <option value="local">Local</option>
                                                             <option value="outstation">Outstation</option>
-                                                        </select>
+                                                        </select> */}
+                                                        <input
+                                                            type="text"
+                                                            name="booking_type"
+                                                            value={
+                                                                values.booking_type === "local"
+                                                                    ? "Local"
+                                                                    : values.booking_type === "outstation"
+                                                                        ? "Outstation"
+                                                                        : ""
+                                                            }
+                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-gray-50"
+                                                            disabled
+                                                        />
+
                                                     </div>
                                                 </div>
 
@@ -344,7 +388,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                                 type="radio"
                                                                                 name="journey"
                                                                                 checked={values.journey_type === "one_way"}
-                                                                                disabled
+                                                                            // disabled
                                                                             />
                                                                             One Way
                                                                         </label>
@@ -354,7 +398,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                                 type="radio"
                                                                                 name="journey"
                                                                                 checked={values.journey_type === "return"}
-                                                                                disabled
+                                                                            // disabled
                                                                             />
                                                                             Return
                                                                         </label>
@@ -364,7 +408,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                                 type="radio"
                                                                                 name="journey"
                                                                                 checked={values.journey_type === "wr"}
-                                                                                disabled
+                                                                            // disabled
                                                                             />
                                                                             W/R
                                                                         </label>
@@ -374,16 +418,15 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 <div className="flex-1">
                                                                     <div className="text-center flex items-center gap-2">
                                                                         <label className="text-sm font-semibold mb-1">Accounts</label>
+
                                                                         <div className="w-full">
-                                                                            <select
+                                                                            <input
                                                                                 name="account"
                                                                                 value={values.account || ""}
                                                                                 className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-2 py-2 w-full"
                                                                                 disabled
                                                                             >
-                                                                                <option value="">Select Account</option>
-                                                                                {values.account && <option value={values.account}>{values.account}</option>}
-                                                                            </select>
+                                                                            </input>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -393,29 +436,27 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         <div className="flex gap-2 w-full">
                                                             <div className="flex md:flex-row flex-row gap-2 w-full">
                                                                 <label className="text-sm font-semibold w-20">Vehicle</label>
-                                                                <select
+                                                                <input
+                                                                    type="text"
                                                                     name="vehicle"
-                                                                    value={values.vehicle || ""}
+                                                                    value={rideData?.vehicle_name || values.vehicle || ""}
+                                                                    placeholder="Select Vehicle"
                                                                     className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
                                                                     disabled
-                                                                >
-                                                                    <option value="">Select Vehicle</option>
-                                                                    {values.vehicle && <option value={values.vehicle}>{rideData?.vehicle_name || values.vehicle}</option>}
-                                                                </select>
+                                                                />
                                                             </div>
 
                                                             <div className="flex md:flex-row flex-row gap-2 w-full">
                                                                 <label className="text-sm font-semibold w-20">Driver</label>
                                                                 <div className="w-full">
-                                                                    <select
+                                                                    <input
+                                                                        type="text"
                                                                         name="driver"
-                                                                        value={values.driver}
+                                                                        placeholder="Driver Name"
+                                                                        value={rideData?.driver_name || values.driver || ""}
+                                                                        readOnly
                                                                         className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
-                                                                        disabled
-                                                                    >
-                                                                        <option value="">Select Driver</option>
-                                                                        {values.driver && <option value={values.driver}>{rideData?.driver_name || values.driver}</option>}
-                                                                    </select>
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -427,7 +468,8 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={rideData?.booking_system === 'auto_dispatch'}
-                                                                    disabled
+                                                                    className="w-4 h-4 accent-[#1F41BB]"
+                                                                // disabled
                                                                 />
                                                                 Auto Dispatch
                                                             </label>
@@ -436,7 +478,8 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={rideData?.booking_system === 'bidding'}
-                                                                    disabled
+                                                                    className="w-4 h-4 accent-[#1F41BB]"
+                                                                // disabled
                                                                 />
                                                                 Bidding
                                                             </label>
@@ -564,7 +607,9 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                 <ChargeInput label="Extra Charges" name="extra_charges" values={values} readOnly />
                                                 <ChargeInput label="Congestion / Toll" name="congestion_toll" values={values} readOnly />
                                                 <ChargeInput label="AC Waiting Charges" name="ac_waiting_charges" values={values} readOnly />
-                                                <ChargeInput label="Total Charges" name="total_charges" values={values} readOnly />
+                                                <div className="text-[#10B981]">
+                                                    <ChargeInput label="Total Charges" name="total_charges" values={values} readOnly />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -595,7 +640,7 @@ export default ViewBookingModel;
 
 const ChargeInput = ({ label, name, values, onChange, readOnly = false }) => (
     <div className="flex items-center gap-2">
-        <label className="text-sm font-medium w-40">{label}</label>
+        <label className="text-sm font-semibold w-40">{label}</label>
         <input
             type="number"
             value={values[name] || 0}

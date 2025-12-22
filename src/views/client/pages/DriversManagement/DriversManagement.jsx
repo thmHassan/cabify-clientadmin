@@ -205,7 +205,7 @@ const DriversManagement = () => {
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
-            <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+            {/* <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
               <CustomSelect
                 variant={2}
                 options={STATUS_OPTIONS}
@@ -213,7 +213,7 @@ const DriversManagement = () => {
                 // onChange={handleStatusChange}
                 placeholder="All Status"
               />
-            </div>
+            </div> */}
           </div>
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">

@@ -513,12 +513,12 @@ const AddVehicleType = () => {
                             <label class="block text-gray-700 font-medium mb-1">Vehicle Type Image</label>
                             {existingVehicleImageUrl && !vehicleImage && (
                               <div class="mb-3">
-                                <p class="text-sm text-gray-600 mb-2">Current Image:</p>
+                                {/* <p class="text-sm text-gray-600 mb-2">Current Image:</p>
                                 <img
                                   src={existingVehicleImageUrl}
                                   alt="Current vehicle type"
                                   class="w-32 h-32 object-contain border border-gray-300 rounded-lg"
-                                />
+                                /> */}
                               </div>
                             )}
                             {/* {vehicleImage && (
@@ -544,9 +544,9 @@ const AddVehicleType = () => {
                               }}
                               class="w-full h-14 border border-gray-300 rounded-lg px-4 py-2 bg-white"
                             />
-                            {isEditMode && !vehicleImage && (
+                            {/* {isEditMode && !vehicleImage && (
                               <p class="text-xs text-gray-500 mt-1">Leave empty to keep current image</p>
-                            )}
+                            )} */}
                             {errors.vehicle_image && (
                               <div className="text-red-500 text-sm mt-1">{errors.vehicle_image}</div>
                             )}

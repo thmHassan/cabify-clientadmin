@@ -1,8 +1,6 @@
-import { ErrorMessage, Form, Formik, useFormikContext } from "formik";
+import { ErrorMessage, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
-import * as Yup from "yup";
 import Maps from "./components/Maps";
-import Charges from "./components/Charges";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import { apiGetAccount } from "../../../../../../services/AccountService";
@@ -52,7 +50,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const [fareCalculated, setFareCalculated] = useState(false);
     const [isBookingLoading, setIsBookingLoading] = useState(false);
     const [isMultiBooking, setIsMultiBooking] = useState(false);
-    // const { values, setFieldValue } = useFormikContext();
 
     const tenant = getTenantData();
     const SEARCH_API = tenant?.search_api;
@@ -622,7 +619,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                 onSubmit={handleCreateBooking}
             >
                 {({ values, setFieldValue }) => {
-                    // Update base_fare and total_charges when fareData changes
                     useEffect(() => {
                         if (fareData?.calculate_fare) {
                             setFieldValue('base_fare', fareData.calculate_fare);
@@ -675,7 +671,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div className="flex items-center max-sm:justify-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
+                                        <div className="flex items-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
                                             <span className="text-sm mr-2">Single Booking</span>
 
                                             <label className="relative inline-flex items-center cursor-pointer">
@@ -693,8 +689,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex xl:flex-row lg:flex-row md:flex-col flex-col gap-4">
 
+                                <div className="flex xl:flex-row lg:flex-row md:flex-col flex-col gap-4">
                                     <div className="">
                                         {isMultiBooking && (
                                             <div className="w-full mb-3">
@@ -704,7 +700,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         Select day of the week
                                                     </span>
 
-                                                    <div className="flex flex-wrap gap-3">
+                                                    <div className="flex flex-wrap gap-3 pb-3">
                                                         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                                                             const value = day.toLowerCase();
                                                             const checked = values.multi_days?.includes(value);
@@ -736,10 +732,10 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="text-sm font-semibold">Week</label>
+                                                    <div className="flex flex-row gap-2 inline-flex">
+                                                        <label className="text-sm font-semibold md:w-20 w-20">Week</label>
                                                         <select
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm"
+                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                             value={values.week_pattern || ""}
                                                             onChange={(e) =>
                                                                 setFieldValue("week_pattern", e.target.value)
@@ -751,11 +747,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         </select>
                                                     </div>
 
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="text-sm font-semibold">Start At</label>
+                                                    <div className="flex flex-row gap-2 inline-flex">
+                                                        <label className="text-sm font-semibold md:w-9 w-20">Start At</label>
                                                         <input
                                                             type="date"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm"
+                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                             value={values.multi_start_at || ""}
                                                             onChange={(e) =>
                                                                 setFieldValue("multi_start_at", e.target.value)
@@ -763,11 +759,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         />
                                                     </div>
 
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="text-sm font-semibold">End At</label>
+                                                    <div className="flex flex-row gap-2 inline-flex">
+                                                        <label className="text-sm font-semibold md:w-20 w-20">End At</label>
                                                         <input
                                                             type="date"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm"
+                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                             value={values.multi_end_at || ""}
                                                             onChange={(e) =>
                                                                 setFieldValue("multi_end_at", e.target.value)
@@ -783,10 +779,10 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                 <div className="lg:col-span-3 space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
                                                         <div className="flex w-full items-center gap-2 md:text-center">
-                                                            <label className="text-sm font-semibold md:text-center">Pick up Time</label>
+                                                            <label className="text-sm font-semibold md:text-center w-20">Pick up Time</label>
                                                             <div className="w-full flex gap-2">
                                                                 <select
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px]  px-3 py-2 text-sm w-full"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                                     value={values.pickup_time_type || ""}
                                                                     onChange={(e) => {
                                                                         const val = e.target.value;
@@ -811,8 +807,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex w-full items-center gap-2 md:text-center">
-                                                            <label className="text-sm font-semibold mb-1">Date</label>
+                                                        <div className="flex w-full items-center gap-2">
+                                                            <label className="text-sm font-semibold mb-1 w-20 md:w-auto">Date</label>
                                                             <input
                                                                 type="date"
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
@@ -822,7 +818,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         </div>
 
                                                         <div className="flex w-full items-center gap-2 md:text-center">
-                                                            <label className="text-sm font-semibold mb-1">Booking Type</label>
+                                                            <label className="text-sm font-semibold mb-1 w-20">Booking Type</label>
                                                             <select
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                                 value={values.booking_type || ""}
@@ -835,7 +831,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="relative flex gap-2 w-full">
+                                                    <div className="relative flex gap-2 w-full flex-col md:flex-row">
                                                         {/* <label className="font-semibold">Pick up Point</label> */}
                                                         <InputBox
                                                             label="Pick up Point"
@@ -851,8 +847,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             onSelect={(i) => selectLocation(i, "pickup", setFieldValue)}
 
                                                         />
-                                                        {showPickup && (
-                                                            <ul className="absolute bg-white border w-full z-50 max-h-48 overflow-auto">
+                                                        {/* {showPickup && (
+                                                            <ul className="absolute bg-white border w-20 z-50 max-h-48 overflow-auto">
                                                                 {pickupSuggestions.map((i, idx) => (
                                                                     <li
                                                                         key={idx}
@@ -863,21 +859,23 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                     </li>
                                                                 ))}
                                                             </ul>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setFieldValue("via_points", [...values.via_points, ""]);
-                                                                invalidateFare();
-                                                            }}
-                                                            className="px-2 py-2 w-24 border rounded-lg bg-blue-50 text-blue-600  hover:bg-blue-100"
-                                                        >
-                                                            +Via
-                                                        </button>
+                                                        )} */}
+                                                        <div className="flex justify-end">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFieldValue("via_points", [...values.via_points, ""]);
+                                                                    invalidateFare();
+                                                                }}
+                                                                className="px-2 py-2 w-24 border rounded-lg bg-blue-50 text-blue-600  hover:bg-blue-100"
+                                                            >
+                                                                +Via
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     {values.via_points.map((_, i) => (
-                                                        <div key={i} className="relative flex flex-row gap-4 w-full">
+                                                        <div key={i} className="relative flex gap-2 w-full flex-col md:flex-row">
                                                             <InputBox
                                                                 label={`Via ${i + 1}`}
                                                                 value={values.via_points[i]}
@@ -893,20 +891,20 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                     selectLocation(i2, "via", setFieldValue, i)
                                                                 }
                                                             />
-                                                            {showVia[i] && (
-                                                                <ul className="absolute bg-white border w-full z-50 overflow-auto">
-                                                                    {(viaSuggestions[i] || []).map((item, idx) => (
-                                                                        <li
-                                                                            key={idx}
-                                                                            onClick={() => selectLocation(item, "via", setFieldValue, i)}
-                                                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                                        >
-                                                                            {item.label}
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            )}
-                                                            <div className="flex gap-2">
+                                                            {/* {showVia[i] && (
+                                                                    <ul className="absolute bg-white border w-full z-50 overflow-auto">
+                                                                        {(viaSuggestions[i] || []).map((item, idx) => (
+                                                                            <li
+                                                                                key={idx}
+                                                                                onClick={() => selectLocation(item, "via", setFieldValue, i)}
+                                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                                            >
+                                                                                {item.label}
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )} */}
+                                                            <div className="flex justify-end gap-2">
                                                                 <button
                                                                     title="Swap with destination"
                                                                     type="button"
@@ -935,13 +933,10 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         </div>
                                                     ))}
 
-
-
-                                                    <div className="flex gap-4">
-                                                        <div className="relative">
-                                                            {/* <label className="font-semibold">Destination</label> */}
+                                                    <div className="flex gap-4 ">
+                                                        <div className="relative flex gap-2 w-full flex-col md:flex-row">
                                                             <InputBox
-                                                                label="Destination"
+                                                                label="Desti-nation"
                                                                 value={values.destination}
                                                                 plot={destinationPlot}
                                                                 suggestions={destinationSuggestions}
@@ -953,7 +948,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 }}
                                                                 onSelect={(i) => selectLocation(i, "destination", setFieldValue)}
                                                             />
-                                                            {showDestination && (
+                                                            {/* {showDestination && (
                                                                 <ul className="absolute bg-white border w-full z-50 max-h-48 overflow-auto">
                                                                     {destinationSuggestions.map((i, idx) => (
                                                                         <li
@@ -967,7 +962,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                         </li>
                                                                     ))}
                                                                 </ul>
-                                                            )}
+                                                            )} */}
                                                         </div>
                                                     </div>
 
@@ -975,23 +970,23 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         <div className="w-full gap-3 grid">
                                                             {/* name, email */}
                                                             <div className="flex md:flex-row flex-col gap-2">
-                                                                <div className="text-left flex gap-2">
-                                                                    <label className="text-sm font-semibold mb-1 w-20">Name</label>
+                                                                <div className="text-left flex">
+                                                                    <label className="text-sm font-semibold mb-1 md:w-28 w-20">Name</label>
                                                                     <input
                                                                         type="text"
                                                                         placeholder="Enter Name"
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
                                                                         value={values.name || ""}
                                                                         onChange={(e) => setFieldValue("name", e.target.value)}
                                                                     />
                                                                 </div>
 
-                                                                <div className="text-left flex items-center gap-2">
-                                                                    <label className="text-sm font-semibold mb-1 w-11">Email</label>
+                                                                <div className="text-left flex items-center md:gap-2">
+                                                                    <label className="text-sm font-semibold mb-1 md:w-11 w-20">Email</label>
                                                                     <input
                                                                         type="text"
                                                                         placeholder="Enter Email"
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
                                                                         value={values.email || ""}
                                                                         onChange={(e) => setFieldValue("email", e.target.value)}
                                                                     />
@@ -1000,26 +995,28 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
                                                             {/* Mobile / Tel */}
                                                             <div className="flex md:flex-row flex-col gap-2">
-                                                                <div className="text-left flex items-left gap-2">
-                                                                    <label className="text-sm font-semibold mb-1 w-20">Mobile No</label>
+                                                                <div className="text-left flex">
+                                                                    <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
                                                                     <input
                                                                         type="text"
                                                                         placeholder="Enter Mobile No"
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full md:w-full"
                                                                         value={values.phone_no || ""}
                                                                         onChange={(e) => setFieldValue("phone_no", e.target.value)}
                                                                     />
                                                                 </div>
 
-                                                                <div className="text-center flex items-center gap-2">
-                                                                    <label className="text-sm font-semibold mb-1">Tel No.</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder="Enter Telephone no"
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-                                                                        value={values.tel_no || ""}
-                                                                        onChange={(e) => setFieldValue("tel_no", e.target.value)}
-                                                                    />
+                                                                <div className="flex md:flex-row flex-col gap-2">
+                                                                    <div className="flex w-full gap-2">
+                                                                        <label className="text-sm font-semibold mb-1 max-sm:w-16">Tel No.</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            placeholder="Enter Telephone no"
+                                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
+                                                                            value={values.tel_no || ""}
+                                                                            onChange={(e) => setFieldValue("tel_no", e.target.value)}
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
@@ -1027,12 +1024,13 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             <div className="w-full">
                                                                 <div className="md:flex-row flex-col flex gap-2 w-full">
                                                                     <div className="text-left flex items-center gap-2">
-                                                                        <label className="text-sm font-semibold w-20">Journey</label>
+                                                                        <label className="text-sm font-semibold md:w-16">Journey</label>
                                                                         <div className="flex items-center gap-2">
                                                                             <label className="flex items-center gap-1">
                                                                                 <input
                                                                                     type="radio"
                                                                                     name="journey"
+                                                                                    className="w-"
                                                                                     checked={values.journey_type === "one_way"}
                                                                                     onChange={() => {
                                                                                         setFieldValue("journey_type", "one_way");
@@ -1072,7 +1070,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
                                                                     <div className="flex-1">
                                                                         <div className="text-center flex items-center gap-2">
-                                                                            <label className="text-sm font-semibold mb-1">Accounts</label>
+                                                                            <label className="text-sm md:text-right text-left font-semibold mb-1 md:w-24 w-14">Accounts</label>
                                                                             <div className="w-full">
                                                                                 <select
                                                                                     name="account"
@@ -1100,9 +1098,9 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             </div>
 
                                                             {/* vehicle, driver */}
-                                                            <div className="flex gap-2 w-full">
+                                                            <div className="flex gap-2 w-full md:flex-row flex-col">
                                                                 <div className="flex md:flex-row items-center flex-row gap-2 w-full">
-                                                                    <label className="text-sm font-semibold w-28">Vehicle</label>
+                                                                    <label className="text-sm font-semibold md:w-24 w-16">Vehicle</label>
                                                                     <select
                                                                         name="vehicle"
                                                                         value={values.vehicle || ""}
@@ -1124,7 +1122,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 </div>
 
                                                                 <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
-                                                                    <label className="text-sm font-semibold w-20">Driver</label>
+                                                                    <label className="text-sm font-semibold text-left md:w-16 w-16">Driver</label>
                                                                     <div className="w-full">
                                                                         <select
                                                                             name="driver"
@@ -1148,7 +1146,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
                                                         {/* Auto Dispatch + Bidding - Only show if driver is not selected */}
                                                         {!values.driver && (
-                                                            <div className="border rounded-lg h-28 md:mt-10 mx-4 px-4 py-4 w-full bg-white shadow-sm">
+                                                            <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
                                                                 <div className="flex flex-col gap-3">
                                                                     <label className="flex items-center gap-2">
                                                                         <input
@@ -1183,8 +1181,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                     </div>
 
                                                     <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
-                                                        <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1 w-20">Passenger</label>
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm font-semibold mb-1 md:w-28 w-20">Passenger</label>
                                                             <input
                                                                 type="number"
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
@@ -1194,7 +1192,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         </div>
 
                                                         <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1 w-20">Luggage</label>
+                                                            <label className="text-sm font-semibold mb-1 md:w-28 w-20">Luggage</label>
                                                             <input
                                                                 type="number"
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
@@ -1203,8 +1201,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             />
                                                         </div>
 
-                                                        <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1 w-full">
+                                                        <div className="md:text-center flex md:items-center gap-2">
+                                                            <label className="text-sm font-semibold mb-1 md:w-28 w-20">
                                                                 Hand Luggage
                                                             </label>
                                                             <input
@@ -1217,8 +1215,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                     </div>
 
                                                     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-                                                        <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1 w-28">Special Req</label>
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm font-semibold mb-1 md:w-20 w-20">Special Req</label>
                                                             <input
                                                                 type="text"
                                                                 placeholder="Write here..."
@@ -1227,8 +1225,8 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 onChange={(e) => setFieldValue("special_request", e.target.value)}
                                                             />
                                                         </div>
-                                                        <div className="text-center flex items-center gap-2">
-                                                            <label className="text-sm font-semibold mb-1 w-28">Payment Ref</label>
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm font-semibold mb-1 md:w-20 w-20">Payment Ref</label>
                                                             <input
                                                                 type="text"
                                                                 placeholder="Write here..."
@@ -1267,7 +1265,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                 </div>
 
                                 <div className="bg-blue-50 p-4 rounded-lg space-y-4 mt-7">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex md:justify-between max-sm:flex-col md:items-center">
                                         <h3 className="font-semibold text-xl">Charges</h3>
                                         <div className="flex justify-end gap-2 mt-4">
                                             <Button
@@ -1289,7 +1287,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between max-sm:flex-col gap-2">
                                         <div className="flex gap-4 items-center">
 
                                             <label className="flex items-center gap-2 text-sm">
@@ -1316,7 +1314,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                             </select>
                                         </div>
 
-                                        <div className="w-60">
+                                        <div className="md:w-60">
                                             <ChargeInput
                                                 label="Booking Fees Charges"
                                                 name="booking_fee_charges"
@@ -1390,33 +1388,35 @@ const InputBox = ({
     plot,
     placeholder
 }) => (
-    <div className="relative flex flex-row gap-2">
-        <label className="font-semibold text-sm w-20">{label}</label>
-        <input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-        />
-        {show && (
-            <ul className="absolute bg-white border w-full z-50 max-h-60 overflow-auto">
-                {suggestions.map((i, idx) => (
-                    <li
-                        key={idx}
-                        onClick={() => onSelect(i)}
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                        {i.label} <span className="text-xs text-gray-400">({i.source})</span>
-                    </li>
-                ))}
-            </ul>
-        )}
-        <input
-            readOnly
-            placeholder="Plot Name"
-            value={plot || ""}
-            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-        />
+    <div className="relative flex md:flex-row max-sm:w-full gap-2">
+        <label className="font-semibold text-sm md:w-20 w-20 text-left">{label}</label>
+        <div className="flex max-sm:flex-col gap-2 w-full">
+            <input
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+            />
+            {show && (
+                <ul className="absolute mt-12 bg-white border md:w-52 w-58 z-50 max-h-60 overflow-auto">
+                    {suggestions.map((i, idx) => (
+                        <li
+                            key={idx}
+                            onClick={() => onSelect(i)}
+                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                            {i.label} <span className="text-xs text-gray-400"></span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            <input
+                readOnly
+                placeholder="Plot Name"
+                value={plot || ""}
+                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+            />
+        </div>
     </div>
 );
 

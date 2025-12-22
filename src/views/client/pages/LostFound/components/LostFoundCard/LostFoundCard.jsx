@@ -1,7 +1,16 @@
 import React from "react";
+import UserDropdown from "../../../../../../components/shared/UserDropdown";
+import Button from "../../../../../../components/ui/Button/Button";
+import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
-const LostFoundCard = ({ lostfound }) => {
-    
+const LostFoundCard = ({ lostfound, onView }) => {
+    const actionOptions = [
+        {
+            label: "View",
+            onClick: () => onView(lostfound),
+        },
+    ];
+
     return (
         <div
             className="bg-white rounded-[15px] p-4 flex items-center justify-between hover:shadow-md overflow-x-auto"
@@ -39,6 +48,13 @@ const LostFoundCard = ({ lostfound }) => {
                 <div className="border border-[#1F41BB]  text-green-700 xl:h-12 lg:h-12 md:h-12 h-12 w-28 xl:py-4 lg:py-4.5 md:py-3 py-2 text-center rounded-full">
                     <p className="text-xs text-[#1F41BB]">{lostfound.received}</p>
                 </div>
+
+                <UserDropdown options={actionOptions} itemData={user}>
+                    <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                        <ThreeDotsIcon />
+                    </Button>
+                </UserDropdown>
+
             </div>
         </div>
     );

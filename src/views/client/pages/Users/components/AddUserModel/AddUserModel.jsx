@@ -7,7 +7,6 @@ import { unlockBodyScroll } from "../../../../../../utils/functions/common.funct
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateUser } from "../../../../../../services/UserService";
 
-// Validation Schema with Yup
 const USER_VALIDATION_SCHEMA = Yup.object().shape({
     name: Yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -21,96 +20,60 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
     const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // const handleSubmit = async (values) => {
-    //     setIsLoading(true);
-    //     setSubmitError(null);
-    //     const formDataObj = new FormData();
-    //     formDataObj.append('name', values.name || '');
-    //     formDataObj.append('email', values.email || '');
-    //     formDataObj.append('phone_no', values.phoneNumber || '');
-    //     formDataObj.append('password', values.password || '');
-    //     formDataObj.append('address', values.address || '');
-    //     formDataObj.append('city', values.city || '');
+    const handleSubmit = async (values) => {
+        setIsLoading(true);
+        setSubmitError(null);
 
-    //     console.log("Form Data being sent:", formDataObj); 
+        const formData = new FormData();
+        formData.append('name', values.name || '');
+        formData.append('email', values.email || '');
+        formData.append('phone_no', values.phoneNumber || '');
+        formData.append('password', values.password || '');
+        formData.append('address', values.address || '');
+        formData.append('city', values.city || '');
 
-    //     try {
-    //         const response = await apiCreateUser(formDataObj);
+        try {
+            const response = await apiCreateUser(formData);
+            console.log("API Response:", response);
 
-    //         if (response?.data?.success === 1 || response?.status === 200) {
-    //             if (onUserCreated) {
-    //                 onUserCreated();
-    //             }
-    //             unlockBodyScroll();
-    //             setIsOpen({ type: "new", isOpen: false });
-    //         } else {
-    //             setSubmitError(response?.data?.message || 'Failed to create user');
-    //         }
-    //     } catch (error) {
-    //         console.error('User creation error:', error);
+            if (response?.data?.error === 1) {
+                setSubmitError(response?.data?.message || 'Failed to create user');
+            } else if (response?.data?.success === 1 || response?.status === 200) {
+                if (onUserCreated) {
+                    onUserCreated();
+                }
+                unlockBodyScroll();
+                setIsOpen({ type: "new", isOpen: false });
+            } else {
+                const errorMsg = response?.data?.message ||
+                    response?.data?.error ||
+                    `Failed to create user`;
+                setSubmitError(errorMsg);
+            }
+        } catch (error) {
+            console.error('User creation error:', error);
+            let errorMessage = 'Error creating user';
 
-    //         const errorMessage = error?.response?.data?.message || error?.message || 'Error creating user';
-    //         setSubmitError(errorMessage);
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-const handleSubmit = async (values) => {
-  setIsLoading(true);
-  setSubmitError(null);
+            if (error.response) {
+                console.error('Response error data:', error.response.data);
+                console.error('Response error status:', error.response.status);
 
-  const formData = new FormData();
-  formData.append('name', values.name || '');
-  formData.append('email', values.email || '');
-  formData.append('phone_no', values.phoneNumber || '');
-  formData.append('password', values.password || '');
-  formData.append('address', values.address || '');
-  formData.append('city', values.city || '');
-
-  try {
-    const response = await apiCreateUser(formData);
-    console.log("API Response:", response);
-
-    // Check for error in response data
-    if (response?.data?.error === 1) {
-      setSubmitError(response?.data?.message || 'Failed to create user');
-    } else if (response?.data?.success === 1 || response?.status === 200) {
-      if (onUserCreated) {
-        onUserCreated();
-      }
-      unlockBodyScroll();
-      setIsOpen({ type: "new", isOpen: false });
-    } else {
-      const errorMsg = response?.data?.message || 
-                       response?.data?.error || 
-                       `Failed to create user`;
-      setSubmitError(errorMsg);
-    }
-  } catch (error) {
-    console.error('User creation error:', error);
-    let errorMessage = 'Error creating user';
-    
-    if (error.response) {
-      console.error('Response error data:', error.response.data);
-      console.error('Response error status:', error.response.status);
-      
-      errorMessage = error.response.data?.message || 
-                    error.response.data?.error || 
+                errorMessage = error.response.data?.message ||
+                    error.response.data?.error ||
                     `Server error: ${error.response.status}`;
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-      errorMessage = 'No response from server';
-    } else {
-      console.error('Request setup error:', error.message);
-      errorMessage = error.message;
-    }
-    
-    setSubmitError(errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+            } else if (error.request) {
+                console.error('No response received:', error.request);
+                errorMessage = 'No response from server';
+            } else {
+                console.error('Request setup error:', error.message);
+                errorMessage = error.message;
+            }
 
+            setSubmitError(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div>
@@ -130,21 +93,18 @@ const handleSubmit = async (values) => {
             >
                 {({ values, setFieldValue }) => (
                     <Form>
-                        {/* Header */}
                         <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
                             <span className="w-full text-center block truncate">
                                 Add User
                             </span>
                         </div>
 
-                        {/* Error Message */}
                         {submitError && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                                 {submitError}
                             </div>
                         )}
 
-                        {/* Form Fields */}
                         <div className="flex flex-wrap gap-5 mb-6 sm:mb-[60px]">
                             <div className="w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="name">Name</FormLabel>
@@ -225,7 +185,6 @@ const handleSubmit = async (values) => {
                             </div>
                         </div>
 
-                        {/* Buttons */}
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end">
                             <Button
                                 btnSize="md"

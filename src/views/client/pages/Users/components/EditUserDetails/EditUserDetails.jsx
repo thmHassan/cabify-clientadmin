@@ -28,15 +28,15 @@ const EditUserDetails = () => {
     const [successMessage, setSuccessMessage] = useState(null);
     const [rideHistory, setRideHistory] = useState([]);
 
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone_no: "",
-        password: "",
-        address: "",
-        city: "",
-        status: ""
-    });
+        const [formData, setFormData] = useState({
+            name: "",
+            email: "",
+            phone_no: "",
+            password: "",
+            address: "",
+            city: "",
+            status: ""
+        });
 
     const [tableLoading, setTableLoading] = useState(false);
     const [_selectedStatus, setSelectedStatus] = useState(

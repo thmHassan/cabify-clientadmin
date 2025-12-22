@@ -10,8 +10,10 @@ import Loading from '../../../../components/shared/Loading/Loading';
 import LostFoundCard from './components/LostFoundCard/LostFoundCard';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import { apiGetLostFoundList } from '../../../../services/LostFoundServices';
+import { useNavigate } from 'react-router-dom';
 
 const LostFound = () => {
+  const navigate = useNavigate()
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
@@ -112,7 +114,11 @@ const LostFound = () => {
           <Loading loading={tableLoading} type="cover">
             <div className="flex flex-col gap-4 pt-4">
               {lostFoundData.map((lostfound) => (
-                <LostFoundCard key={lostfound.id} lostfound={lostfound} />
+                <LostFoundCard
+                  key={lostfound.id}
+                  lostfound={lostfound}
+                  onView={(lostfoundToView) => navigate(`/lost-found/${lostfoundToView.id}`)}
+                />
               ))}
             </div>
           </Loading>

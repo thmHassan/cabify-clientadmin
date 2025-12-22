@@ -187,14 +187,14 @@ const Users = () => {
             className="w-full md:max-w-[400px]"
           />
 
-          <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+          {/* <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
             <CustomSelect
               variant={2}
               options={STATUS_OPTIONS}
               value={_selectedStatus}
               placeholder="All Status"
             />
-          </div>
+          </div> */}
         </div>
 
         <Loading loading={isUserLoadnig} type="cover">

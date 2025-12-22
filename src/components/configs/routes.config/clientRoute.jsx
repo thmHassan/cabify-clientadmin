@@ -40,7 +40,7 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/DriversManagement")),
     authority: [],
   },
-    {
+  {
     key: KEY.DRIVERS_DETAILS_KEY,
     path: PATH.DRIVER_DETAILS_PATH,
     component: lazy(() => import("../../../views/client/pages/DriversManagement/components/DriverDetails")),
@@ -56,6 +56,12 @@ const clientRoute = [
     key: KEY.LOST_FOUND_KEY,
     path: PATH.LOST_FOUND_PATH,
     component: lazy(() => import("../../../views/client/pages/LostFound")),
+    authority: [],
+  },
+  {
+    key: KEY.LOST_FOUND_DETAILS_KEY,
+    path: PATH.LOST_FOUND_DETAILS_PATH,
+    component: lazy(() => import("../../../views/client/pages/LostFound/components/LostFoundDetails")),
     authority: [],
   },
   {

@@ -55,10 +55,10 @@ const DriverDocuments = () => {
   };
 
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const timer = setTimeout(() => {
       setDebouncedSearchQuery(_searchQuery);
     }, 500);
-    return () => clearTimeout(handler);
+    return () => clearTimeout(timer);
   }, [_searchQuery]);
 
   const fetchDocuments = useCallback(async () => {
@@ -137,27 +137,27 @@ const DriverDocuments = () => {
   const handleDriveDocumetCreated = () => {
     setRefreshTrigger(prev => prev + 1);
   };
-  
-const handleEdit = (doc) => {
+
+  const handleEdit = (doc) => {
     // Convert mapped data back to API format
     const apiFormatData = {
-        id: doc.id,
-        document_name: doc.name,
-        front_photo: doc.frontPhoto ? 'yes' : 'no',
-        back_photo: doc.backPhoto ? 'yes' : 'no',
-        profile_photo: doc.profilePhoto ? 'yes' : 'no',
-        has_issue_date: doc.issueDate ? 'yes' : 'no',
-        has_expiry_date: doc.expiryDate ? 'yes' : 'no',
-        has_number_field: doc.numberField ? 'yes' : 'no',
+      id: doc.id,
+      document_name: doc.name,
+      front_photo: doc.frontPhoto ? 'yes' : 'no',
+      back_photo: doc.backPhoto ? 'yes' : 'no',
+      profile_photo: doc.profilePhoto ? 'yes' : 'no',
+      has_issue_date: doc.issueDate ? 'yes' : 'no',
+      has_expiry_date: doc.expiryDate ? 'yes' : 'no',
+      has_number_field: doc.numberField ? 'yes' : 'no',
     };
-    
+
     setIsDriverDocumentModelOpen({
-        type: "edit",
-        isOpen: true,
-        documentData: apiFormatData,
+      type: "edit",
+      isOpen: true,
+      documentData: apiFormatData,
     });
     lockBodyScroll();
-};
+  };
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -196,7 +196,7 @@ const handleEdit = (doc) => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>

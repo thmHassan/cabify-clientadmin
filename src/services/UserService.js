@@ -2,7 +2,7 @@ import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
-import { CREATE_USER, DELETE_USER, EDIT_USER, GET_USER_BY_ID, GET_USER_LIST, POST_EDIT_USER_STATUS, RIDE_HISTORY } from "../constants/api.route.constant";
+import { CREATE_USER, DELETE_USER, EDIT_USER, GET_USER_BY_ID, GET_USER_LIST, POST_EDIT_USER_STATUS, RIDE_HISTORY, SEND_USER_NOTIFICATIONS } from "../constants/api.route.constant";
 
 export async function apiCreateUser(data) {
     const isFormData = data instanceof FormData;
@@ -75,5 +75,20 @@ export async function apiGetRideHistory(id) {
     return ApiService.fetchData({
         url: `${RIDE_HISTORY}?user_id=${id}`,
         method: METHOD_GET,
+    });
+}
+
+export async function apiSendUserNotifiction(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: SEND_USER_NOTIFICATIONS,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
     });
 }

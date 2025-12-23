@@ -25,6 +25,7 @@ export const POST_EDIT_USER_STATUS = "/company/change-user-status";
 export const EDIT_USER = "/company/edit-user";
 export const DELETE_USER = "/company/delete-user";
 export const RIDE_HISTORY = "/company/ride-history"
+export const SEND_USER_NOTIFICATIONS = "/company/send-user-notification"
 
 //api for drivers management
 export const GET_DRIVERS_MANAGEMENT = "/company/list-driver";
@@ -133,3 +134,7 @@ export const UPDATE_PROFILE = "/super-admin/update-profile";
 
 //api for General Notification
 export const SEND_NOTIFICATION = "/company/send-notification"
+
+// api for get-app-content
+export const GET_APP_CONTENT = "/company/get-app-content"
+export const SAVE_APP_CONTENT = "/company/save-app-content"

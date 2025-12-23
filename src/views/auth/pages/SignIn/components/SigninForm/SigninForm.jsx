@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { FORGOT_PASSWORD_PATH } from "../../../../../../constants/routes.path.constant/auth.route.path.constant";
 import Loading from "../../../../../../components/shared/Loading/Loading";
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
+import Toast from "../../../../../../components/shared/Toast";
 
 const SigninForm = ({
   disableSubmit,
@@ -19,10 +20,14 @@ const SigninForm = ({
   const { signIn, adminSignIn } = useAuth();
   const navigate = useNavigate();
   const { isLoading, executeWithLoader } = useApiLoader();
+  const [toast, setToast] = React.useState({
+    show: false,
+    message: "",
+    type: "error",
+  });
 
   const onSignIn = async (values, setSubmitting) => {
     const { email, password } = values;
-
     setSubmitting(true);
 
     try {
@@ -34,11 +39,20 @@ const SigninForm = ({
         {
           onSuccess: (result) => {
             if (result?.status === "failed") {
-              // setMessage(result.message);
+              setToast({
+                show: true,
+                message: result.message || "Login failed",
+                type: "error",
+              });
             }
           },
           onError: (error) => {
-            console.error("Login error:", error);
+            setToast({
+              show: true,
+              message:
+                error?.response?.data?.message || "Something went wrong",
+              type: "error",
+            });
           },
         }
       );
@@ -53,9 +67,18 @@ const SigninForm = ({
       type="fullscreen"
       customLoader={<AppLogoLoader />}
     >
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() =>
+            setToast({ show: false, message: "", type: "error" })
+          }
+        />
+      )}
+      
       <Formik
         initialValues={initialValues}
-        //   validationSchema={SIGNIN_VALIDATION_SCHEMA}
         onSubmit={(values, { setSubmitting }) => {
           if (!disableSubmit) {
             onSignIn(values, setSubmitting);

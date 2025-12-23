@@ -2,6 +2,7 @@ import { lazy } from "react";
 import * as KEY from "../../../constants/routes.key.constant/client.route.key.constant";
 import * as PATH from "../../../constants/routes.path.constant/client.route.path.constant";
 import { path } from "framer-motion/client";
+import { components } from "react-select";
 
 const clientRoute = [
   {
@@ -146,6 +147,12 @@ const clientRoute = [
     key: KEY.VEHICLE_TYPE_DETAILS_KEY,
     path: PATH.VEHICLE_TYPE_DETAILS_PATH,
     component: lazy(() => import("../../../views/client/pages/VehicleType/components/AddVehicleType")),
+    authority: [],
+  },
+  {
+    key: KEY.APP_DISPLAY_CONTENT_KEY,
+    path: PATH.APP_DISPLAY_CONTENT_PATH,
+    component: lazy(() => import("../../../views/client/pages/AppDisplayContent")),
     authority: [],
   }
   // {

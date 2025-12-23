@@ -305,6 +305,20 @@ const userNavRoutes = [
         subMenu: [],
         isStatic: false,
       },
+      {
+        key: KEY.APP_DISPLAY_CONTENT_KEY,
+        title: "App Display Content",
+        icon: {
+          active: LostFoundIcon,
+          component: LostFoundIcon,
+          size: 20,
+        },
+        route: PATH.APP_DISPLAY_CONTENT_PATH,
+        active: [],
+        isSubMenu: false,
+        subMenu: [],
+        isStatic: false,
+      },
     ],
   },
 ];

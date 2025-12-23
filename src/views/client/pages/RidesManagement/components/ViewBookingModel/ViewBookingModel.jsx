@@ -85,7 +85,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                         <h2 className="text-xl font-semibold">View Booking - #{rideData?.booking_id || 'N/A'}</h2>
 
                                         {rideData?.booking_status && (
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            <span className={`px-3 py-1 rounded-full w-fit text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
                                                 rideData.booking_status === 'pending' ? 'bg-[#F5C60B] text-white' :
                                                     rideData.booking_status === 'cancelled' ? 'bg-[#FF4747] text-white' :
                                                         rideData.booking_status === 'waiting' ? 'bg-[#1F41BB] text-white' :
@@ -98,19 +98,17 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                         <div className="flex md:flex-row flex-col md:gap-4 gap-0 md:items-center">
                                             <div className="md:w-72 w-full">
-                                                <select
+                                                <input
+                                                    type="text"
                                                     name="sub_company"
-                                                    value={values.sub_company || ""}
+                                                    value={rideData?.sub_company_detail?.name || ""}
                                                     className="w-full border-[1.5px] border-[#8D8D8D] px-3 py-2 rounded-[8px]"
                                                     disabled
-                                                >
-                                                    <option value="">Select Sub Company</option>
-                                                    {values.sub_company && <option value={values.sub_company}>{values.sub_company}</option>}
-                                                </select>
+                                                />
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center max-sm:justify-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
+                                        <div className="flex max-sm:justify-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
                                             <span className="text-sm mr-2">Single Booking</span>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
@@ -193,7 +191,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
                                                     <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold md:text-center">Pick up Time</label>
+                                                        <label className="text-sm font-semibold md:text-center w-20">Pick up Time</label>
                                                         <div className="w-full flex gap-2">
                                                             {/* <select
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
@@ -236,7 +234,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     </div>
 
                                                     <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold mb-1">Date</label>
+                                                        <label className="text-sm font-semibold mb-1 w-20">Date</label>
                                                         <input
                                                             type="date"
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
@@ -246,7 +244,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     </div>
 
                                                     <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold mb-1">Booking Type</label>
+                                                        <label className="text-sm font-semibold mb-1 w-20">Booking Type</label>
                                                         {/* <select
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
                                                             value={values.booking_type || ""}
@@ -274,7 +272,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                 <div className="flex gap-4">
                                                     <div className="flex gap-2 w-full">
-                                                        <div className="flex gap-2 items-center relative">
+                                                        <div className="flex gap-2 items-center relative flex-col">
                                                             <span className="text-sm text-center font-semibold mb-1 w-full">Pick up Point</span>
                                                             <div className="relative">
                                                                 <input
@@ -422,7 +420,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                         <div className="w-full">
                                                                             <input
                                                                                 name="account"
-                                                                                value={values.account || ""}
+                                                                                value={rideData?.account_detail?.name || ""}
                                                                                 className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-2 py-2 w-full"
                                                                                 disabled
                                                                             >
@@ -439,7 +437,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 <input
                                                                     type="text"
                                                                     name="vehicle"
-                                                                    value={rideData?.vehicle_name || values.vehicle || ""}
+                                                                    value={rideData?.vehicle_detail?.vehicle_type_name}
                                                                     placeholder="Select Vehicle"
                                                                     className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
                                                                     disabled
@@ -453,7 +451,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                         type="text"
                                                                         name="driver"
                                                                         placeholder="Driver Name"
-                                                                        value={rideData?.driver_name || values.driver || ""}
+                                                                        value={rideData?.driver_detail?.name || ""}
                                                                         readOnly
                                                                         className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
                                                                     />

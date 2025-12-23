@@ -139,14 +139,18 @@ const clientRoute = [
   {
     key: KEY.VEHICLE_TYPE_KEY,
     path: PATH.VEHICLE_TYPE_PATH,
-    component: lazy(() => import("../../../views/client/pages/VehicleType")), 
+    component: lazy(() => import("../../../views/client/pages/VehicleType")),
     authority: [],
   },
   {
     key: KEY.VEHICLE_TYPE_DETAILS_KEY,
-    path: PATH.VEHICLE_TYPE_DETAILS_PATH, 
+    path: PATH.VEHICLE_TYPE_DETAILS_PATH,
     component: lazy(() => import("../../../views/client/pages/VehicleType/components/AddVehicleType")),
-    authority: [], 
+    authority: [],
+  },
+  {
+    key: KEY.APP_DISPLAY_CONTENT_KEY,
+    path: PATH.
   }
   // {
   //   key: KEY.VEHICLES_MANAGEMENT_PATH,

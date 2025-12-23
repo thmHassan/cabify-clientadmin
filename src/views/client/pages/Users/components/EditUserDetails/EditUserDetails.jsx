@@ -12,12 +12,14 @@ import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../../../store";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
 import { apiGetUserById, apiEditUser, apiGetRideHistory, apiEditUserStatus } from "../../../../../../services/UserService";
+import Modal from "../../../../../../components/shared/Modal/Modal";
+import SendNotifictionModel from "./components/SendNotifictionModel";
 
 const EditUserDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [isUserModalOpen, setIsUserModalOpen] = useState({
+    const [isSendNotificationModalOpen, setIsSendNotificationModalOpen] = useState({
         type: "new",
         isOpen: false,
     });
@@ -28,15 +30,15 @@ const EditUserDetails = () => {
     const [successMessage, setSuccessMessage] = useState(null);
     const [rideHistory, setRideHistory] = useState([]);
 
-        const [formData, setFormData] = useState({
-            name: "",
-            email: "",
-            phone_no: "",
-            password: "",
-            address: "",
-            city: "",
-            status: ""
-        });
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        phone_no: "",
+        password: "",
+        address: "",
+        city: "",
+        status: ""
+    });
 
     const [tableLoading, setTableLoading] = useState(false);
     const [_selectedStatus, setSelectedStatus] = useState(
@@ -224,7 +226,7 @@ const EditUserDetails = () => {
                                 btnSize="2xl"
                                 onClick={() => {
                                     lockBodyScroll();
-                                    setIsSendNotificationModalOpen(true);
+                                    setIsSendNotificationModalOpen({ isOpen: true, type: "new" });
                                 }}
                                 className="w-full sm:w-auto !py-3.5"
                             >
@@ -239,7 +241,7 @@ const EditUserDetails = () => {
                             btnSize="2xl"
                             onClick={() => {
                                 lockBodyScroll();
-                                // setIsUserModalOpen({ isOpen: true, type: "new" });
+                                // setIsSendNotificationModalOpen({ isOpen: true, type: "new" });
                             }}
                             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
                         >
@@ -396,12 +398,16 @@ const EditUserDetails = () => {
                         )}
                     </CardContainer>
                 </div>
-                {/* <Modal
-        isOpen={isUserModalOpen.isOpen}
-        className="p-4 sm:p-6 lg:p-10"
-      >
-        <AddUserModel setIsOpen={setIsUserModalOpen} />
-      </Modal> */}
+                <Modal
+                    isOpen={isSendNotificationModalOpen.isOpen}
+                    className="p-4 sm:p-6 lg:p-10"
+                >
+                    <SendNotifictionModel
+                        setIsOpen={setIsSendNotificationModalOpen}
+                        userId={id}
+                    />
+                </Modal>
+
             </div>
         </div>
     )

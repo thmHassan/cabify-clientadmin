@@ -38,6 +38,15 @@ const DriverDocumentCard = ({ doc, onEdit, onDelete }) => {
                                 <span className="text-sm font-medium">Back Photo</span>
                             </div>
                         )}
+                        {/* {doc.profilePhoto
+                            && (
+                                <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
+                                    <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span className="text-sm font-medium">profile Photo</span>
+                                </div>
+                            )} */}
                         {doc.issueDate && (
                             <div className="flex items-center justify-start gap-2 px-4 py-2 bg-[#F4F4F4] rounded-full">
                                 <svg className="w-4 h-4 text-white rounded-sm bg-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">

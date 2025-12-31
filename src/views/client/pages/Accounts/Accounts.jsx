@@ -7,13 +7,14 @@ import { useAppSelector } from '../../../../store';
 import { lockBodyScroll } from '../../../../utils/functions/common.function';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
-import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectOptions';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AccountCard from './components/AccountCard';
 import AddAccountModel from './components/AddAccountsModel';
 import { apiDeleteAccount, apiGetAccount } from '../../../../services/AccountService';
+import toast from 'react-hot-toast';
+import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
 const Accounts = () => {
   const [isAccountModelOpen, setIsAccountModelOpen] = useState({
@@ -114,16 +115,27 @@ const Accounts = () => {
       if (response?.data?.success === 1 || response?.status === 200) {
         setDeleteModalOpen(false);
         setAccountToDelete(null);
-        setRefreshTrigger(prev => prev + 1);
+        fetchAccounts(); // refresh table
+        toast.success('Account deleted successfully');
       } else {
         console.error("Failed to delete account");
+        toast.error('Failed to delete account');
       }
     } catch (error) {
       console.error("Error deleting account:", error);
+      toast.error(error?.message || 'Error deleting account');
     } finally {
       setIsDeleting(false);
     }
   };
+
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -170,25 +182,23 @@ const Accounts = () => {
               />
             </div>
           </div>
-          <Loading loading={tableLoading} type="cover">
-            <div className="flex flex-col gap-4 pt-4">
-              {accounts.length > 0 ? (
-                accounts.map((account) => (
-                  <AccountCard
-                    key={account.id}
-                    account={account}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteClick}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No accounts found
-                </div>
-              )}
-            </div>
-          </Loading>
+          <div className="flex flex-col gap-4 pt-4">
+            {accounts.length > 0 ? (
+              accounts.map((account) => (
+                <AccountCard
+                  key={account.id}
+                  account={account}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No accounts found
+              </div>
+            )}
+          </div>
           {Array.isArray(accounts) &&
             accounts.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
@@ -215,9 +225,9 @@ const Accounts = () => {
           onAccountCreated={fetchAccounts}
         />
       </Modal>
-      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+      <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <h2 className="text-xl font-semibold mb-3">Delete Account?</h2>
           <p className="text-gray-600 mb-6">
             Are you sure you want to delete {accountToDelete?.name}?
           </p>
@@ -229,7 +239,7 @@ const Accounts = () => {
                 setDeleteModalOpen(false);
                 setAccountToDelete(null);
               }}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               Cancel
             </Button>
@@ -238,7 +248,7 @@ const Accounts = () => {
               type="filledRed"
               onClick={handleDeleteAccount}
               disabled={isDeleting}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

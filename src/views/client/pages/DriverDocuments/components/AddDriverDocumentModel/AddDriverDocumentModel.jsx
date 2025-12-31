@@ -6,6 +6,7 @@ import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateDriveDocument, apiEditDriverDocument } from "../../../../../../services/DriversDocumentServices";
 import { DRIVER_DOCUMENT_VALIDATION_SCHEMA } from "../../../../validators/pages/driver.validation";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
+import toast from "react-hot-toast";
 
 const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -16,41 +17,54 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
         setIsEditMode(!!initialValue?.id);
     }, [initialValue]);
 
-const handleSubmit = async (values, { resetForm }) => {
-    setIsLoading(true);
-    setSubmitError(null);
+    const handleSubmit = async (values, { resetForm }) => {
+        setIsLoading(true);
+        setSubmitError(null);
 
-    try {
-        const formDataObj = new FormData();
-        if (isEditMode) formDataObj.append('id', initialValue.id);
-        formDataObj.append('document_name', values.documentName || '');
-        formDataObj.append('front_photo', values.frontPhoto ? 'yes' : 'no');
-        formDataObj.append('back_photo', values.backPhoto ? 'yes' : 'no');
-        formDataObj.append('profile_photo', values.issuePhoto ? 'yes' : 'no');
-        formDataObj.append('has_issue_date', values.issueDate ? 'yes' : 'no');
-        formDataObj.append('has_expiry_date', values.expiryDate ? 'yes' : 'no');
-        formDataObj.append('has_number_field', values.numberField ? 'yes' : 'no');
+        try {
+            const formDataObj = new FormData();
 
-        const response = isEditMode
-            ? await apiEditDriverDocument(formDataObj)
-            : await apiCreateDriveDocument(formDataObj);
+            if (isEditMode) formDataObj.append("id", initialValue.id);
 
-        if (response?.data?.success === 1 || response?.status === 200) {
-            if (onDocumentCreated) {
-                onDocumentCreated();
+            formDataObj.append("document_name", values.documentName || "");
+            formDataObj.append("front_photo", values.frontPhoto ? "yes" : "no");
+            formDataObj.append("back_photo", values.backPhoto ? "yes" : "no");
+            formDataObj.append("profile_photo", values.issuePhoto ? "yes" : "no");
+            formDataObj.append("has_issue_date", values.issueDate ? "yes" : "no");
+            formDataObj.append("has_expiry_date", values.expiryDate ? "yes" : "no");
+            formDataObj.append("has_number_field", values.numberField ? "yes" : "no");
+
+            const response = isEditMode
+                ? await apiEditDriverDocument(formDataObj)
+                : await apiCreateDriveDocument(formDataObj);
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(
+                    isEditMode
+                        ? "Driver document updated successfully"
+                        : "Driver document created successfully"
+                );
+
+                onDocumentCreated?.();
+                unlockBodyScroll();
+                setIsOpen({ type: "new", isOpen: false });
+                resetForm();
+            } else {
+                toast.error(
+                    response?.data?.message ||
+                    `Failed to ${isEditMode ? "update" : "create"} driver document`
+                );
             }
-            unlockBodyScroll();
-            setIsOpen({ type: "new", isOpen: false });
-            resetForm(); // Reset the form on successful submission
-        } else {
-            setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} driver document`);
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                `Error ${isEditMode ? "updating" : "creating"} driver document`
+            );
+        } finally {
+            setIsLoading(false);
         }
-    } catch (error) {
-        setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} driver document`);
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
     return (
         <div>
@@ -80,11 +94,6 @@ const handleSubmit = async (values, { resetForm }) => {
                                         {isEditMode ? 'Edit Driver Document' : 'Add New Driver Document'}
                                     </span>
                                 </div>
-                                {submitError && (
-                                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                        {submitError}
-                                    </div>
-                                )}
                                 <div className="mb-6 sm:mb-[60px]">
                                     <div className="w-full mb-4">
                                         <FormLabel htmlFor="documentName">Document Name</FormLabel>
@@ -125,7 +134,7 @@ const handleSubmit = async (values, { resetForm }) => {
                                                 name="issuePhoto"
                                                 className="w-5 h-5"
                                             />
-                                            <span className="font-medium text-gray-700">Issue Photo</span>
+                                            <span className="font-medium text-gray-700">Issue Date</span>
                                         </label>
                                         <label className="flex items-center gap-3 border border-[#D8D8D8] rounded-lg p-3 shadow-sm cursor-pointer">
                                             <Field

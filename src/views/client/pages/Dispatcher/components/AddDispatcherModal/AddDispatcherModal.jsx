@@ -6,6 +6,8 @@ import Password from "../../../../../../components/elements/CustomPassword/Passw
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateDispatcher, apiEditDispatcher } from "../../../../../../services/DispatcherService";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
+import { DISPATCHER_VALIDATION_SCHEMA } from "../../../../validators/pages/dispatcher.validation";
+import toast from "react-hot-toast";
 
 const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated }) => {
   const [submitError, setSubmitError] = useState(null);
@@ -18,41 +20,57 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
-    setSubmitError(null);
 
     try {
       const formDataObj = new FormData();
 
       if (isEditMode) {
-        formDataObj.append('id', initialValue.id);
+        formDataObj.append("id", initialValue.id);
       }
 
-      formDataObj.append('name', values.name || '');
-      formDataObj.append('email', values.email || '');
-      formDataObj.append('phone_no', values.phone_no || '');
+      formDataObj.append("name", values.name || "");
+      formDataObj.append("email", values.email || "");
+      formDataObj.append("phone_no", values.phone_no || "");
+      formDataObj.append("status", values.status || "");
+
       if (values.password) {
-        formDataObj.append('password', values.password);
+        formDataObj.append("password", values.password);
       }
-      formDataObj.append('status', values.status || '');
 
       const response = isEditMode
         ? await apiEditDispatcher(formDataObj)
         : await apiCreateDispatcher(formDataObj);
 
-      console.log(`${isEditMode ? 'Edit' : 'Create'} driver response:`, response);
-
-      if (response?.data?.success === 1 || response?.status === 200) {
-        if (onDispatcherCreated) {
-          onDispatcherCreated();
-        }
-        unlockBodyScroll();
-        setIsOpen({ type: "new", isOpen: false });
-      } else {
-        setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} Dispatcher`);
+      if (response?.data?.error === 1) {
+        toast.error(response?.data?.message || "Something went wrong", {
+          duration: 5000,
+        });
+        return;
       }
+
+      toast.success(
+        response?.data?.message ||
+        `Dispatcher ${isEditMode ? "updated" : "created"} successfully`,
+        {
+          duration: 5000,
+        }
+      );
+
+      if (onDispatcherCreated) {
+        onDispatcherCreated();
+      }
+
+      unlockBodyScroll();
+      setIsOpen({ type: "new", isOpen: false });
     } catch (error) {
-      console.error(`Dispatcher ${isEditMode ? 'edit' : 'creation'} error:`, error);
-      setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} Dispatcher`);
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Server error",
+        {
+          duration: 5000,
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -66,9 +84,11 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
           email: initialValue.email || '',
           phone_no: initialValue.phone_no || '',
           status: initialValue.status || 'active',
-          password: initialValue.password || ''
+          // password: initialValue.password || ''
+          password: ""
         }}
         onSubmit={handleSubmit}
+        validationSchema={DISPATCHER_VALIDATION_SCHEMA}
         validateOnChange={true}
         validateOnBlur={true}
         enableReinitialize={true}

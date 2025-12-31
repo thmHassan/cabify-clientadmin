@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { apiSaveUpdatePassword } from "../../../../../../services/SettingsConfigurationServices";
+import toast from 'react-hot-toast';
 
 const Security = () => {
     const [currentPassword, setCurrentPassword] = useState("");
@@ -8,12 +9,12 @@ const Security = () => {
 
     const handleSave = async () => {
         if (!currentPassword || !newPassword) {
-            console.error("All fields are required");
+            toast.error("All fields are required");
             return;
         }
 
         if (newPassword.length < 6) {
-            console.error("Password must be at least 6 characters");
+            toast.error("Password must be at least 6 characters");
             return;
         }
 
@@ -26,18 +27,21 @@ const Security = () => {
 
             const response = await apiSaveUpdatePassword(formData);
 
-            if (response?.success === true || response?.success === 1) {
-                console.log("Password updated successfully");
+            if (response?.data?.error === 0) {
+                toast.success(response?.data?.message || "Password updated successfully");
 
                 setCurrentPassword("");
                 setNewPassword("");
             } else {
-                console.error(response?.message || "Failed to update password");
+                toast.error(response?.data?.message || "Failed to update password");
             }
         } catch (error) {
-            console.error(
-                error?.response?.data?.message || error.message || "API Error"
-            );
+            const errorMsg =
+                error?.response?.data?.message ||
+                error?.message ||
+                "Something went wrong";
+
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }

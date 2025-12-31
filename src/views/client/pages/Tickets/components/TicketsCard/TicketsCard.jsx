@@ -10,7 +10,6 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
     const statusOptions =
         tickets.status === "open" ? ["closed"] : ["open"];
 
-    // 👉 CLOSE DROPDOWN ON OUTSIDE CLICK
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -60,17 +59,17 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100">
-                        <p className="text-xs text-gray-500 text-center">
+                    <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] w-[200px]">
+                        <p className="text-xs text-[#6C6C6C] text-center">
                             Subject
                         </p>
-                        <p className="text-black text-sm">
+                        <p className="text-[#333333] text-center text-sm">
                             {tickets.subject}
                         </p>
                     </div>
 
-                    <div className="inline-flex w-40 flex-col px-4 py-2 rounded-full bg-gray-100 break-all">
-                        <p className="text-black text-[10px] break-all">
+                    <div className="inline-flex w-40 flex-col px-4 py-2 rounded-full bg-[#EFEFEF] break-all w-[300px]">
+                        <p className="text-[#333333] text-[10px] break-all line-clamp-2">
                             {tickets.message}
                         </p>
                     </div>
@@ -78,10 +77,10 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                     <button
                         ref={statusBtnRef}
                         onClick={handleStatusClick}
-                        className={`h-12 w-28 px-4 py-2 rounded-full border flex items-center justify-between
+                        className={`w-28 px-4 py-2 rounded-full border flex items-center justify-between
                             ${tickets.status === "open"
-                                ? "bg-[#b1f7d8] border-green-500 text-green-700"
-                                : "bg-[#faadad] border-red-500 text-red-700"
+                                ? "bg-[#FFF1F1] border-[#FF4747] text-[#FF4747]"
+                                : "bg-[#E4FFF6] border-[#10B981] text-[#10B981]"
                             }`}
                     >
                         <span className="font-semibold  text-sm capitalize">
@@ -89,7 +88,7 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                         </span>
 
                         <svg
-                            className="w-4 h-4 text-black ml-2"
+                            className="w-4 h-4 text-[#333333] ml-2"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
@@ -99,10 +98,9 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                         </svg>
                     </button>
 
-
                     <button
                         onClick={() => onReplyClick(tickets)}
-                        className="px-4 py-2 rounded-full border border-[#1F41BB] text-xs text-[#1F41BB]"
+                        className="px-4 py-2 rounded-full border border-[#1F41BB] text-xs text-[#1F41BB] text-nowrap"
                     >
                         {tickets.reply_message === null ? "Reply" : "View Reply"}
                     </button>
@@ -128,7 +126,7 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                                 onStatusChange(tickets.id, status);
                                 setShowDropdown(false);
                             }}
-                            className="w-full text-left px-3 py-2 hover:bg-gray-100 capitalize text-sm"
+                            className="w-full text-left px-3 py-2 hover:bg-[#EFEFEF] capitalize text-sm"
                         >
                             {status}
                         </button>

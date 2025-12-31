@@ -1,21 +1,12 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import React, { useRef, useState, useEffect } from "react";
-import * as Yup from "yup";
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreatePlot, apiEditPlot } from "../../../../../../services/PlotService";
-
-const PLOT_VALIDATION_SCHEMA = Yup.object().shape({
-    name: Yup.string()
-        .required("Plot name is required")
-        .min(2, "Plot name must be at least 2 characters"),
-    coordinates: Yup.array()
-        .of(Yup.array().of(Yup.number()))
-        .min(3, "At least 3 coordinates are required to create a polygon")
-        .required("Coordinates are required"),
-});
+import { PLOT_VALIDATION_SCHEMA } from "../../../../validators/pages/plot.validation";
+import toast from "react-hot-toast";
 
 const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -92,6 +83,10 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                 : await apiCreatePlot(formDataObj);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(
+                    isEditMode ? "Plot updated successfully" : "Plot created successfully"
+                );
+
                 if (onPlotsCreated) {
                     onPlotsCreated();
                 }

@@ -230,6 +230,8 @@ const Overview = () => {
     }
   };
 
+  const tenantData = resolveTenantData();
+
   useEffect(() => {
     const tenantData = resolveTenantData();
     console.debug("Resolved tenant data for overview:", tenantData);
@@ -249,7 +251,20 @@ const Overview = () => {
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
         <div className="sm:mb-[30px] mb-1 sm:w-[calc(100%-240px)] w-full flex gap-5 items-center">
-          <div className="w-20 h-20 rounded-full bg-[#000000]"></div>
+          <div className="w-20 h-20 rounded-full bg-[#000000]">
+            <img
+              src={
+                tenantData?.picture
+                  ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
+                  : "/default-avatar.png"
+              }
+              alt="Profile"
+              className="w-full h-full rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/default-avatar.png";
+              }}
+            />
+          </div>
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
             <PageTitle title={companyName} />
             <PageSubTitle title="Welcome back! (Admin Name), Here's what's happening with your transportation business today." />

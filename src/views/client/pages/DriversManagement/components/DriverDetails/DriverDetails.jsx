@@ -1,11 +1,10 @@
 import { useCallback, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CardContainer from "../../../../../../components/shared/CardContainer";
-import PlusIcon from "../../../../../../components/svg/PlusIcon";
 import Button from "../../../../../../components/ui/Button/Button";
 import PageTitle from "../../../../../../components/ui/PageTitle/PageTitle";
 import Modal from "../../../../../../components/shared/Modal/Modal";
-import { lockBodyScroll, unlockBodyScroll } from "../../../../../../utils/functions/common.function";
+import { lockBodyScroll } from "../../../../../../utils/functions/common.function";
 import AddWalletBalanceModel from "./component/AddWalletBalanceModel/AddWalletBalanceModel";
 import AddDocumentModel from "./component/AddDocumentModel/AddDocumentModel";
 import SendNotifictionModel from "./component/SendNotifictionModel/SendNotifictionModel";
@@ -17,6 +16,7 @@ import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocume
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
+import toast from "react-hot-toast";
 
 
 const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name }) => {
@@ -87,8 +87,6 @@ const DriverDetails = () => {
     );
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [submitError, setSubmitError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
     const [rideHistory, setRideHistory] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -135,8 +133,8 @@ const DriverDetails = () => {
                     const companies = response?.data?.list?.data || [];
 
                     const options = companies.map((company) => ({
-                        label: company.name,       // 👈 show in dropdown
-                        value: company.id.toString(), // 👈 stored value
+                        label: company.name,
+                        value: company.id.toString(),
                     }));
 
                     setSubCompanyList(options);
@@ -258,13 +256,15 @@ const DriverDetails = () => {
     const handleDeleteDocument = async (documentId) => {
         try {
             const response = await apiDeleteDriverDocument(documentId);
+
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Document deleted successfully");
                 await loadDriverDocuments();
             } else {
-                console.log(response?.data?.message || "Failed to delete document");
+                toast.error("Failed to delete document");
             }
         } catch (error) {
-            console.error("Error deleting document:", error);
+            toast.error("Error deleting document");
         }
     };
 
@@ -295,13 +295,15 @@ const DriverDetails = () => {
             formDataObj.append('status', status);
 
             const response = await apiChangeDriverDocument(formDataObj);
+
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(`Document ${status}`);
                 await loadDriverDocuments();
             } else {
-                console.error(response?.data?.message || "Failed to update document status");
+                toast.error("Failed to update document");
             }
         } catch (error) {
-            console.error("Error changing document status:", error);
+            toast.error("Error updating document");
         }
     };
 
@@ -346,13 +348,15 @@ const DriverDetails = () => {
             formDataObj.append('driver_id', driverId);
 
             const response = await apiApproveVehicle(formDataObj);
+
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Vehicle approved successfully");
                 await loadDriverData();
             } else {
-                console.error(response?.data?.message || "Failed to approve vehicle");
+                toast.error(response?.data?.message || "Failed to approve vehicle");
             }
         } catch (error) {
-            console.error("Error approving vehicle:", error);
+            toast.error("Error approving vehicle");
         }
     };
 
@@ -362,13 +366,15 @@ const DriverDetails = () => {
             formDataObj.append('driver_id', driverId);
 
             const response = await apiRejectVehicle(formDataObj);
+
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Vehicle rejected");
                 await loadDriverData();
             } else {
-                console.error(response?.data?.message || "Failed to approve vehicle");
+                toast.error(response?.data?.message || "Failed to reject vehicle");
             }
         } catch (error) {
-            console.error("Error approving vehicle:", error);
+            toast.error("Error rejecting vehicle");
         }
     };
 
@@ -383,8 +389,10 @@ const DriverDetails = () => {
             formDataObj.append('address', formData.address || '');
             formDataObj.append('driver_license', formData.driver_license || '');
             formDataObj.append('assigned_vehicle', formData.assigned_vehicle || '');
-            const joinedDate = formData.joined_date ? `${formData.joined_date} 00:00:00` : '';
-            formDataObj.append('joined_date', joinedDate);
+            formDataObj.append(
+                'joined_date',
+                formData.joined_date ? `${formData.joined_date} 00:00:00` : ''
+            );
             formDataObj.append('sub_company', formData.sub_company || '');
 
             if (profileImageFile) {
@@ -394,12 +402,17 @@ const DriverDetails = () => {
             const response = await apiEditDriverManagement(formDataObj);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Driver details updated successfully");
                 await loadDriverData();
             } else {
-                console.error(response?.data?.message || "Failed to update driver");
+                toast.error(response?.data?.message || "Failed to update driver");
             }
         } catch (error) {
-            console.error("Error saving driver:", error);
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Error saving driver"
+            );
         } finally {
             setIsSaving(false);
         }
@@ -412,10 +425,10 @@ const DriverDetails = () => {
         try {
             const response = await apiGetDriverRideHistory(driverId);
 
-            if (response?.status === 200 && Array.isArray(response?.data?.data)) {
-                setRideHistory(response.data.data);
-                setTotalItems(response.data.total || response.data.data.length);
-                setTotalPages(response.data.last_page || 1);
+            if (response?.status === 200 && Array.isArray(response?.data?.rideHistory)) {
+                setRideHistory(response?.data.rideHistory);
+                // setTotalItems(response.data.total || response.data.data.length);
+                // setTotalPages(response.data.last_page || 1);
             } else {
                 setRideHistory([]);
             }
@@ -446,17 +459,21 @@ const DriverDetails = () => {
         try {
             const response = await apieditDriverStatus({
                 id: driverId,
-                status: status,
+                status,
             });
 
             if (response?.data?.success === 1 || response?.status === 200) {
-                // reload driver data so UI updates
+                toast.success(`Driver status changed to ${status}`);
                 await loadDriverData();
             } else {
-                console.error(response?.data?.message || "Failed to change status");
+                toast.error(response?.data?.message || "Failed to change status");
             }
         } catch (error) {
-            console.error("Error changing driver status", error);
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Error changing driver status"
+            );
         }
     };
 
@@ -475,7 +492,7 @@ const DriverDetails = () => {
                                 onClick={() => handleChangeDriverStatus("accepted")}
                                 className="border border-[#10b981] text-[#10b981] font-bold py-2 px-4 rounded-md"
                             >
-                                Accepted
+                                Accept
                             </Button>
                         )}
 
@@ -487,7 +504,7 @@ const DriverDetails = () => {
                                 }}
                                 className="border border-[#ff4747] text-[#ff4747] font-bold py-2 px-4 rounded-md"
                             >
-                                Rejected
+                                Reject
                             </Button>
                         )}
 
@@ -578,7 +595,7 @@ const DriverDetails = () => {
                             </label>
                             <input
                                 type="text"
-                                value={driverData?.wallet_balance ? `$${driverData.wallet_balance}` : "$0.00"}
+                                value={driverData?.wallet_balance ? `${driverData.wallet_balance}` : "$0.00"}
                                 disabled
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm bg-gray-100 text-gray-600"
                             />
@@ -605,39 +622,12 @@ const DriverDetails = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className=" ">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Profile Image <span className="text-red-500">*</span>
-                                </label>
-
-                                <div className="flex items-center bg-white gap-4 border border-gray-300 rounded-lg px-4 py-3">
-                                    <label className="cursor-pointer px-4 py-1.5 text-sm text-blue-700 border border-blue-700 rounded-md hover:bg-blue-50">
-                                        Choose File
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                        />
-                                    </label>
-                                    <span className="text-sm text-gray-500">
-                                        {profileImageFile ? profileImageFile.name : profileImage ? "Image selected" : "No File Chosen"}
-                                    </span>
-                                    {profileImage && (
-                                        <img
-                                            src={profileImage}
-                                            alt="Profile"
-                                            className="w-12 h-12 rounded object-cover"
-                                        />
-                                    )}
-                                </div>
-                            </div>
                         </div>
                         <div className="flex items-start justify-end md:col-start-3 mt-4">
                             <Button
                                 btnSize="md"
                                 type="filled"
-                                className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                                className="pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                                 onClick={() => {
                                     lockBodyScroll();
                                     setIsAddWalletBalanceModalOpen(true);
@@ -647,7 +637,7 @@ const DriverDetails = () => {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                         <Button
                             btnSize="md"
                             type="filledGray"
@@ -749,7 +739,7 @@ const DriverDetails = () => {
 
                     </div>
                     {Number(driverData?.vehicle_change_request) === 0 && (
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                             <Button
                                 btnSize="md"
                                 type="filledRed"
@@ -821,7 +811,7 @@ const DriverDetails = () => {
                     <h2 className="text-[22px] font-semibold">
                         Document Information
                     </h2>
-                    {Number(driverData?.document_approved_office) === 0 && (
+                    {Number(driverData?.document_approved_office) === 1 && (
                         <span className="bg-[#10B981] text-white text-sm px-3 py-1 rounded-full flex items-center gap-1">
                             <svg className="w-4 h-4 bg-white rounded-full text-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -875,7 +865,7 @@ const DriverDetails = () => {
                                     <select
                                         value={doc.status || "pending"}
                                         onChange={(e) => handleDocumentStatusChange(doc.id, e.target.value)}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                        className="border border-[#8D8D8D] text-[#6C6C6C] rounded-[8px] shadow-md px-3 py-1.5 text-sm focus:outline-none"
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="verified">Approved</option>
@@ -883,7 +873,7 @@ const DriverDetails = () => {
                                     </select>
                                     <Button
                                         type="filled"
-                                        className="py-1.5 px-4 rounded-sm leading-[25px]"
+                                        className="py-1.5 px-4 rounded-[8px] leading-[25px]"
                                         onClick={() => handleViewDocument(doc.id)}
                                         disabled={isLoadingDocument}
                                     >
@@ -898,7 +888,7 @@ const DriverDetails = () => {
                                         Edit
                                     </Button> */}
                                     <Button
-                                        className="py-1.5 px-4 rounded-sm leading-[25px] border border-red-600 text-red-600 hover:bg-red-50"
+                                        className="py-1.5 px-4 rounded-[8px] leading-[25px] border-[1px] border-[#FF4747] text-[#FF4747]"
                                         onClick={() => handleDeleteDocument(doc.id)}
                                     >
                                         Delete
@@ -910,14 +900,14 @@ const DriverDetails = () => {
                 </Loading>
             </div>
 
-            {/* <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
+            <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
                 <div className="flex">
                     <p className="font-semibold">Revenue</p>
                 </div>
                 <div>
                     <p className="font-semibold text-2xl pt-2 pl-2">$465.32</p>
                 </div>
-            </div> */}
+            </div>
 
             <div>
                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5] mt-5">
@@ -956,6 +946,9 @@ const DriverDetails = () => {
                 <AddWalletBalanceModel
                     driverId={driverId}
                     setIsOpen={setIsAddWalletBalanceModalOpen}
+                    onSuccess={async () => {
+                        await loadDriverData(); 
+                    }}
                 />
             </Modal>
 

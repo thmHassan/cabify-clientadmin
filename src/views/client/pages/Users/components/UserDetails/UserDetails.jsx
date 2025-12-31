@@ -14,39 +14,53 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
             onClick: () => onDelete(user),
         },
     ];
+
+    const formatDate = (dateString) => {
+  if (!dateString) return "-";
+
+  const date = new Date(dateString);
+
+  return date.toLocaleString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).replace(",", "");
+};
     return (
         <div
-            className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto"
+            className="bg-white rounded-[15px] p-4 gap-2 flex items-center hover:shadow-md overflow-x-auto"
         >
             <div className="flex items-center gap-3">
-                <div className="w-60">
+                <div className="w-52">
                     <p className="font-semibold text-xl">{user.name}</p>
                     <p className="text-[10px]">{user.email}</p>
-                    <p className="text-xs">{user.phone_no}</p>
+                    <p className="text-xs">{user?.country_code|| "+91"} {user.phone_no}</p>
                 </div>
             </div>
             <div className="flex items-center justify-center gap-3">
 
-                {/* <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">ID</p>
-                    <p className="text-black text-center font-semibold text-sm">{user.id}</p>
-                </div> */}
-                <div className="inline-flex w-52 flex-col px-4 py-2 rounded-full bg-gray-100 text-left break-all">
-                    <p className="text-xs text-center text-gray-500">Address</p>
-                    <p className="text-black font-semibold text-center text-[12px]">{user.address}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[100px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">ID</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{user.id}</p>
                 </div>
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Device</p>
-                    <p className="text-black text-center font-semibold text-sm">{user.device || 12}</p>
+                <div className="inline-flex w-52 flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left break-all w-[250px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Address</p>
+                    <p className="text-[#333333] font-semibold text-center text-[12px]">{user.address|| "-"}</p>
                 </div>
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Rating</p>
-                    <p className="text-black text-center font-semibold text-sm">{user.ratings || 3.5}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[107px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Device</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{user.device || 12}</p>
                 </div>
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Created At</p>
-                    <p className="text-black text-center font-semibold text-sm">
-                        {user?.createdAt ? formatDate(user.createdAt) : "12/12/2025"}
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[107px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Rating</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{user.ratings || 3.5}</p>
+                </div>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
+                    <p className="text-xs text-center text-[#6C6C6C]">Created At</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">
+                         {formatDate(user.created_at)}
+                        {/* {user?.createdAt ? formatDate(user.createdAt) : "12/12/2025"} */}
                     </p>
                 </div>
 

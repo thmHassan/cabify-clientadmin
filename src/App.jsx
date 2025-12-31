@@ -2,6 +2,7 @@ import { Provider } from "react-redux";
 import { Suspense } from "react";
 import store from "./store";
 import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import appConfig from "./components/configs/app.config";
 import mockServer from "./mock";
 import AllRoutes from "./components/routes/AllRoutes";
@@ -23,6 +24,43 @@ function App() {
             <AllRoutes />
           </Suspense>
         </ScrollToTop>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#fff",
+              color: "#363636",
+              fontSize: "16px",
+              padding: "16px 20px",
+              minWidth: "300px",
+            },
+            success: {
+              duration: 3000,
+              style: {
+                fontSize: "16px",
+                padding: "16px 20px",
+                minWidth: "300px",
+              },
+              iconTheme: {
+                primary: "#4ade80",
+                secondary: "#fff",
+              },
+            },
+            error: {
+              duration: 3000,
+              style: {
+                fontSize: "16px",
+                padding: "16px 20px",
+                minWidth: "300px",
+              },
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
       </BrowserRouter>
     </Provider>
   );

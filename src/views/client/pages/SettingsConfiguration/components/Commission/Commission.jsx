@@ -3,7 +3,6 @@ import PageTitle from "../../../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../../../components/ui/PageSubTitle/PageSubTitle";
 import CardContainer from "../../../../../../components/shared/CardContainer";
 import SearchBar from "../../../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../../../components/ui/CustomSelect";
 import Loading from "../../../../../../components/shared/Loading/Loading";
 import Button from "../../../../../../components/ui/Button/Button";
 import { lockBodyScroll } from "../../../../../../utils/functions/common.function";
@@ -11,9 +10,8 @@ import PlusIcon from "../../../../../../components/svg/PlusIcon";
 import CommissionCard from "./components/CommssionCard";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import AddPackageModel from "./components/AddPackegModel";
-import SnapshotCard from "../../../../../../components/shared/SnapshotCard/SnapshotCard";
-import CompaniesIcon from "../../../../../../components/svg/CompaniesIcon";
 import { apiDeletePackageToPup, apiGetCommissionData, apiSaveCommissionData } from "../../../../../../services/SettingsConfigurationServices";
+import toast from 'react-hot-toast';
 
 const Commission = ({ isSidebarOpen }) => {
     const [_searchQuery, setSearchQuery] = useState("");
@@ -29,10 +27,8 @@ const Commission = ({ isSidebarOpen }) => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [packageToPupToDatale, setPackageToPupToDatale] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    // Commission form state
     const [commissionForm, setCommissionForm] = useState({
-        package_type: "packages_topup", // Default to Packages (Top Up)
+        package_type: "packages_topup",
         package_amount: "",
         package_days: "",
         package_percentage: "",
@@ -62,7 +58,6 @@ const Commission = ({ isSidebarOpen }) => {
     const packageTopups = commissionData?.packageTopups || [];
     const mainCommission = commissionData?.main_commission || {};
 
-    // Initialize form data from main_commission when it's loaded
     useEffect(() => {
         if (mainCommission && Object.keys(mainCommission).length > 0) {
             setCommissionForm({
@@ -95,9 +90,9 @@ const Commission = ({ isSidebarOpen }) => {
         setIsDeleting(true);
         try {
             const response = await apiDeletePackageToPup(packageToPupToDatale.id);
-            console.log("Delete sub-company response:", response);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("package delete successfully")
                 setDeleteModalOpen(false);
                 setPackageToPupToDatale(null);
                 setRefreshTrigger(prev => prev + 1);
@@ -122,63 +117,81 @@ const Commission = ({ isSidebarOpen }) => {
         setIsSubmitting(true);
         setError(null);
 
+        const {
+            package_type,
+            package_days,
+            package_amount,
+            package_percentage,
+            cancellation_per_day,
+            waiting_time_charge,
+        } = commissionForm;
+
+        /* ---------------- VALIDATION ---------------- */
+
+        if (
+            package_type === "per_ride_commission_topup" &&
+            !package_amount
+        ) {
+            toast.error("Package amount is required");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (
+            package_type === "per_ride_commission_potpaid" &&
+            (!package_days || !package_percentage)
+        ) {
+            toast.error("Package days and percentage are required");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (
+            package_type === "packages_postpaid" &&
+            (!package_days || !package_amount)
+        ) {
+            toast.error("Package days and amount are required");
+            setIsSubmitting(false);
+            return;
+        }
+
+        /* ---------------- API CALL ---------------- */
+
+        const toastId = toast.loading("Saving commission settings...");
+
         try {
             const formData = new FormData();
-            formData.append("package_type", commissionForm.package_type);
-            formData.append("package_days", commissionForm.package_days || "");
-            formData.append("package_amount", commissionForm.package_amount || "");
-            formData.append("package_percentage", commissionForm.package_percentage || "");
-            formData.append("cancellation_per_day", commissionForm.cancellation_per_day || "");
-            formData.append("waiting_time_charge", commissionForm.waiting_time_charge || "");
+            formData.append("package_type", package_type);
+            formData.append("package_days", package_days || "");
+            formData.append("package_amount", package_amount || "");
+            formData.append("package_percentage", package_percentage || "");
+            formData.append("cancellation_per_day", cancellation_per_day || "");
+            formData.append("waiting_time_charge", waiting_time_charge || "");
 
             const response = await apiSaveCommissionData(formData);
 
             if (response?.data?.success === 1) {
+                toast.success("Commission settings saved successfully", {
+                    id: toastId,
+                });
                 setRefreshTrigger(prev => prev + 1);
-                // Optionally show success message
             } else {
-                setError(response?.data?.message || "Failed to save commission data");
+                toast.error(
+                    response?.data?.message || "Failed to save commission settings",
+                    { id: toastId }
+                );
             }
         } catch (error) {
-            console.error("Error saving commission data:", error);
-            setError(error?.response?.data?.message || error?.message || "An error occurred while saving commission data");
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Something went wrong",
+                { id: toastId }
+            );
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const DASHBOARD_CARDS = [
-        {
-            title: "Total Companies",
-            value: "25",
-            change: "+3 from last hour",
-            icon: {
-                component: CompaniesIcon,
-            },
-            backgroundColor: "#eeedff",
-            color: "#534CB4",
-        },
-        {
-            title: "Active Companies",
-            value: "15",
-            change: "+3 from last hour",
-            icon: {
-                component: CompaniesIcon,
-            },
-            backgroundColor: "#e5f9f0",
-            color: "#3E9972",
-        },
-        {
-            title: "Monthly Revenue",
-            value: "$6,800",
-            change: "+3 from last hour",
-            icon: {
-                component: CompaniesIcon,
-            },
-            backgroundColor: "#fdf3e7",
-            color: "#C29569",
-        },
-    ];
 
     return (
         <div>
@@ -191,129 +204,144 @@ const Commission = ({ isSidebarOpen }) => {
                 </div>
             </div>
             <div className="flex flex-col sm:gap-5 gap-4">
-                <div className="grid gap-4 sm:gap-5 ">
-                    <div className="flex gap-4 w-full grid grid-cols-2">
-                        <label className="flex-1 cursor-pointer">
-                            <div className={`border rounded-2xl p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "per_ride_commission_topup" ? "bg-blue-50" : ""}`}>
-                                <div className="flex  gap-3">
-                                    <input
-                                        type="radio"
-                                        name="commission"
-                                        className="w-4 h-4 text-blue-600"
-                                        checked={commissionForm.package_type === "per_ride_commission_topup"}
-                                        onChange={() => handleCommissionFormChange("package_type", "per_ride_commission_topup")}
-                                    />
-                                    <p className="font-medium text-sm text-gray-800">
-                                        Per Ride <br /> Commission (Top Up)
-                                    </p>
+                <CardContainer className="p-3 sm:p-4 lg:p-5">
+                    <div className="grid gap-4 sm:gap-5 ">
+                        <div className="flex gap-4 w-full grid grid-cols-2">
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`border rounded-2xl p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "per_ride_commission_topup" ? "bg-blue-50" : ""}`}>
+                                    <div className="flex  gap-3">
+                                        <input
+                                            type="radio"
+                                            name="commission"
+                                            className="w-4 h-4 text-blue-600"
+                                            checked={commissionForm.package_type === "per_ride_commission_topup"}
+                                            onChange={() => handleCommissionFormChange("package_type", "per_ride_commission_topup")}
+                                        />
+                                        <p className="font-medium text-sm text-gray-800">
+                                            Per Ride <br /> Commission (Top Up)
+                                        </p>
+                                    </div>
+                                    {commissionForm.package_type === "per_ride_commission_topup" && (
+                                        <div className="mt-3">
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Amount"
+                                                value={commissionForm.package_amount}
+                                                onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 text-gray-700 shadow-sm bg-white w-full max-w-[120px]"
+                                                disabled={commissionForm.package_type !== "per_ride_commission_topup"}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
+                            </label>
 
-                                <div className="mt-3">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="Amount"
-                                        value={commissionForm.package_amount}
-                                        onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
-                                        className="border rounded-lg px-4 py-1 text-gray-700 shadow-sm bg-white w-full max-w-[120px]"
-                                        disabled={commissionForm.package_type !== "per_ride_commission_topup"}
-                                    />
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`border rounded-2xl p-3 h-full flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "packages_topup" ? "bg-blue-50" : ""}`}>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="radio"
+                                            name="commission"
+                                            className="w-4 h-4 text-blue-600"
+                                            checked={commissionForm.package_type === "packages_topup"}
+                                            onChange={() => handleCommissionFormChange("package_type", "packages_topup")}
+                                        />
+                                        <p className="font-medium text-gray-800 text-sm">
+                                            Packages (Top Up)
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </label>
+                            </label>
 
-                        <label className="flex-1 cursor-pointer">
-                            <div className={`border rounded-2xl p-3 h-full flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "packages_topup" ? "bg-blue-50" : ""}`}>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="radio"
-                                        name="commission"
-                                        className="w-4 h-4 text-blue-600"
-                                        checked={commissionForm.package_type === "packages_topup"}
-                                        onChange={() => handleCommissionFormChange("package_type", "packages_topup")}
-                                    />
-                                    <p className="font-medium text-gray-800 text-sm">
-                                        Packages (Top Up)
-                                    </p>
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`border rounded-2xl  p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "commission_without_topup" ? "bg-blue-50" : ""}`}>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="radio"
+                                            name="commission"
+                                            className="w-4 h-4 text-blue-600"
+                                            checked={commissionForm.package_type === "commission_without_topup"}
+                                            onChange={() => handleCommissionFormChange("package_type", "commission_without_topup")}
+                                        />
+                                        <p className="font-medium text-gray-800 text-sm leading-tight">
+                                            Commission <br /> without Top Up <br /> Settled Later
+                                        </p>
+                                    </div>
+                                    {commissionForm.package_type === "commission_without_topup" && (
+                                        <div className="flex gap-3">
+                                            <input
+                                                type="number"
+                                                placeholder="Days"
+                                                value={commissionForm.package_days}
+                                                onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                disabled={commissionForm.package_type !== "commission_without_topup"}
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="%"
+                                                value={commissionForm.package_percentage}
+                                                onChange={(e) => handleCommissionFormChange("package_percentage", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                disabled={commissionForm.package_type !== "commission_without_topup"}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        </label>
+                            </label>
 
-                        <label className="flex-1 cursor-pointer">
-                            <div className={`border rounded-2xl  p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "commission_without_topup" ? "bg-blue-50" : ""}`}>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="radio"
-                                        name="commission"
-                                        className="w-4 h-4 text-blue-600"
-                                        checked={commissionForm.package_type === "commission_without_topup"}
-                                        onChange={() => handleCommissionFormChange("package_type", "commission_without_topup")}
-                                    />
-                                    <p className="font-medium text-gray-800 text-sm leading-tight">
-                                        Commission <br /> without Top Up <br /> Settled Later
-                                    </p>
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`border rounded-2xl h-full p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "packages_post_paid" ? "bg-blue-50" : ""}`}>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="radio"
+                                            name="commission"
+                                            className="w-4 h-4 text-blue-600"
+                                            checked={commissionForm.package_type === "packages_post_paid"}
+                                            onChange={() => handleCommissionFormChange("package_type", "packages_post_paid")}
+                                        />
+                                        <p className="font-medium text-sm text-gray-800">
+                                            Packages Post Paid
+                                        </p>
+                                    </div>
+                                    {commissionForm.package_type === "packages_post_paid" && (
+                                        <div className="flex gap-3">
+                                            <input
+                                                type="number"
+                                                placeholder="Days"
+                                                value={commissionForm.package_days}
+                                                onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                disabled={commissionForm.package_type !== "packages_post_paid"}
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Amount"
+                                                value={commissionForm.package_amount}
+                                                onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                disabled={commissionForm.package_type !== "packages_post_paid"}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-
-                                <div className="flex gap-3">
-                                    <input
-                                        type="number"
-                                        placeholder="Days"
-                                        value={commissionForm.package_days}
-                                        onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
-                                        className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
-                                        disabled={commissionForm.package_type !== "commission_without_topup"}
-                                    />
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="%"
-                                        value={commissionForm.package_percentage}
-                                        onChange={(e) => handleCommissionFormChange("package_percentage", e.target.value)}
-                                        className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
-                                        disabled={commissionForm.package_type !== "commission_without_topup"}
-                                    />
-                                </div>
-                            </div>
-                        </label>
-
-                        <label className="flex-1 cursor-pointer">
-                            <div className={`border rounded-2xl h-full p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "packages_post_paid" ? "bg-blue-50" : ""}`}>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="radio"
-                                        name="commission"
-                                        className="w-4 h-4 text-blue-600"
-                                        checked={commissionForm.package_type === "packages_post_paid"}
-                                        onChange={() => handleCommissionFormChange("package_type", "packages_post_paid")}
-                                    />
-                                    <p className="font-medium text-sm text-gray-800">
-                                        Packages Post Paid
-                                    </p>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <input
-                                        type="number"
-                                        placeholder="Days"
-                                        value={commissionForm.package_days}
-                                        onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
-                                        className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
-                                        disabled={commissionForm.package_type !== "packages_post_paid"}
-                                    />
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="Amount"
-                                        value={commissionForm.package_amount}
-                                        onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
-                                        className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
-                                        disabled={commissionForm.package_type !== "packages_post_paid"}
-                                    />
-                                </div>
-                            </div>
-                        </label>
+                            </label>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button
+                                type="filled"
+                                onClick={handleSaveCommission}
+                                disabled={isSubmitting}
+                                className="px-3 py-3 rounded-md"
+                            >
+                                {isSubmitting ? "Saving..." : "Save Packages (Top Up)"}
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                </CardContainer>
 
                 <CardContainer className="p-3 sm:p-4 lg:p-5">
                     <div className="flex flex-col gap-4">
@@ -354,76 +382,77 @@ const Commission = ({ isSidebarOpen }) => {
                                 type="filled"
                                 onClick={handleSaveCommission}
                                 disabled={isSubmitting}
-                                className="px-6 py-2"
+                                className="px-3 py-3 rounded-md"
                             >
                                 {isSubmitting ? "Saving..." : "Save Commission Settings"}
                             </Button>
                         </div>
                     </div>
                 </CardContainer>
-
-                <div className="overflow-hidden">
-                    <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
-                        <div className="flex xl:flex-row lg:flex-row md:flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
-                            <div className="w-full sm:flex-1">
-                                <SearchBar
-                                    value={_searchQuery}
-                                    className="w-full"
-                                />
-                            </div>
-                            <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
-                                <Button
-                                    type="filled"
-                                    btnSize="2xl"
-                                    onClick={() => {
-                                        lockBodyScroll();
-                                        setIsCommissionModelOpen({ isOpen: true, type: "new" });
-
-                                    }}
-                                    className="w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
-                                >
-                                    <div className="flex gap-2 sm:gap-[15px] items-center whitespace-nowrap">
-                                        <span className="hidden sm:inline-block">
-                                            <PlusIcon />
-                                        </span>
-                                        <span className="sm:hidden">
-                                            <PlusIcon height={12} width={12} />
-                                        </span>
-                                        <span>Add Packge</span>
-                                    </div>
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="overflow-hidden w-full">
-                            <Loading loading={tableLoading} type="cover">
-                                <div
-                                    className={`
-        grid gap-4 pt-4 transition-all duration-300 ease-in-out
-        ${isSidebarOpen
-                                            ? ""
-                                            : ""
-                                        }
-      `}
-                                >
-                                    {packageTopups.length === 0 ? (
-                                        <p>No package top-ups available</p>
-                                    ) : (
-                                        packageTopups.map((commission) => (
-                                            <CommissionCard
-                                                key={commission.id}
-                                                commission={commission}
-                                                onEdit={handleEdit}
-                                                onDelete={handleDeleteClick}
-                                            />
-                                        ))
-                                    )}
+                {commissionForm.package_type === "packages_topup" && (
+                    <div className="overflow-hidden">
+                        <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
+                            <div className="flex xl:flex-row lg:flex-row md:flex-row flex-col items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
+                                <div className="w-full sm:flex-1">
+                                    <SearchBar
+                                        value={_searchQuery}
+                                        className="w-full"
+                                    />
                                 </div>
-                            </Loading>
-                        </div>
+                                <div className="md:flex flex-row gap-3 sm:gap-5 flex w-full sm:w-auto justify-end">
+                                    <Button
+                                        type="filled"
+                                        btnSize="2xl"
+                                        onClick={() => {
+                                            lockBodyScroll();
+                                            setIsCommissionModelOpen({ isOpen: true, type: "new" });
 
-                    </CardContainer>
-                </div>
+                                        }}
+                                        className="w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
+                                    >
+                                        <div className="flex gap-2 sm:gap-[15px] items-center whitespace-nowrap">
+                                            <span className="hidden sm:inline-block">
+                                                <PlusIcon />
+                                            </span>
+                                            <span className="sm:hidden">
+                                                <PlusIcon height={12} width={12} />
+                                            </span>
+                                            <span>Add Packge</span>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="overflow-hidden w-full">
+                                <Loading loading={tableLoading} type="cover">
+                                    <div
+                                        className={`
+                                          grid gap-4 pt-4 transition-all duration-300 ease-in-out
+                                         ${isSidebarOpen
+                                                ? ""
+                                                : ""
+                                            }
+                                           `}
+                                    >
+                                        {packageTopups.length === 0 ? (
+                                            <p>No package top-ups available</p>
+                                        ) : (
+                                            packageTopups.map((commission) => (
+                                                <CommissionCard
+                                                    key={commission.id}
+                                                    commission={commission}
+                                                    onEdit={handleEdit}
+                                                    onDelete={handleDeleteClick}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </Loading>
+                            </div>
+
+                        </CardContainer>
+                    </div>
+                )}
             </div>
             <Modal
                 isOpen={isCommissionModelOpen.isOpen}
@@ -435,7 +464,7 @@ const Commission = ({ isSidebarOpen }) => {
                     onPackageCreated={() => setRefreshTrigger(prev => prev + 1)}
                 />
             </Modal>
-            <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+            <Modal isOpen={deleteModalOpen} className="p-10">
                 <div className="text-center">
                     <h2 className="text-xl font-semibold mb-3">Delete Package?</h2>
                     <p className="text-gray-600 mb-6">
@@ -449,7 +478,7 @@ const Commission = ({ isSidebarOpen }) => {
                                 setDeleteModalOpen(false);
                                 setPackageToPupToDatale(null);
                             }}
-                            className="px-6 py-2"
+                            className="px-6 py-2 rounded-md"
                         >
                             Cancel
                         </Button>
@@ -458,7 +487,7 @@ const Commission = ({ isSidebarOpen }) => {
                             type="filledRed"
                             onClick={handleDeleteCommission}
                             disabled={isDeleting}
-                            className="px-6 py-2"
+                            className="px-6 py-2 rounded-md"
                         >
                             {isDeleting ? "Deleting..." : "Delete"}
                         </Button>

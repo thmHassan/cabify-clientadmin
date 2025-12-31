@@ -9,6 +9,7 @@ import { useAppSelector } from "../../../../store";
 import { PAGE_SIZE_OPTIONS } from "../../../../constants/selectOptions";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { apiGetCustomerRatings, apiGetDriverRatings } from "../../../../services/Reviewservices";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const Reviews = () => {
 
@@ -116,6 +117,14 @@ const Reviews = () => {
   const activeData =
     activeTab === "customer" ? customerRatingData : driverRatingData;
 
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
 
@@ -168,11 +177,11 @@ const Reviews = () => {
               />
             </div>
           </div>
-          <div className="space-y-4">
-            {activeData?.map((rating) => (
-              <ReviewCard key={rating.id} rating={rating} />
-            ))}
-          </div>
+            <div className="space-y-4">
+              {activeData?.map((rating) => (
+                <ReviewCard key={rating.id} rating={rating} />
+              ))}
+            </div>
           {activeData?.length > 0 && (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination

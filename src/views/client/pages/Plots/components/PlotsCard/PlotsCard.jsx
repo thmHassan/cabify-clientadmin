@@ -17,16 +17,27 @@ const PlotsCard = ({ plot, onEdit, onDelete, onSelect }) => {
     return (
         <div
             className="flex items-center justify-between bg-white rounded-xl p-4 border hover:shadow transition cursor-pointer"
-            onClick={() => onSelect?.(plot)}
         >
             <div className="text-lg font-semibold text-[#252525]">
                 {plot.name}
             </div>
-            <UserDropdown options={actionOptions} itemData={plot}>
-                <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
-                    <ThreeDotsIcon />
-                </Button>
-            </UserDropdown>
+            <div className="flex gap-2">
+                <div>
+                    <Button
+                        btnType="submit"
+                        type="filled"
+                        className="py-2 px-2 rounded-md w-full sm:w-auto"
+                        onClick={() => onSelect?.(plot)}
+                    >
+                        Show In Map
+                    </Button>
+                </div>
+                <UserDropdown options={actionOptions} itemData={plot}>
+                    <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                        <ThreeDotsIcon />
+                    </Button>
+                </UserDropdown>
+            </div>
         </div>
     );
 };

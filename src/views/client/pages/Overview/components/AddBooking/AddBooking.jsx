@@ -9,6 +9,7 @@ import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServ
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiGetAllPlot, apiCreateCalculateFares, apiCreateBooking } from "../../../../../../services/AddBookingServices";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
+import toast from 'react-hot-toast';
 
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const BARIKOI_KEY = import.meta.env.VITE_BARIKOI_API_KEY;

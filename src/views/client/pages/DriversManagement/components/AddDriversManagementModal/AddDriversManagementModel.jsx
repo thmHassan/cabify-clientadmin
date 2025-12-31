@@ -1,6 +1,6 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useState, useEffect } from "react";
-import * as Yup from "yup";
+
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
@@ -8,22 +8,8 @@ import { unlockBodyScroll } from "../../../../../../utils/functions/common.funct
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateDriveManagement, apiEditDriverManagement } from "../../../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
-
-const DRIVER_VALIDATION_SCHEMA = Yup.object().shape({
-  name: Yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-  email: Yup.string().email("Invalid email").required("Email is required"),
-  phone_no: Yup.string().required("Phone number is required"),
-  password: Yup.string().when("id", {
-    is: (id) => !id,
-    then: (schema) => schema.required("Password is required").min(6, "Password must be at least 6 characters"),
-    otherwise: (schema) => schema.min(6, "Password must be at least 6 characters"),
-  }),
-  address: Yup.string(),
-  driver_license: Yup.string(),
-  assigned_vehicle: Yup.string(),
-  joined_date: Yup.string(),
-  sub_company: Yup.string(),
-});
+import { DRIVER_VALIDATION_SCHEMA } from "../../../../validators/pages/driverManagement.validation";
+import toast from "react-hot-toast";
 
 const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreated }) => {
   const [submitError, setSubmitError] = useState(null);
@@ -32,12 +18,10 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
   const [subCompanyList, setSubCompanyList] = useState([]);
   const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
 
-  // Detect if in edit mode
   useEffect(() => {
     setIsEditMode(!!initialValue?.id);
   }, [initialValue]);
 
-  // Fetch sub-companies for dropdown
   useEffect(() => {
     const fetchSubCompanies = async () => {
       setLoadingSubCompanies(true);
@@ -62,49 +46,66 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
-    setSubmitError(null);
 
     try {
       const formDataObj = new FormData();
-      
-      if (isEditMode) {
-        formDataObj.append('id', initialValue.id);
-      }
-      
-      formDataObj.append('name', values.name || '');
-      formDataObj.append('email', values.email || '');
-      formDataObj.append('phone_no', values.phone_no || '');
-      if (values.password) {
-        formDataObj.append('password', values.password);
-      }
-      formDataObj.append('address', values.address || '');
-      formDataObj.append('driver_license', values.driver_license || '');
-      formDataObj.append('assigned_vehicle', values.assigned_vehicle || '');
-      formDataObj.append('joined_date', values.joined_date || '');
-      formDataObj.append('sub_company', values.sub_company || '');
 
-      const response = isEditMode 
+      if (isEditMode) {
+        formDataObj.append("id", initialValue.id);
+      }
+
+      formDataObj.append("name", values.name || "");
+      formDataObj.append("email", values.email || "");
+      formDataObj.append("phone_no", values.phone_no || "");
+      if (values.password) {
+        formDataObj.append("password", values.password);
+      }
+      formDataObj.append("address", values.address || "");
+      formDataObj.append("driver_license", values.driver_license || "");
+      formDataObj.append("assigned_vehicle", values.assigned_vehicle || "");
+      formDataObj.append("joined_date", values.joined_date || "");
+      formDataObj.append("sub_company", values.sub_company || "");
+
+      const response = isEditMode
         ? await apiEditDriverManagement(formDataObj)
         : await apiCreateDriveManagement(formDataObj);
-      
-      console.log(`${isEditMode ? 'Edit' : 'Create'} driver response:`, response);
 
-      if (response?.data?.success === 1 || response?.status === 200) {
-        if (onDriverCreated) {
-          onDriverCreated();
-        }
-        unlockBodyScroll();
-        setIsOpen({ type: "new", isOpen: false });
-      } else {
-        setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} driver`);
+      if (response?.data?.error === 1) {
+        toast.error(
+          response?.data?.message ||
+          `Failed to ${isEditMode ? "update" : "create"} driver`,
+          { duration: 5000 }
+        );
+        return;
       }
+
+      toast.success(
+        response?.data?.message ||
+        (isEditMode
+          ? "Driver updated successfully"
+          : "Driver created successfully"),
+        { duration: 5000 }
+      );
+
+      if (onDriverCreated) {
+        onDriverCreated();
+      }
+
+      unlockBodyScroll();
+      setIsOpen({ type: "new", isOpen: false });
+
     } catch (error) {
-      console.error(`Driver ${isEditMode ? 'edit' : 'creation'} error:`, error);
-      setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} driver`);
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Server error",
+        { duration: 5000 }
+      );
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div>

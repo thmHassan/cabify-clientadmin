@@ -13,16 +13,14 @@ import CardContainer from "../../../../components/shared/CardContainer/CardConta
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import CustomSelect from "../../../../components/ui/CustomSelect/CustomSelect";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
-import Loading from "../../../../components/shared/Loading/Loading";
-import DataDetailsTable from "../../../../components/shared/DataDetailsTable/DataDetailsTable";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../store";
-import CardSubtitle from "../../../../components/ui/CardSubtitle";
 import Tag from "../../../../components/ui/Tag";
 import UserDropdown from "../../../../components/shared/UserDropdown";
 import ThreeDotsIcon from "../../../../components/svg/ThreeDotsIcon";
 import ApiService from "../../../../services/ApiService";
 import { apiDeleteDispatcher } from "../../../../services/DispatcherService";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const Dispatcher = () => {
   const [isDispatcherModalOpen, setIsDispatcherModalOpen] = useState({
@@ -105,7 +103,6 @@ const Dispatcher = () => {
       setTableLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchDispatcherCards();
@@ -201,6 +198,14 @@ const Dispatcher = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -287,61 +292,58 @@ const Dispatcher = () => {
                   />
                 </div>
               </div>
-              <Loading loading={tableLoading} type="cover">
-                <div className="flex flex-col gap-4 pt-4 ">
-                  {dispatcherListRaw.map((d) => (
-                    <div
-                      key={d.id}
-                      className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* <img
+              <div className="flex flex-col gap-4 pt-4 ">
+                {dispatcherListRaw.map((d) => (
+                  <div
+                    key={d.id}
+                    className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* <img
                           src={d.picture}
                           className="w-14 h-14 rounded-md object-cover"
                           alt=""
                         /> */}
-                        <div className="w-60">
-                          <p className="font-semibold text-xl">{d.name}</p>
-                          <p className="text-[10px]">{d.email}</p>
-                          <p className="text-xs">{d.phone}</p>
-                        </div>
+                      <div className="">
+                        <p className="font-semibold text-xl">{d.name}</p>
+                        <p className="text-[10px]">{d.email}</p>
+                        <p className="text-xs">{d.phone}</p>
                       </div>
-                      <div className="flex items-center justify-center gap-3">
-
-                        <Tag
-                          className={
-                            d.status === "active"
-                              ? "bg-[#b1f7d8] border border-green-500 text-green-700 xl:h-14 lg:h-14 md:h-14 h-14 w-28 xl:py-4 lg:py-4.5 md:py-4 py-3 text-center rounded-full"
-                              : "bg-[#faadad] border border-red-500 text-red-700 text-center xl:h-14 lg:h-14 md:h-14 h-14 w-28 xl:py-4 lg:py-4 md:py-5 py-3 rounded-full"
-                          }
-                        >
-                          {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
-                        </Tag>
-
-                        <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                          <p className="text-xs text-gray-500">Active Rides</p>
-                          <p className="text-[#1F41BB] font-semibold text-sm">
-                            {d.active_rides || 12}
-                          </p>
-                        </div>
-
-                        <div className="px-4 py-2 rounded-full bg-gray-100 text-center">
-                          <p className="text-xs text-gray-500">Completed Today</p>
-                          <p className="text-[#00cc66] font-semibold text-sm">
-                            {d.completed_today || 12}
-                          </p>
-                        </div>
-                      </div>
-                      <UserDropdown options={actionOptions} itemData={d}>
-                        <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
-                          <ThreeDotsIcon />
-                        </Button>
-                      </UserDropdown>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center justify-center gap-3">
 
-              </Loading>
+                      <Tag
+                        className={
+                          d.status === "active"
+                            ? "bg-[#E4FFF6] border border-[#10B981] text-[#10B981] w-28 py-3 text-center rounded-full"
+                            : "bg-[#FFF1F1] border border-[#FF4747] text-[#FF4747] text-center w-28 py-3 rounded-full"
+                        }
+                      >
+                        {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
+                      </Tag>
+
+                      <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
+                        <p className="text-xs text-[#6C6C6C]">Active Rides</p>
+                        <p className="text-[#1F41BB] font-semibold text-sm">
+                          {d.active_rides || 12}
+                        </p>
+                      </div>
+
+                      <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
+                        <p className="text-xs text-[#6C6C6C]">Completed Today</p>
+                        <p className="text-[#00cc66] font-semibold text-sm">
+                          {d.completed_today || 12}
+                        </p>
+                      </div>
+                    </div>
+                    <UserDropdown options={actionOptions} itemData={d}>
+                      <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                        <ThreeDotsIcon />
+                      </Button>
+                    </UserDropdown>
+                  </div>
+                ))}
+              </div>
               {Array.isArray(dispatcherListRaw) &&
                 dispatcherListRaw.length > 0 ? (
                 <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
@@ -369,7 +371,7 @@ const Dispatcher = () => {
           setIsOpen={setIsDispatcherModalOpen}
           onDispatcherCreated={handleonDispatcherCreated} />
       </Modal>
-      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+      <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-3">Delete Driver Document?</h2>
           <p className="text-gray-600 mb-6">
@@ -383,7 +385,7 @@ const Dispatcher = () => {
                 setDeleteModalOpen(false);
                 setDispatcherToDelete(null);
               }}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               Cancel
             </Button>
@@ -392,7 +394,7 @@ const Dispatcher = () => {
               type="filledRed"
               onClick={handleDeleteDispatcher}
               disabled={isDeleting}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

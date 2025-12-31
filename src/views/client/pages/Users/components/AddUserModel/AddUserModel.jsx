@@ -1,20 +1,12 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useState } from "react";
-import * as Yup from "yup";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import Password from "../../../../../../components/elements/CustomPassword/Password";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateUser } from "../../../../../../services/UserService";
-
-const USER_VALIDATION_SCHEMA = Yup.object().shape({
-    name: Yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    phoneNumber: Yup.string().required("Phone number is required"),
-    password: Yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
-    address: Yup.string(),
-    city: Yup.string(),
-});
+import { USER_VALIDATION_SCHEMA } from "../../../../validators/pages/user.validation";
+import toast from "react-hot-toast";
 
 const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -22,58 +14,53 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
 
     const handleSubmit = async (values) => {
         setIsLoading(true);
-        setSubmitError(null);
-
-        const formData = new FormData();
-        formData.append('name', values.name || '');
-        formData.append('email', values.email || '');
-        formData.append('phone_no', values.phoneNumber || '');
-        formData.append('password', values.password || '');
-        formData.append('address', values.address || '');
-        formData.append('city', values.city || '');
 
         try {
+            const formData = new FormData();
+            formData.append("name", values.name || "");
+            formData.append("email", values.email || "");
+            formData.append("phone_no", values.phoneNumber || "");
+            formData.append("password", values.password || "");
+            formData.append("address", values.address || "");
+            formData.append("city", values.city || "");
+
             const response = await apiCreateUser(formData);
-            console.log("API Response:", response);
 
             if (response?.data?.error === 1) {
-                setSubmitError(response?.data?.message || 'Failed to create user');
-            } else if (response?.data?.success === 1 || response?.status === 200) {
-                if (onUserCreated) {
-                    onUserCreated();
+                toast.error(response?.data?.message || "Something went wrong", {
+                    duration: 5000,
+                });
+                return;
+            }
+
+            toast.success(
+                response?.data?.message || "User created successfully",
+                {
+                    duration: 5000,
                 }
-                unlockBodyScroll();
-                setIsOpen({ type: "new", isOpen: false });
-            } else {
-                const errorMsg = response?.data?.message ||
-                    response?.data?.error ||
-                    `Failed to create user`;
-                setSubmitError(errorMsg);
+            );
+
+            if (onUserCreated) {
+                onUserCreated();
             }
+
+            unlockBodyScroll();
+            setIsOpen({ type: "new", isOpen: false });
+
         } catch (error) {
-            console.error('User creation error:', error);
-            let errorMessage = 'Error creating user';
-
-            if (error.response) {
-                console.error('Response error data:', error.response.data);
-                console.error('Response error status:', error.response.status);
-
-                errorMessage = error.response.data?.message ||
-                    error.response.data?.error ||
-                    `Server error: ${error.response.status}`;
-            } else if (error.request) {
-                console.error('No response received:', error.request);
-                errorMessage = 'No response from server';
-            } else {
-                console.error('Request setup error:', error.message);
-                errorMessage = error.message;
-            }
-
-            setSubmitError(errorMessage);
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Server error",
+                {
+                    duration: 5000,
+                }
+            );
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div>

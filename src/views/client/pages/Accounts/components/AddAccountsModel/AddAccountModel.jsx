@@ -1,18 +1,11 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
-import * as Yup from "yup";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateAccount, apiEditAccount } from "../../../../../../services/AccountService";
-
-const ACCOUNT_VALIDATION_SCHEMA = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    phone_no: Yup.string().required("Phone number is required"),
-    address: Yup.string().required("Address is required"),
-    notes: Yup.string(),
-});
+import { ACCOUNT_VALIDATION_SCHEMA } from "../../../../validators/pages/account.validation";
+import toast from 'react-hot-toast';
 
 const AddAccountModel = ({ initialValue = {}, setIsOpen, onAccountCreated }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -43,20 +36,26 @@ const AddAccountModel = ({ initialValue = {}, setIsOpen, onAccountCreated }) => 
                 : await apiCreateAccount(formDataObj);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(isEditMode ? "Account updated successfully!" : "Account created successfully!");
                 if (onAccountCreated) {
                     onAccountCreated();
                 }
                 unlockBodyScroll();
                 setIsOpen({ type: "new", isOpen: false });
             } else {
-                setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} account`);
+                const msg = response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} account`;
+                setSubmitError(msg);
+                toast.error(msg);
             }
         } catch (error) {
-            setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} account`);
+            const msg = error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} account`;
+            setSubmitError(msg);
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
     };
+
     return (
         <div>
             <Formik
@@ -81,11 +80,6 @@ const AddAccountModel = ({ initialValue = {}, setIsOpen, onAccountCreated }) => 
                                     {isEditMode ? 'Edit Account' : 'Add Account'}
                                 </span>
                             </div>
-                            {submitError && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                    {submitError}
-                                </div>
-                            )}
                             <div className="flex flex-wrap gap-5 mb-6 sm:mb-[60px]">
                                 <div className="w-[calc((100%-20px)/2)]">
                                     <FormLabel htmlFor="name">Name</FormLabel>

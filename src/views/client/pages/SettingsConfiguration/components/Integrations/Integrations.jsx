@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetThirdPartyInformation, apiSaveThirdPartyInformation } from "../../../../../../services/SettingsConfigurationServices";
+import toast from 'react-hot-toast';
 
 const Integrations = () => {
     const [thirdPartyData, setThirdPartyData] = useState({
@@ -85,12 +86,15 @@ const Integrations = () => {
         try {
             const response = await apiSaveThirdPartyInformation(formData);
             if (response?.data?.success === 1) {
+                toast.success("Settings saved successfully")
                 setRefreshTrigger(prev => prev + 1);
             } else {
+                toast.error("Failed to save settings")
                 setError("Failed to save changes.");
             }
         } catch (err) {
             setError("An error occurred while saving the third-party information.");
+             toast.error("Failed to save settings")
         } finally {
             setIsSubmitting(false);
         }

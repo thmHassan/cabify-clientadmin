@@ -14,6 +14,7 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/s
 import { apiGetUserById, apiEditUser, apiGetRideHistory, apiEditUserStatus } from "../../../../../../services/UserService";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import SendNotifictionModel from "./components/SendNotifictionModel";
+import toast from "react-hot-toast";
 
 const EditUserDetails = () => {
     const { id } = useParams();
@@ -101,10 +102,10 @@ const EditUserDetails = () => {
         try {
             const response = await apiGetRideHistory(id);
 
-            if (response?.status === 200 && Array.isArray(response?.data?.data)) {
-                setRideHistory(response.data.data);
-                setTotalItems(response.data.total || response.data.data.length);
-                setTotalPages(response.data.last_page || 1);
+            if (response?.status === 200 && Array.isArray(response?.data?.rideHistory)) {
+                setRideHistory(response.data.rideHistory);
+                // setTotalItems(response.data.total || response.data.data.length);
+                // setTotalPages(response.data.last_page || 1);
             } else {
                 setRideHistory([]);
             }
@@ -133,38 +134,52 @@ const EditUserDetails = () => {
 
     const handleSave = async () => {
         setIsSaving(true);
-        setSubmitError(null);
-        setSuccessMessage(null);
 
         try {
             const editData = new FormData();
-            editData.append('id', id);
-            editData.append('name', formData.name || '');
-            editData.append('email', formData.email || '');
-            editData.append('phone_no', formData.phone_no || '');
+            editData.append("id", id);
+            editData.append("name", formData.name || "");
+            editData.append("email", formData.email || "");
+            editData.append("phone_no", formData.phone_no || "");
+            editData.append("address", formData.address || "");
+            editData.append("city", formData.city || "");
+
             if (formData.password) {
-                editData.append('password', formData.password);
+                editData.append("password", formData.password);
             }
-            editData.append('address', formData.address || '');
-            editData.append('city', formData.city || '');
 
             const response = await apiEditUser(editData);
 
-            if (response?.data?.success === 1 || response?.status === 200) {
-                setSuccessMessage("User updated successfully!");
-                setTimeout(() => {
-                    navigate("/users");
-                }, 1500);
-            } else {
-                setSubmitError(response?.data?.message || "Failed to update user");
+            if (response?.data?.error === 1) {
+                toast.error(response?.data?.message || "Failed to update user", {
+                    duration: 5000,
+                });
+                return;
             }
+
+            toast.success(
+                response?.data?.message || "User updated successfully",
+                {
+                    duration: 5000,
+                }
+            );
+
+            navigate("/users");
+
         } catch (error) {
-            console.error("Error updating user:", error);
-            setSubmitError(error?.response?.data?.message || error?.message || "Error updating user");
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Server error",
+                {
+                    duration: 5000,
+                }
+            );
         } finally {
             setIsSaving(false);
         }
     };
+
 
     const handleCancel = () => {
         unlockBodyScroll();
@@ -175,19 +190,27 @@ const EditUserDetails = () => {
         try {
             const response = await apiEditUserStatus({
                 id: userId,
-                status: status,
+                status,
             });
 
-            if (response?.data?.success === 1 || response?.status === 200) {
-                setFormData(prev => ({
-                    ...prev,
-                    status: status,
-                }));
-            } else {
-                console.error("Failed to change user status");
+            if (response?.data?.error === 1) {
+                toast.error(response?.data?.message || "Failed to update status");
+                return;
             }
+
+            toast.success(
+                `User ${status === "active" ? "activated" : "deactivated"} successfully`
+            );
+
+            setFormData((prev) => ({
+                ...prev,
+                status,
+            }));
         } catch (error) {
-            console.error("Change status error:", error);
+            toast.error(
+                error?.response?.data?.message ||
+                "Server error while changing status"
+            );
         }
     };
 
@@ -235,21 +258,6 @@ const EditUserDetails = () => {
                         </div>
 
                     </div>
-                    {/* <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px]">
-                        <Button
-                            type="filled"
-                            btnSize="2xl"
-                            onClick={() => {
-                                lockBodyScroll();
-                                // setIsSendNotificationModalOpen({ isOpen: true, type: "new" });
-                            }}
-                            className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
-                        >
-                            <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
-                                <span>Send Notifiction</span>
-                            </div>
-                        </Button>
-                    </div> */}
                 </div>
                 <div>
                     <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">

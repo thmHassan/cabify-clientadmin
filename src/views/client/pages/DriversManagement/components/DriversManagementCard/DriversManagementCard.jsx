@@ -1,14 +1,27 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { apieditDriverStatus } from "../../../../../../services/DriverManagementService";
+import toast from "react-hot-toast";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [status, setStatus] = useState(driver.status);
     const [loading, setLoading] = useState(false);
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
+
+    const currencySymbols = {
+        INR: "₹",
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        AUD: "A$",
+        CAD: "C$",
+        AED: "د.إ",
+    };
 
     const actionOptions = [
         {
@@ -47,26 +60,44 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         try {
             const response = await apieditDriverStatus({
                 id: driver.id,
-                status: newStatus
+                status: newStatus,
             });
 
             if (response?.data?.success === 1) {
                 setStatus(newStatus);
 
+                toast.success(`Driver status changed to ${newStatus}`, {
+                    duration: 4000,
+                });
+
                 if (onStatusChange) {
                     onStatusChange(driver.id, newStatus);
                 }
             } else {
-                console.error("Failed to update status:", response);
-                alert("Failed to update status. Try again.");
+                toast.error(
+                    response?.data?.message || "Failed to update driver status",
+                    { duration: 4000 }
+                );
             }
         } catch (error) {
-            console.error("Error updating driver status:", error);
-            alert("Error updating status. Please try again.");
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Something went wrong",
+                { duration: 4000 }
+            );
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const tenant = getTenantData();
+
+        if (tenant?.currency) {
+            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+        }
+    }, []);
 
     return (
         <div className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto">
@@ -97,7 +128,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Wallet Balance</p>
-                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm">{driver.wallet_balance}</p>
+                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm"> {currencySymbol} {driver.wallet_balance}</p>
                 </div>
 
                 <UserDropdown options={getStatusOptions()} itemData={driver}>

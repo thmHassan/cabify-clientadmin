@@ -7,15 +7,14 @@ import Modal from "../../../../components/shared/Modal/Modal";
 import AddDriversManagementModal from "./components/AddDriversManagementModal";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import { useAppSelector } from "../../../../store";
-import Loading from "../../../../components/shared/Loading/Loading";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../components/ui/CustomSelect";
 import DriverManagementCard from "./components/DriversManagementCard";
 import { apiDeleteDriverManagement, apiGetDriverManagement } from "../../../../services/DriverManagementService";
 import { useNavigate } from "react-router-dom";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const DriversManagement = () => {
   const navigate = useNavigate()
@@ -128,7 +127,15 @@ const DriversManagement = () => {
 
   const handleDriverStatusChange = () => {
     setRefreshTrigger(prev => prev + 1);
-};
+  };
+
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -215,27 +222,25 @@ const DriversManagement = () => {
               />
             </div> */}
           </div>
-          <Loading loading={tableLoading} type="cover">
-            <div className="flex flex-col gap-4 pt-4">
-              {driversData?.map((driver) => (
-                <DriverManagementCard
-                  key={driver.id}
-                  driver={driver}
-                  onDelete={handleDeleteClick}
-                  onEdit={(driverToEdit) => navigate(`/driver-management/${driverToEdit.id}`)}
-                  // onEdit={(driverToEdit) => {
-                  //   lockBodyScroll();
-                  //   setIsDriversManagementModalOpen({
-                  //     isOpen: true,
-                  //     type: "edit",
-                  //     data: driverToEdit,
-                  //   });
-                  // }}
-                   onStatusChange={handleDriverStatusChange}
-                />
-              ))}
-            </div>
-          </Loading>
+          <div className="flex flex-col gap-4 pt-4">
+            {driversData?.map((driver) => (
+              <DriverManagementCard
+                key={driver.id}
+                driver={driver}
+                onDelete={handleDeleteClick}
+                onEdit={(driverToEdit) => navigate(`/driver-management/${driverToEdit.id}`)}
+                // onEdit={(driverToEdit) => {
+                //   lockBodyScroll();
+                //   setIsDriversManagementModalOpen({
+                //     isOpen: true,
+                //     type: "edit",
+                //     data: driverToEdit,
+                //   });
+                // }}
+                onStatusChange={handleDriverStatusChange}
+              />
+            ))}
+          </div>
           {Array.isArray(driversData) &&
             driversData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
@@ -262,9 +267,9 @@ const DriversManagement = () => {
           onDriverCreated={handleOnDriverCreated}
         />
       </Modal>
-      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+      <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <h2 className="text-xl font-semibold mb-3">Delete Driver?</h2>
           <p className="text-gray-600 mb-6">
             Are you sure you want to delete {driverToDelete?.name}?
           </p>
@@ -276,7 +281,7 @@ const DriversManagement = () => {
                 setDeleteModalOpen(false);
                 setDriverToDelete(null);
               }}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               Cancel
             </Button>
@@ -285,7 +290,7 @@ const DriversManagement = () => {
               type="filledRed"
               onClick={handleDeleteDriver}
               disabled={isDeleting}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

@@ -6,9 +6,9 @@ import { ErrorMessage, Field, Form, Formik } from "formik";
 import FormLabel from "../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../components/ui/FormSelection/FormSelection";
 import Button from "../../../../components/ui/Button/Button";
-import * as Yup from "yup";
 import { apiGetAllVehicleType } from "../../../../services/VehicleTypeServices";
 import { apiSendNotifiction } from "../../../../services/GeneralNotificationServices";
+import { NOTIFICATION_VALIDATION_SCHEMA } from "../../validators/pages/generalNotification.validation";
 
 const userOptions = [
   { value: "all_drivers", label: "All Drivers" },
@@ -17,13 +17,6 @@ const userOptions = [
   { value: "approved_drivers", label: "Approved Drivers" },
   { value: "rejected_drivers", label: "Rejected Drivers" },
 ];
-
-const validationSchema = Yup.object({
-  title: Yup.string().required("Title is required"),
-  body: Yup.string().required("Body is required"),
-  type: Yup.mixed().required("User type is required"),
-  vehicleType: Yup.mixed().nullable(),
-});
 
 const GeneralNotification = () => {
   const [vehicleList, setVehicleList] = useState([]);
@@ -56,7 +49,7 @@ const GeneralNotification = () => {
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
         <PageTitle title="General Notification" />
-        <PageSubTitle title="Need content here" />
+        {/* <PageSubTitle title="Need content here" /> */}
       </div>
 
       <CardContainer className="!p-3 sm:!p-4 lg:!px-5 lg:!pt-[30px] lg:!pb-5 2xl:!p-10">
@@ -67,7 +60,7 @@ const GeneralNotification = () => {
             type: "",
             vehicleType: "",
           }}
-          validationSchema={validationSchema}
+          validationSchema={NOTIFICATION_VALIDATION_SCHEMA}
           onSubmit={async (values, { resetForm }) => {
             try {
               setSending(true);
@@ -172,7 +165,7 @@ const GeneralNotification = () => {
                     {sending ? "Sending..." : "Send Notification"}
                   </Button>
                   <Button
-                    type="button"  
+                    type="button"
                     onClick={() => resetForm()}
                     className="border border-[#1F41BB] sm:h-14 h-12 px-10 rounded-lg font-semibold text-[#1F41BB]"
                   >

@@ -6,12 +6,9 @@ import FormLabel from "../../../../../../../../components/ui/FormLabel";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import { apieditDriverStatus } from "../../../../../../../../services/DriverManagementService";
 import { unlockBodyScroll } from "../../../../../../../../utils/functions/common.function";
+import toast from "react-hot-toast";
+import { REJECT_VALIDATION_SCHEMA } from "../../../../../../validators/pages/driverManagement.validation";
 
-
-const validationSchema = Yup.object({
-  reason: Yup.string().required("Reason is required"),
-  description: Yup.string().required("Description is required"),
-});
 
 const RejectModel = ({ driverId, setIsOpen, onRejected }) => {
   const [submitError, setSubmitError] = useState(null);
@@ -22,7 +19,6 @@ const RejectModel = ({ driverId, setIsOpen, onRejected }) => {
     setSubmitError(null);
 
     try {
-
       const params = {
         id: driverId,
         status: "rejected",
@@ -33,14 +29,18 @@ const RejectModel = ({ driverId, setIsOpen, onRejected }) => {
       const response = await apieditDriverStatus(params);
 
       if (response?.data?.success === 1 || response?.status === 200) {
+        toast.success("Driver rejected successfully");
+
         unlockBodyScroll();
         setIsOpen(false);
         onRejected?.();
       } else {
-        setSubmitError(response?.data?.message || "Failed to reject driver");
+        toast.error(
+          response?.data?.message || "Failed to reject driver"
+        );
       }
     } catch (error) {
-      setSubmitError(
+      toast.error(
         error?.response?.data?.message || "Something went wrong"
       );
     } finally {
@@ -51,7 +51,7 @@ const RejectModel = ({ driverId, setIsOpen, onRejected }) => {
   return (
     <Formik
       initialValues={{ reason: "", description: "" }}
-      validationSchema={validationSchema}
+      validationSchema={REJECT_VALIDATION_SCHEMA}
       onSubmit={handleSubmit}
     >
       <div className="w-96">
@@ -60,11 +60,6 @@ const RejectModel = ({ driverId, setIsOpen, onRejected }) => {
             Reject Driver
           </h2>
 
-          {submitError && (
-            <div className="mb-3 p-2 bg-red-100 text-red-700 rounded">
-              {submitError}
-            </div>
-          )}
 
           {/* Reason */}
           <div className="mb-4">

@@ -1,21 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
-import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
 import PlusIcon from "../../../../components/svg/PlusIcon";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../components/ui/CustomSelect";
 import { useAppSelector } from "../../../../store";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import AddUserModel from "./components/AddUserModel";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
-import Loading from "../../../../components/shared/Loading/Loading";
 import UserDetails from "./components/UserDetails";
 import { apiDeleteUser, apiGetUser } from "../../../../services/UserService";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const Users = () => {
   const navigate = useNavigate();
@@ -155,12 +153,20 @@ const Users = () => {
     }
   };
 
+  if (isUserLoadnig) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
         <div className="flex flex-col gap-2.5">
           <PageTitle title="Users" />
-          <PageSubTitle title="Reviews By Customers & Drivers" />
+          {/* <PageSubTitle title="Reviews By Customers & Drivers" /> */}
         </div>
 
         <Button
@@ -197,18 +203,16 @@ const Users = () => {
           </div> */}
         </div>
 
-        <Loading loading={isUserLoadnig} type="cover">
-          <div className="flex flex-col gap-4 pt-4">
-            {userListDisplay.map((user) => (
-              <UserDetails
-                key={user.id}
-                user={user}
-                onEdit={(userToEdit) => navigate(`/users/${userToEdit.id}`)}
-                onDelete={handleDeleteClick}
-              />
-            ))}
-          </div>
-        </Loading>
+        <div className="flex flex-col gap-4 pt-4">
+          {userListDisplay.map((user) => (
+            <UserDetails
+              key={user.id}
+              user={user}
+              onEdit={(userToEdit) => navigate(`/users/${userToEdit.id}`)}
+              onDelete={handleDeleteClick}
+            />
+          ))}
+        </div>
 
         {userListDisplay.length > 0 && (
           <div className="mt-4 border-t border-[#E9E9E9] pt-4">
@@ -232,7 +236,7 @@ const Users = () => {
         />
       </Modal>
 
-      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+      <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-3">Delete User?</h2>
           <p className="text-gray-600 mb-6">
@@ -246,7 +250,7 @@ const Users = () => {
                 setDeleteModalOpen(false);
                 setUserToDelete(null);
               }}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               Cancel
             </Button>
@@ -255,7 +259,7 @@ const Users = () => {
               type="filledRed"
               onClick={handleDeleteUser}
               disabled={isDeleting}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

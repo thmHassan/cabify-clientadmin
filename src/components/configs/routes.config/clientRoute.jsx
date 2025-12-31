@@ -59,12 +59,12 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/LostFound")),
     authority: [],
   },
-  {
-    key: KEY.LOST_FOUND_DETAILS_KEY,
-    path: PATH.LOST_FOUND_DETAILS_PATH,
-    component: lazy(() => import("../../../views/client/pages/LostFound/components/LostFoundDetails")),
-    authority: [],
-  },
+  // {
+  //   key: KEY.LOST_FOUND_DETAILS_KEY,
+  //   path: PATH.LOST_FOUND_DETAILS_PATH,
+  //   component: lazy(() => import("../../../views/client/pages/LostFound/components/LostFoundDetails")),
+  //   authority: [],
+  // },
   {
     key: KEY.MANAGE_ZONES_KEY,
     path: PATH.MANAGE_ZONES_PATH,

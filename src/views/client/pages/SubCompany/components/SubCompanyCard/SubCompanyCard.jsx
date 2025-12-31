@@ -14,13 +14,18 @@ const SubCompantCard = ({ company, onEdit, onDelete }) => {
             onClick: () => onDelete(company),
         },
     ];
+
+    const capitalizeFirst = (value) => {
+        if (!value) return "-";
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    };
     return (
 
         <div
             className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto"
         >
             <div className="flex items-center gap-3">
-                <p className="font-semibold text-xl">{company.name}</p>
+                <p className="font-semibold text-xl">{capitalizeFirst(company.name)}</p>
             </div>
 
             <div className="flex items-center justify-center gap-3 flex-wrap">

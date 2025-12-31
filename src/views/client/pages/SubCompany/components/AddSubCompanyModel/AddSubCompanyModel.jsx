@@ -1,20 +1,12 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import React, { useRef, useState, useEffect } from "react";
-import * as Yup from "yup";
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateSubCompany, apiEditSubCompany } from "../../../../../../services/SubCompanyServices";
-
-const SUB_COMPANY_VALIDATION_SCHEMA = Yup.object().shape({
-    name: Yup.string()
-        .required("Sub company name is required")
-        .min(2, "Name must be at least 2 characters"),
-    email: Yup.string()
-        .email("Invalid email format")
-        .required("Email is required"),
-});
+import toast from 'react-hot-toast';
+import { SUB_COMPANY_VALIDATION_SCHEMA } from "../../../../validators/pages/subCompany.validation";
 
 const AddSubCompanyModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -38,27 +30,32 @@ const AddSubCompanyModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated 
 
             formDataObj.append('name', values.name || '');
             formDataObj.append('email', values.email || '');
+
             const response = isEditMode
                 ? await apiEditSubCompany(formDataObj)
                 : await apiCreateSubCompany(formDataObj);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(isEditMode ? "Sub-company updated successfully!" : "Sub-company added successfully!");
                 if (onSubCompanyCreated) {
                     onSubCompanyCreated();
                 }
                 unlockBodyScroll();
                 setIsOpen({ type: "new", isOpen: false });
             } else {
-                setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} sub-company`);
+                const msg = response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} sub-company`;
+                setSubmitError(msg);
+                toast.error(msg);
             }
         } catch (error) {
-            console.error(`Sub-company ${isEditMode ? 'edit' : 'creation'} error:`, error);
-            setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} sub-company`);
+            const msg = error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} sub-company`;
+            setSubmitError(msg);
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     return (
         <div>
             <Formik
@@ -78,11 +75,6 @@ const AddSubCompanyModel = ({ initialValue = {}, setIsOpen, onSubCompanyCreated 
                                         {isEditMode ? 'Edit Sub Company' : 'Add Sub Company'}
                                     </span>
                                 </div>
-                                {submitError && (
-                                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                        {submitError}
-                                    </div>
-                                )}
                                 <div className="mb-6 sm:mb-[60px]">
                                     <div className="w-full mb-4">
                                         <FormLabel htmlFor="name">Sub Company Name</FormLabel>

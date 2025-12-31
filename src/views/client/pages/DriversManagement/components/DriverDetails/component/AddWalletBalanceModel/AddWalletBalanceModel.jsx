@@ -1,19 +1,14 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import React, { useState } from "react";
-import * as Yup from "yup";
 import { apiAddWalletBalance } from "../../../../../../../../services/DriverManagementService";
 import FormLabel from "../../../../../../../../components/ui/FormLabel";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import { unlockBodyScroll } from "../../../../../../../../utils/functions/common.function";
+import { WALLET_BALANCE_VALIDATION_SCHEMA } from "../../../../../../validators/pages/driverManagement.validation";
+import toast from "react-hot-toast";
 
-const WALLET_BALANCE_VALIDATION_SCHEMA = Yup.object().shape({
-    amount: Yup.number()
-        .required("Amount is required")
-        .positive("Amount must be greater than 0")
-        .typeError("Amount must be a valid number"),
-});
 
-const AddWalletBalanceModel = ({ driverId, setIsOpen }) => {
+const AddWalletBalanceModel = ({ driverId, setIsOpen, onSuccess }) => {
     const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -23,20 +18,32 @@ const AddWalletBalanceModel = ({ driverId, setIsOpen }) => {
 
         try {
             const formDataObj = new FormData();
-            formDataObj.append('id', driverId || '');
-            formDataObj.append('amount', values.amount || '');
+            formDataObj.append("id", driverId || "");
+            formDataObj.append("amount", values.amount || "");
 
             const response = await apiAddWalletBalance(formDataObj);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Wallet balance added successfully");
+
+                if (onSuccess) {
+                    await onSuccess(); 
+                }
+
                 unlockBodyScroll();
                 setIsOpen(false);
                 resetForm();
             } else {
-                setSubmitError(response?.data?.message || "Failed to add wallet balance");
+                toast.error(
+                    response?.data?.message || "Failed to add wallet balance"
+                );
             }
         } catch (error) {
-            setSubmitError(error?.response?.data?.message || error?.message || "Error adding wallet balance");
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Error adding wallet balance"
+            );
         } finally {
             setIsLoading(false);
         }
@@ -62,11 +69,6 @@ const AddWalletBalanceModel = ({ driverId, setIsOpen }) => {
                                         Add Wallet Balance
                                     </span>
                                 </div>
-                                {submitError && (
-                                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                        {submitError}
-                                    </div>
-                                )}
                                 <div className="mb-6 sm:mb-[60px]">
                                     <div className="w-full mb-4">
                                         <FormLabel htmlFor="amount">Price</FormLabel>
@@ -77,7 +79,7 @@ const AddWalletBalanceModel = ({ driverId, setIsOpen }) => {
                                                 step="0.01"
                                                 min="0"
                                                 className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                                placeholder="$0.00"
+                                                placeholder="0.00"
                                             />
                                         </div>
                                         <ErrorMessage

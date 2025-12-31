@@ -67,7 +67,7 @@ const UserPageContainer = ({ children }) => {
     <div className="flex">
        <div
   className={`
-    border-r-[0.7px] border-[#7A7A7A] pb-[21px] 
+    border-r-[0.7px] border-[#7A7A7A] pb-[21px]   
     h-screen overflow-auto fixed z-[70] bg-[#ffffff]
     transition-all duration-300 ease-in-out
 
@@ -208,11 +208,18 @@ const UserPageContainer = ({ children }) => {
             >
               <div className="max-w-[200px] w-full rounded-[30px] bg-[#ffffff] py-1 sm:py-[5px] px-1 sm:px-[5px] lg:pl-[5px] lg:pr-5 flex items-center gap-1.5 sm:gap-3">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0">
-                  <img
-                    src={userImage}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                 <img
+                   src={
+                     tenantData?.picture
+                     ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
+                      : "/default-avatar.png"
+                    }
+                     alt="Profile"
+                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                     e.currentTarget.src = "/default-avatar.png";
+                    }}
+                   />
                 </div>
                 <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] truncate capitalize">
                   <span>{tenantData?.company_name || user?.name || "Admin"}</span>

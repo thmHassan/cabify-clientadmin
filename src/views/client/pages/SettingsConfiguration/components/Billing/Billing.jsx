@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetInvoiceHistory, apiGetStripeInformation, apiSaveStripeInformation, apiGetPlanDetails } from "../../../../../../services/SettingsConfigurationServices";
+import toast from 'react-hot-toast';
 
 const Billing = () => {
     const [invoices, setInvoices] = useState([]);
@@ -29,13 +30,17 @@ const Billing = () => {
         setPlanLoading(true);
         try {
             const response = await apiGetPlanDetails();
+
             if (response?.data?.success === 1) {
-                const data = response?.data?.data || response?.data?.plan || {};
+                const data = response?.data?.planDetail || {};
+
                 setPlanDetails({
-                    plan_name: data.plan_name || data.name || "Professional Plan",
-                    status: data.status || "Active",
-                    subscription_end_date: data.subscription_end_date || data.end_date || "",
-                    features: data.features || []
+                    plan_name: data.plan_name || "Professional Plan",
+                    status: "Active",
+                    subscription_end_date: "",
+                    features: data.features
+                        ? data.features.split(",")
+                        : []
                 });
             }
         } catch (error) {
@@ -44,6 +49,7 @@ const Billing = () => {
             setPlanLoading(false);
         }
     }, []);
+
 
     const fetchInvoiceHistory = useCallback(async () => {
         setInvoiceLoading(true);
@@ -108,11 +114,14 @@ const Billing = () => {
         try {
             const response = await apiSaveStripeInformation(formData);
             if (response?.data?.success === 1) {
+                toast.success("Stripe Information saved successfully")
                 setRefreshTrigger(prev => prev + 1);
             } else {
+                toast.error("Failed to save Stripe Information")
                 setError("Failed to save changes.");
             }
         } catch (err) {
+            toast.error("Failed to save Stripe Information")
             setError("An error occurred while saving the stripe information.");
         } finally {
             setIsSubmitting(false);

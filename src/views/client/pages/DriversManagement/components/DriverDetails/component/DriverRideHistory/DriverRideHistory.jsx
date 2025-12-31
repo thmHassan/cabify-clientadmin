@@ -1,10 +1,58 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
 
 const DriverRideHistory = ({ driver }) => {
+
+    const currencySymbols = {
+        INR: "₹",
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        AUD: "A$",
+        CAD: "C$",
+        AED: "د.إ",
+    };
+
+    const [distanceUnit, setDistanceUnit] = useState("Miles");
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
+
+    useEffect(() => {
+        const tenant = getTenantData();
+
+        if (tenant?.units) {
+            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
+            setDistanceUnit(unit);
+        }
+
+        if (tenant?.currency) {
+            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+        }
+    }, []);
+
+    const formatDistance = (distanceInMeters) => {
+        if (!distanceInMeters) return "-";
+
+        if (distanceUnit === "Km") {
+            return `${(distanceInMeters / 1000).toFixed(2)} Km`;
+        }
+
+        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
+    };
+
     const statusColors = {
         Rescheduled: "bg-[#F59E0B] text-white",
-        Cancelled: "bg-[#FF4747] text-white",
+        cancelled: "bg-[#E24B4B] text-white",
         Onboarding: "bg-[#10B981] text-white",
+    };
+
+    const capitalizeFirst = (value) => {
+        if (!value) return "-";
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    };
+
+    const formatAmount = (amount) => {
+        if (amount === null || amount === undefined) return "-";
+        return Number(amount).toFixed(2);
     };
 
     return (
@@ -13,45 +61,45 @@ const DriverRideHistory = ({ driver }) => {
         >
             <div className="flex items-center gap-3">
                 <div className="w-60">
-                    <p className="font-semibold text-xl">{driver.id}</p>
+                    <p className="font-semibold text-xl">{driver.booking_id}</p>
                     <p
                         className={`
                             text-[10px] px-3 py-1 rounded-full inline-block 
-                            ${statusColors[driver.status] || "bg-gray-100 text-gray-600"}
+                            ${statusColors[driver.booking_status] || "bg-[#EFEFEF] text-gray-600"}
                         `}
                     >
-                        {driver.status}
+                        {driver.booking_status}
                     </p>
                 </div>
             </div>
             <div className="flex items-center justify-center gap-3">
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Driver Name</p>
-                    <p className="text-black font-semibold text-sm">{driver.driverName}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[160px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Driver Name</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{capitalizeFirst(driver?.driver_detail?.name || "-")}</p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Customer Name</p>
-                    <p className="text-black font-semibold text-sm">{driver.customerName}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[160px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Customer Name</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{capitalizeFirst(driver.name)}</p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Route</p>
-                    <p className="text-black font-semibold text-sm">{driver.route}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[245px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Route</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{driver.route || "-"}</p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Time</p>
-                    <p className="text-black font-semibold text-sm">{driver.time}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[210px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Time</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{driver.pickup_time}</p>
                 </div>
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Fare</p>
-                    <p className="text-black font-semibold text-sm">{driver.fare}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[107px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Fare</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm"> {currencySymbol} {formatAmount(driver.booking_amount)}</p>
                 </div>
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Distance</p>
-                    <p className="text-black font-semibold text-sm">{driver.distance}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[110px]">
+                    <p className="text-xs text-center text-[#6C6C6C]">Distance</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{formatDistance(driver.distance)}</p>
                 </div>
             </div>
         </div>

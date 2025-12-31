@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiSaveCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
 import { apiGetCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
+import toast from 'react-hot-toast';
 
 const CompanyProfile = () => {
     const [companyProfileData, setCompanyProfileData] = useState({});
@@ -41,15 +42,30 @@ const CompanyProfile = () => {
         formData.append("company_business_address", companyProfileData.company_business_address);
         formData.append("company_timezone", companyProfileData.company_timezone);
         formData.append("company_description", companyProfileData.company_description);
+        formData.append("support_rescue_number", companyProfileData.support_rescue_number);
+        formData.append("support_emergency_no", companyProfileData.support_emergency_no);
+        formData.append("support_contact_no", companyProfileData.support_contact_no);
 
         try {
             const response = await apiSaveCompanyProfile(formData);
+
             if (response?.data?.success === 1) {
+                toast.success("Company profile updated successfully");
+
+                // Optional: refresh profile data
+                setRefreshTrigger((prev) => prev + 1);
             } else {
-                setError("Failed to save changes.");
+                const msg = response?.data?.message || "Failed to save changes";
+                toast.error(msg);
+                setError(msg);
             }
         } catch (err) {
-            setError("An error occurred while saving the company profile.");
+            const errorMsg =
+                err?.response?.data?.message ||
+                "An error occurred while saving the company profile";
+
+            toast.error(errorMsg);
+            setError(errorMsg);
         } finally {
             setIsSubmitting(false);
         }
@@ -129,6 +145,36 @@ const CompanyProfile = () => {
                             placeholder="Enter Time Zone"
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_timezone: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium text-gray-700 mb-1">Support Contact Number</label>
+                        <input
+                            type="text"
+                            value={companyProfileData?.support_contact_no || ""}
+                            placeholder="Enter Support Contact Number"
+                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_contact_no: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium text-gray-700 mb-1">Support Emergency Number</label>
+                        <input
+                            type="text"
+                            value={companyProfileData?.support_emergency_no || ""}
+                            placeholder="Enter Support Emergency Number"
+                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_emergency_no: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium text-gray-700 mb-1">Support Rescue Number</label>
+                        <input
+                            type="text"
+                            value={companyProfileData?.support_rescue_number || ""}
+                            placeholder="Enter Support Rescue Number"
+                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_rescue_number: e.target.value })}
                         />
                     </div>
                 </div>

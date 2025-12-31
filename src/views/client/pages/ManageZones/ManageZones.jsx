@@ -183,14 +183,14 @@ const ManageZones = () => {
           </tbody>
         </table>
 
-        <div className="p-4">
+        {/* <div className="p-4">
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             onClick={addRow}
           >
             Add Row
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

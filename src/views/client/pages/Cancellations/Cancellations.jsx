@@ -7,6 +7,7 @@ import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../constants/selectOptions";
 import { useAppSelector } from "../../../../store";
 import { apiGetCancelledBooking } from "../../../../services/AddBookingServices";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const Cancellations = () => {
   const [_searchQuery, setSearchQuery] = useState("");
@@ -73,6 +74,14 @@ const Cancellations = () => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
+
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">

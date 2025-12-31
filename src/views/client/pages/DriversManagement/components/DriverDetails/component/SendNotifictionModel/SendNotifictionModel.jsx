@@ -4,6 +4,7 @@ import FormLabel from "../../../../../../../../components/ui/FormLabel";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import { unlockBodyScroll } from "../../../../../../../../utils/functions/common.function";
 import { apiSendDriverNotifiction } from "../../../../../../../../services/DriverManagementService";
+import toast from "react-hot-toast";
 
 const SendNotifictionModel = ({ setIsOpen, driverId }) => {
     const [submitError, setSubmitError] = useState(null);
@@ -23,16 +24,23 @@ const SendNotifictionModel = ({ setIsOpen, driverId }) => {
             const response = await apiSendDriverNotifiction(formData);
 
             if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Notification sent successfully");
+
                 resetForm();
                 unlockBodyScroll();
                 setIsOpen(false);
             } else {
-                setSubmitError(response?.data?.message || "Failed to send notification");
+                toast.error(
+                    response?.data?.message || "Failed to send notification"
+                );
             }
         } catch (error) {
             console.error("Send notification error:", error);
-            setSubmitError(
-                error?.response?.data?.message || "Error sending notification"
+
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Error sending notification"
             );
         } finally {
             setIsLoading(false);
@@ -57,11 +65,6 @@ const SendNotifictionModel = ({ setIsOpen, driverId }) => {
                                         Send Notification
                                     </span>
                                 </div>
-                                {submitError && (
-                                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                        {submitError}
-                                    </div>
-                                )}
                                 <div className="">
                                     <div className="w-full">
                                         <FormLabel htmlFor="title">Title</FormLabel>

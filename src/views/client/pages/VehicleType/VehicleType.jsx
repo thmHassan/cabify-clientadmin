@@ -5,9 +5,7 @@ import Button from "../../../../components/ui/Button/Button";
 import PlusIcon from "../../../../components/svg/PlusIcon";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../components/ui/CustomSelect";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
-import Loading from "../../../../components/shared/Loading/Loading";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../store";
 import VehicleTypeCard from "./components/VehicleTypeCard";
@@ -15,6 +13,7 @@ import { apiDeleteVehicleType, apiGetVehicleTypes } from "../../../../services/V
 import { useNavigate } from "react-router-dom";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { VEHICLE_TYPE_DETAILS_PATH } from "../../../../constants/routes.path.constant/client.route.path.constant";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const VehicleType = () => {
   const navigate = useNavigate();
@@ -107,6 +106,14 @@ const VehicleType = () => {
     }
   };
 
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -146,17 +153,15 @@ const VehicleType = () => {
               />
             </div>
           </div>
-          <Loading loading={tableLoading} type="cover">
-            <div className="flex flex-col gap-4 pt-4">
-              {vehicleTypeData.map((vehicle) => (
-                <VehicleTypeCard key={vehicle.id}
-                  vehicle={vehicle}
-                  onEdit={(vehicleToEdit) => navigate(`${VEHICLE_TYPE_DETAILS_PATH}?id=${vehicleToEdit.id}`)}
-                  onDelete={handleDeleteClick} 
-                />
-              ))}
-            </div>
-          </Loading>
+          <div className="flex flex-col gap-4 pt-4">
+            {vehicleTypeData.map((vehicle) => (
+              <VehicleTypeCard key={vehicle.id}
+                vehicle={vehicle}
+                onEdit={(vehicleToEdit) => navigate(`${VEHICLE_TYPE_DETAILS_PATH}?id=${vehicleToEdit.id}`)}
+                onDelete={handleDeleteClick}
+              />
+            ))}
+          </div>
           {Array.isArray(vehicleTypeData) &&
             vehicleTypeData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
@@ -173,9 +178,9 @@ const VehicleType = () => {
           ) : null}
         </CardContainer>
       </div>
-      <Modal isOpen={deleteModalOpen} className="p-6 sm:p-8 w-full max-w-md">
+      <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-3">Delete Sub Company?</h2>
+          <h2 className="text-xl font-semibold mb-3">Delete Vehicle Types?</h2>
           <p className="text-gray-600 mb-6">
             Are you sure you want to delete {vehicleTypeToDelete?.name}?
           </p>
@@ -187,7 +192,7 @@ const VehicleType = () => {
                 setDeleteModalOpen(false);
                 setVehicleTypeToDelete(null);
               }}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               Cancel
             </Button>
@@ -196,7 +201,7 @@ const VehicleType = () => {
               type="filledRed"
               onClick={handleDeleteVehicleType}
               disabled={isDeleting}
-              className="px-6 py-2"
+              className="px-6 py-2 rounded-md"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

@@ -6,13 +6,13 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectO
 import Button from '../../../../components/ui/Button/Button';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
-import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import RidesManagementCard from './components/RidesManagementCard';
 import { apiGetRideById, apiGetRidesManagement } from '../../../../services/RidesManagementServices';
 import ViewBookingModel from './components/ViewBookingModel';
 import { lockBodyScroll, unlockBodyScroll } from '../../../../utils/functions/common.function';
 import Modal from '../../../../components/shared/Modal/Modal';
+import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
 const RidesManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -104,11 +104,11 @@ const RidesManagement = () => {
     setIsLoading(true);
     lockBodyScroll();
     setIsViewOpen(true);
-    
+
     try {
       // Fetch detailed ride information
       const response = await apiGetRideById(ride.id);
-      
+
       if (response?.status === 200 && response?.data?.detail) {
         setSelectedRide(response.data.detail);
       } else if (response?.data?.detail) {
@@ -130,6 +130,14 @@ const RidesManagement = () => {
     setIsViewOpen(false);
     setSelectedRide(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -207,17 +215,17 @@ const RidesManagement = () => {
               />
             </div>
           </div>
-          <Loading loading={tableLoading} type="cover">
-            <div className="flex flex-col gap-4 pt-4">
-              {filteredRides.map((ride) => (
-                <RidesManagementCard 
-                  key={ride.id} 
-                  ride={ride}
-                  onView={handleViewRide} 
-                />
-              ))}
-            </div>
-          </Loading>
+
+          <div className="flex flex-col gap-4 pt-4">
+            {filteredRides.map((ride) => (
+              <RidesManagementCard
+                key={ride.id}
+                ride={ride}
+                onView={handleViewRide}
+              />
+            ))}
+          </div>
+
           {Array.isArray(rideManagementData) &&
             rideManagementData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
@@ -236,10 +244,10 @@ const RidesManagement = () => {
       </div>
 
       <Modal isOpen={isViewOpen} className="p-4 sm:p-6 lg:p-10">
-          <ViewBookingModel
-            initialValue={selectedRide}
-            setIsOpen={closeViewModal}
-          />
+        <ViewBookingModel
+          initialValue={selectedRide}
+          setIsOpen={closeViewModal}
+        />
       </Modal>
     </div>
   );

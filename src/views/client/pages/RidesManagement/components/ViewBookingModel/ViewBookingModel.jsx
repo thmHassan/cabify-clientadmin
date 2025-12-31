@@ -27,6 +27,43 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
         }
     }, [initialValue]);
 
+    useEffect(() => {
+        if (initialValue?.pickup_point && initialValue?.destination_point) {
+
+            const [pickupLat, pickupLng] = initialValue.pickup_point
+                .split(",")
+                .map(val => val.trim());
+
+            const [destLat, destLng] = initialValue.destination_point
+                .split(",")
+                .map(val => val.trim());
+
+            if (pickupLat && pickupLng && destLat && destLng) {
+                const url = `https://www.google.com/maps/embed/v1/directions
+                ?key=AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU
+                &origin=${pickupLat},${pickupLng}
+                &destination=${destLat},${destLng}
+                &zoom=12`;
+
+                setMapUrl(url.replace(/\s/g, ""));
+            }
+        }
+    }, [initialValue]);
+
+
+    const chargeFields = [
+        "fares",
+        "return_fares",
+        "waiting_time",
+        "parking_charges",
+        "ac_fares",
+        "return_ac_fares",
+        "ac_parking_charges",
+        "waiting_charges",
+        "extra_charges",
+        "congestion_toll",
+        "ac_waiting_charges",
+    ];
     return (
         <div>
             <Formik
@@ -85,7 +122,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                         <h2 className="text-xl font-semibold">View Booking - #{rideData?.booking_id || 'N/A'}</h2>
 
                                         {rideData?.booking_status && (
-                                            <span className={`px-3 py-1 rounded-full w-fit text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            <span className={`px-3 py-1 rounded-full w-fit h-fit text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
                                                 rideData.booking_status === 'pending' ? 'bg-[#F5C60B] text-white' :
                                                     rideData.booking_status === 'cancelled' ? 'bg-[#FF4747] text-white' :
                                                         rideData.booking_status === 'waiting' ? 'bg-[#1F41BB] text-white' :
@@ -109,7 +146,6 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                         </div>
 
                                         <div className="flex max-sm:justify-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
-                                            <span className="text-sm mr-2">Single Booking</span>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
@@ -117,10 +153,11 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     checked={values.multi_booking === "yes"}
                                                     disabled
                                                 />
-                                                <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-green-400 transition-all"></div>
-                                                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-all"></div>
                                             </label>
-                                            <span className="text-sm ml-2">Multi Booking</span>
+
+                                            <span className="text-sm ml-2">
+                                                {values.multi_booking === "yes" ? "Multi Booking" : "Single Booking"}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -193,48 +230,15 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     <div className="flex w-full items-center gap-2 md:text-center">
                                                         <label className="text-sm font-semibold md:text-center w-20">Pick up Time</label>
                                                         <div className="w-full flex gap-2">
-                                                            {/* <select
+                                                            <input
+                                                                type="text"
                                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                value={values.pickup_time_type || ""}
-                                                                disabled
-                                                            >
-                                                                <option value="asap">ASAP</option>
-                                                                <option value="time">Pick a time</option>
-                                                            </select>
-
-                                                            {values.pickup_time_type === "time" && (
-                                                                <input
-                                                                    type="time"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.pickup_time || ""}
-                                                                    disabled
-                                                                />
-                                                            )} */}
-                                                            {/* ASAP input */}
-                                                            {values.pickup_time_type === "asap" && (
-                                                                <input
-                                                                    type="text"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.pickup_time || "asap"}
-                                                                // disabled
-                                                                />
-                                                            )}
-
-
-                                                            {values.pickup_time_type === "time" && (
-                                                                <input
-                                                                    type="time"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.pickup_time}
-                                                                    disabled
-                                                                />
-                                                            )}
-
+                                                                value={values.pickup_time || "asap"}
+                                                            />
                                                         </div>
                                                     </div>
-
-                                                    <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold mb-1 w-20">Date</label>
+                                                    <div className="flex w-full items-center gap-2">
+                                                        <label className="text-sm font-semibold mb-1 w-20 md:w-auto">Date</label>
                                                         <input
                                                             type="date"
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
@@ -245,107 +249,69 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                     <div className="flex w-full items-center gap-2 md:text-center">
                                                         <label className="text-sm font-semibold mb-1 w-20">Booking Type</label>
-                                                        {/* <select
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                            value={values.booking_type || ""}
-                                                            disabled
-                                                        >
-                                                            <option value="local">Local</option>
-                                                            <option value="outstation">Outstation</option>
-                                                        </select> */}
                                                         <input
                                                             type="text"
-                                                            name="booking_type"
-                                                            value={
-                                                                values.booking_type === "local"
-                                                                    ? "Local"
-                                                                    : values.booking_type === "outstation"
-                                                                        ? "Outstation"
-                                                                        : ""
-                                                            }
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-gray-50"
-                                                            disabled
+                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
+                                                            value={values.booking_date || ""}
+                                                            onChange={(e) => setFieldValue("booking_date", e.target.value)}
                                                         />
-
                                                     </div>
                                                 </div>
 
-                                                <div className="flex gap-4">
-                                                    <div className="flex gap-2 w-full">
-                                                        <div className="flex gap-2 items-center relative flex-col">
-                                                            <span className="text-sm text-center font-semibold mb-1 w-full">Pick up Point</span>
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="text"
-                                                                    name="pickup_point"
-                                                                    value={values.pickup_point || ''}
-                                                                    placeholder="Search location..."
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                            <div className="text-center flex items-center gap-2 max-sm:mt-8">
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Plot"
-                                                                    value={rideData?.pickup_point || ""}
-                                                                    readOnly
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 bg-gray-50 w-52"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div className="relative flex gap-2 w-full flex-col md:flex-row">
+                                                    <InputBox
+                                                        label="Pick up Point"
+                                                        type="text"
+                                                        name="pickup_point"
+                                                        value={values.pickup_point || ''}
+                                                        placeholder="Search location..."
+
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Plot"
+                                                        value={rideData?.pickup_point || ""}
+                                                        readOnly
+                                                        className="max-sm:ml-[75px] border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2" />
+
                                                 </div>
-
-                                                <div className="flex gap-4">
-                                                    <div className="flex gap-2">
-                                                        <div className="flex items-center gap-2 relative">
-                                                            <label className="text-sm font-semibold mb-1 w-20">Destination</label>
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="text"
-                                                                    name="destination"
-                                                                    value={values.destination || ''}
-                                                                    placeholder="Search location..."
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-                                                                    autoComplete="off"
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="text-center flex items-center gap-2 max-sm:mt-8">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Plot"
-                                                                value={rideData?.destination_point || destinationPlotData}
-                                                                readOnly
-                                                                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-52 bg-gray-50"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                <div className="relative flex gap-2 w-full flex-col md:flex-row">
+                                                    <InputBox
+                                                        label="Desti-nation"
+                                                        type="text"
+                                                        name="pickup_point"
+                                                        value={values.destination || ''}
+                                                        placeholder="Search location..."
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Plot"
+                                                        value={rideData?.destination_point || destinationPlotData}
+                                                        readOnly
+                                                        className="max-sm:ml-[75px] border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2" />
                                                 </div>
 
                                                 <div className="flex md:flex-row flex-col">
                                                     <div className="w-full gap-3 grid">
+                                                        {/* name, email */}
                                                         <div className="flex md:flex-row flex-col gap-2">
-                                                            <div className="text-left flex gap-2">
-                                                                <label className="text-sm font-semibold mb-1 w-20">Name</label>
+                                                            <div className="text-left flex">
+                                                                <label className="text-sm font-semibold mb-1 md:w-28 w-20">Name</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Enter Name"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
                                                                     value={values.name || ""}
                                                                     disabled
                                                                 />
                                                             </div>
 
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1 w-11">Email</label>
+                                                            <div className="text-left flex items-center md:gap-2">
+                                                                <label className="text-sm font-semibold mb-1 md:w-11 w-20">Email</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Enter Email"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
                                                                     value={values.email}
                                                                     disabled
                                                                 />
@@ -353,33 +319,35 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         </div>
 
                                                         <div className="flex md:flex-row flex-col gap-2">
-                                                            <div className="text-left flex items-left gap-2">
-                                                                <label className="text-sm font-semibold mb-1 w-20">Mobile No</label>
+                                                            <div className="text-left flex">
+                                                                <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Enter Mobile No"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full md:w-full"
                                                                     value={values.phone_no || ""}
                                                                     disabled
                                                                 />
                                                             </div>
 
-                                                            <div className="text-center flex items-center gap-2">
-                                                                <label className="text-sm font-semibold mb-1">Tel No.</label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Enter Telephone no"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
-                                                                    value={values.tel_no}
-                                                                    disabled
-                                                                />
+                                                            <div className="flex md:flex-row flex-col gap-2">
+                                                                <div className="flex w-full md:gap-2">
+                                                                    <label className="text-sm font-semibold mb-1 max-sm:w-20">Tel No.</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="Enter Telephone no"
+                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
+                                                                        value={values.tel_no}
+                                                                        disabled
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
 
                                                         <div className="w-full">
                                                             <div className="md:flex-row flex-col flex gap-2 w-full">
                                                                 <div className="text-left flex items-center gap-2">
-                                                                    <label className="text-sm font-semibold w-20">Journey</label>
+                                                                    <label className="text-sm font-semibold md:w-16">Journey</label>
                                                                     <div className="flex items-center gap-2">
                                                                         <label className="flex items-center gap-1">
                                                                             <input
@@ -415,25 +383,24 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                                 <div className="flex-1">
                                                                     <div className="text-center flex items-center gap-2">
-                                                                        <label className="text-sm font-semibold mb-1">Accounts</label>
-
+                                                                        <label className="text-sm md:text-right text-left font-semibold mb-1 md:w-24 w-14">Accounts</label>
                                                                         <div className="w-full">
                                                                             <input
                                                                                 name="account"
                                                                                 value={rideData?.account_detail?.name || ""}
                                                                                 className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-2 py-2 w-full"
                                                                                 disabled
-                                                                            >
-                                                                            </input>
+                                                                            />
                                                                         </div>
+
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex gap-2 w-full">
-                                                            <div className="flex md:flex-row flex-row gap-2 w-full">
-                                                                <label className="text-sm font-semibold w-20">Vehicle</label>
+                                                        <div className="flex gap-2 w-full md:flex-row flex-col">
+                                                            <div className="flex md:flex-row items-center flex-row gap-2 w-full">
+                                                                <label className="text-sm font-semibold md:w-24 w-16">Vehicle</label>
                                                                 <input
                                                                     type="text"
                                                                     name="vehicle"
@@ -444,8 +411,8 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                                 />
                                                             </div>
 
-                                                            <div className="flex md:flex-row flex-row gap-2 w-full">
-                                                                <label className="text-sm font-semibold w-20">Driver</label>
+                                                            <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
+                                                                <label className="text-sm font-semibold text-left md:w-16 w-16">Driver</label>
                                                                 <div className="w-full">
                                                                     <input
                                                                         type="text"
@@ -460,7 +427,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="border rounded-lg h-28 md:mt-10 mx-4 px-4 py-4 w-full bg-white shadow-sm">
+                                                    <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
                                                         <div className="flex flex-col gap-3">
                                                             <label className="flex items-center gap-2">
                                                                 <input
@@ -483,11 +450,12 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                             </label>
                                                         </div>
                                                     </div>
+
                                                 </div>
 
                                                 <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
                                                     <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-20">Passenger</label>
+                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Passenger</label>
                                                         <input
                                                             type="number"
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
@@ -497,7 +465,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     </div>
 
                                                     <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-20">Luggage</label>
+                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Luggage</label>
                                                         <input
                                                             type="number"
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
@@ -507,7 +475,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                     </div>
 
                                                     <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-full">Hand Luggage</label>
+                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Hand Luggage</label>
                                                         <input
                                                             type="number"
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
@@ -519,7 +487,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
                                                 <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
                                                     <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-28">Special Req</label>
+                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Special Req</label>
                                                         <input
                                                             type="text"
                                                             placeholder="Write here..."
@@ -529,7 +497,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         />
                                                     </div>
                                                     <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-28">Payment Ref</label>
+                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Payment Ref</label>
                                                         <input
                                                             type="text"
                                                             placeholder="Write here..."
@@ -549,23 +517,21 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         height="100%"
                                                         loading="lazy"
                                                         allowFullScreen
+                                                        referrerPolicy="no-referrer-when-downgrade"
                                                         src={mapUrl}
-                                                        style={{ minHeight: '400px' }}
-                                                    ></iframe>
+                                                        style={{ minHeight: "400px" }}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="bg-blue-50 p-4 rounded-lg space-y-4 mt-7">
-                                            <div className="flex justify-between items-center">
+                                            <div className="flex md:justify-between max-sm:flex-col md:items-center">
                                                 <h3 className="font-semibold text-xl">Charges</h3>
                                             </div>
 
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between max-sm:flex-col gap-2">
                                                 <div className="flex gap-4 items-center">
-                                                    <div className="flex items-center gap-2">
-                                                        <label className="text-sm font-medium">Payment Mode</label>
-                                                    </div>
 
                                                     <label className="flex items-center gap-2 text-sm">
                                                         <input
@@ -586,27 +552,25 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                         <option value="upi">UPI</option>
                                                     </select>
                                                 </div>
-                                                <div>
+
+                                                <div className="md:w-60">
                                                     <ChargeInput label="Booking Fees Charges" name="booking_fee_charges" values={values} readOnly />
                                                 </div>
                                             </div>
 
                                             <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
-                                                <ChargeInput label="Fares" name="fares" values={values} readOnly />
-                                                <ChargeInput label="Return Fares" name="return_fares" values={values} readOnly />
-                                                <ChargeInput label="Waiting Time" name="waiting_time" values={values} readOnly />
-                                                <ChargeInput label="Parking Charges" name="parking_charges" values={values} readOnly />
+                                                {chargeFields.map((field) => (
 
-                                                <ChargeInput label="AC Fares" name="ac_fares" values={values} readOnly />
-                                                <ChargeInput label="Return AC Fares" name="return_ac_fares" values={values} readOnly />
-                                                <ChargeInput label="Waiting Charges" name="waiting_charges" values={values} readOnly />
-                                                <ChargeInput label="AC Parking Charges" name="ac_parking_charges" values={values} readOnly />
+                                                    <ChargeInput label={field.replaceAll("_", " ").toUpperCase()} name={field} values={values} readOnly />
+                                                ))}
 
-                                                <ChargeInput label="Extra Charges" name="extra_charges" values={values} readOnly />
-                                                <ChargeInput label="Congestion / Toll" name="congestion_toll" values={values} readOnly />
-                                                <ChargeInput label="AC Waiting Charges" name="ac_waiting_charges" values={values} readOnly />
-                                                <div className="text-[#10B981]">
-                                                    <ChargeInput label="Total Charges" name="total_charges" values={values} readOnly />
+                                                <div className="font-bold text-[#10B981]">
+                                                    <ChargeInput
+                                                        label="TOTAL CHARGES"
+                                                        name="total_charges"
+                                                        values={values} readOnly
+                                                    // readOnly
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -649,3 +613,26 @@ const ChargeInput = ({ label, name, values, onChange, readOnly = false }) => (
         />
     </div>
 )
+
+const InputBox = ({
+    label,
+    value,
+    onChange,
+    suggestions,
+    show,
+    onSelect,
+    plot,
+    placeholder
+}) => (
+    <div className="relative flex md:flex-row max-sm:w-full gap-2">
+        <label className="font-semibold text-sm md:w-20 w-20 text-left">{label}</label>
+        <div className="flex max-sm:flex-col gap-2 w-full">
+            <input
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+            />
+        </div>
+    </div>
+);

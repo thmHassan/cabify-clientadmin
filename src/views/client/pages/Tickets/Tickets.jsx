@@ -5,13 +5,13 @@ import { useAppSelector } from '../../../../store';
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectOptions';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
-import Loading from '../../../../components/shared/Loading/Loading';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import CustomSelect from '../../../../components/ui/CustomSelect';
 import TicketsCard from './components/TicketsCard';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddTicketModel from './components/AddTicketModel';
 import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/TicketsServices';
+import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
 const Tickets = () => {
   const [isTicketsModelOpen, setIsTicketsModelOpen] = useState({
@@ -112,6 +112,14 @@ const Tickets = () => {
     }
   };
 
+  if (tableLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AppLogoLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -143,18 +151,16 @@ const Tickets = () => {
           </div>
         </div>
 
-        <Loading loading={tableLoading} type="cover">
-          <div className="flex flex-col gap-4 pt-4">
-            {ticketsData.map((ticket) => (
-              <TicketsCard
-                key={ticket.id}
-                tickets={ticket}
-                onReplyClick={handleReplyClick}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
-        </Loading>
+        <div className="flex flex-col gap-4 pt-4">
+          {ticketsData.map((ticket) => (
+            <TicketsCard
+              key={ticket.id}
+              tickets={ticket}
+              onReplyClick={handleReplyClick}
+              onStatusChange={handleStatusChange}
+            />
+          ))}
+        </div>
 
         {ticketsData.length > 0 && (
           <div className="mt-4 border-t border-[#E9E9E9] pt-4">

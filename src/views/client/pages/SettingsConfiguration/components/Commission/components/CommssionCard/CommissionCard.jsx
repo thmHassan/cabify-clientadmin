@@ -5,10 +5,6 @@ import ThreeDotsIcon from "../../../../../../../../components/svg/ThreeDotsIcon"
 
 const CommissionCard = ({ commission, onEdit, onDelete }) => {
     const actionOptions = [
-        // {
-        //     label: "View",
-        //     onClick: () => alert(`Viewing ${commission.package_name}`),
-        // },
         {
             label: "Edit",
             onClick: () => onEdit(commission),
@@ -28,19 +24,19 @@ const CommissionCard = ({ commission, onEdit, onDelete }) => {
             </div>
 
             <div className="flex items-center justify-center gap-3">
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Package Type</p>
-                    <p className="text-black font-semibold text-sm">{commission.package_type}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
+                    <p className="text-xs text-center text-[#6C6C6C]">Package Type</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{commission.package_type}</p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Duration (Days)</p>
-                    <p className="text-black font-semibold text-sm">{commission.package_duration}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
+                    <p className="text-xs text-center text-[#6C6C6C]">Duration</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{commission.package_duration}</p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Price</p>
-                    <p className="text-black font-semibold text-sm">${commission.package_price}</p>
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
+                    <p className="text-xs text-center text-[#6C6C6C]">Price</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">${commission.package_price}</p>
                 </div>
 
                 <UserDropdown options={actionOptions} itemData={commission}>

@@ -10,6 +10,16 @@ const CompanyProfile = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
+    const timeZoneOptions = [
+        { value: "UTC", label: "UTC" },
+        { value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" },
+        { value: "Asia/Dubai", label: "Asia/Dubai" },
+        { value: "Europe/London", label: "Europe/London" },
+        { value: "Europe/Paris", label: "Europe/Paris" },
+        { value: "America/New_York", label: "America/New_York" },
+        { value: "America/Los_Angeles", label: "America/Los_Angeles" },
+    ];
+
     const fetchCompanieProfile = useCallback(async () => {
         setTableLoading(true);
         try {
@@ -139,13 +149,23 @@ const CompanyProfile = () => {
 
                     <div>
                         <label className="block font-medium text-gray-700 mb-1">Time Zone</label>
-                        <input
-                            type="text"
+                        <select
                             value={companyProfileData?.company_timezone || ""}
-                            placeholder="Enter Time Zone"
+                            onChange={(e) =>
+                                setCompanyProfileData({
+                                    ...companyProfileData,
+                                    company_timezone: e.target.value,
+                                })
+                            }
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                            onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_timezone: e.target.value })}
-                        />
+                        >
+                            <option value="">Select Time Zone</option>
+                            {timeZoneOptions.map((tz) => (
+                                <option key={tz.value} value={tz.value}>
+                                    {tz.label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block font-medium text-gray-700 mb-1">Support Contact Number</label>

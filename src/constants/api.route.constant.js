@@ -11,6 +11,8 @@ export const GET_ALL_PLOT = "/company/get-plot"
 export const CREATE_BOOKING = "/company/create-booking"
 export const CALCULATE_FARES = "/company/calculate-fares"
 export const CANCELLED_BOOKING = "/company/cancelled-booking"
+export const UPDATE_BOOKING_SYSTEM = "/company/update-company-booking-system"
+export const GATE_BOOKING_SYSTEM = "/company/get-company-booking-system"
 
 //api for dispatcher
 export const CREATE_DISPATCHER = "/company/create-dispatcher";
@@ -39,7 +41,7 @@ export const DRIVER_DOCUMENT_LIST = "/company/driver-document-list"
 export const GET_BY_ID_DRIVER_DOCUMENT = "/company/driver-document"
 export const CHANGE_DRIVER_DOCUMENT_STATUS = "/company/change-status-document"
 export const DELETE_DRIVER_DOCUMENT = "/company/delete-driver-document"
-export const APPROVE_VEHICLE  = "/company/approv-vehicle-details"
+export const APPROVE_VEHICLE = "/company/approv-vehicle-details"
 export const REJECT_VAHICLE = "/company/reject-vehicle-details"
 export const DRIVER_RIDE_HISTORY = "/company/driver-ride-history"
 export const SEND_DRIVER_NOTIFICATION = "/company/send-driver-notification"
@@ -103,9 +105,9 @@ export const GET_THIRD_PARTY_INFORMATION = "/company/third-party-information"
 export const SAVE_THIRD_PARTY_INFORMATION = "/company/third-party-information"
 
 //api for account
-export const GET_ACCOUNT= "/company/list-account";
+export const GET_ACCOUNT = "/company/list-account";
 export const UPDATE_ACCOUNT = "/company/edit-account";
-export const CREATE_ACCOUNT= "/company/create-account";
+export const CREATE_ACCOUNT = "/company/create-account";
 export const DELETE_ACCOUNT = "/company/delete-account";
 export const GET_ACCOUNT_BY_ID = "/company/edit-account";
 

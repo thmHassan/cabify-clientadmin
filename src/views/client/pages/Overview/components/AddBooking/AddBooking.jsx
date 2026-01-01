@@ -24,6 +24,46 @@ const loadGoogleScript = () =>
         document.head.appendChild(script);
     });
 
+const AlertModal = ({ isOpen, message, onClose }) => {
+    useEffect(() => {
+        if (isOpen) {
+            const timer = setTimeout(() => {
+                onClose();
+            }, 10000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                        <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Alert</h3>
+                        <p className="text-sm text-gray-600">{message}</p>
+                    </div>
+                    {/* <button
+                        onClick={onClose}
+                        className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button> */}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const [subCompanyList, setSubCompanyList] = useState([]);
     const [vehicleList, setVehicleList] = useState([]);
@@ -51,6 +91,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const [fareCalculated, setFareCalculated] = useState(false);
     const [isBookingLoading, setIsBookingLoading] = useState(false);
     const [isMultiBooking, setIsMultiBooking] = useState(false);
+
+    const [alertModal, setAlertModal] = useState({
+        isOpen: false,
+        message: ''
+    });
 
     const tenant = getTenantData();
     const SEARCH_API = tenant?.search_api;
@@ -283,7 +328,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
         if (latLng) {
             plot = await fetchPlotName(latLng.lat, latLng.lng);
 
-            // Store coordinates
             if (type === "pickup") {
                 setFieldValue("pickup_latitude", latLng.lat);
                 setFieldValue("pickup_longitude", latLng.lng);
@@ -300,7 +344,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
         else if (type === "destination") setDestinationPlot(plot);
         else setViaPlots((p) => ({ ...p, [index]: plot }));
 
-        // Invalidate fare when location changes
         invalidateFare();
     };
 
@@ -351,39 +394,39 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
         try {
             if (!values.pickup_point) {
-                setFareError("Please select a pickup point");
+                toast.error("Please select a pickup point");
                 setFareLoading(false);
                 return;
             }
 
             if (!values.destination) {
-                setFareError("Please select a destination");
+                toast.error("Please select a destination");
                 setFareLoading(false);
                 return;
             }
 
             if (!values.vehicle) {
-                setFareError("Please select a vehicle type");
+                toast.error("Please select a vehicle type");
                 setFareLoading(false);
                 return;
             }
 
             if (!values.journey_type) {
-                setFareError("Please select a journey type");
+                toast.error("Please select a journey type");
                 setFareLoading(false);
                 return;
             }
 
             const pickupCoords = await getCoordinatesFromAddress(values.pickup_point);
             if (!pickupCoords) {
-                setFareError("Could not get coordinates for pickup point");
+                toast.error("Could not get coordinates for pickup point");
                 setFareLoading(false);
                 return;
             }
 
             const destinationCoords = await getCoordinatesFromAddress(values.destination);
             if (!destinationCoords) {
-                setFareError("Could not get coordinates for destination");
+                toast.error("Could not get coordinates for destination");
                 setFareLoading(false);
                 return;
             }
@@ -415,13 +458,18 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
             if (response?.data?.success === 1) {
                 setFareData(response.data);
                 setFareCalculated(true);
+                toast.success("Fare calculated successfully");
                 console.log("Fare calculation successful:", response.data);
             } else {
-                setFareError(response?.data?.message || "Failed to calculate fares");
+                const errorMsg = response?.data?.message || "Failed to calculate fares";
+                toast.error(errorMsg);
+                setFareError(errorMsg);
             }
         } catch (error) {
             console.error("Error calculating fares:", error);
-            setFareError(error?.response?.data?.message || "An error occurred while calculating fares");
+            const errorMsg = error?.response?.data?.message || "An error occurred while calculating fares";
+            toast.error(errorMsg);
+            setFareError(errorMsg);
         } finally {
             setFareLoading(false);
         }
@@ -459,7 +507,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
     const handleCreateBooking = async (values) => {
         if (!fareCalculated) {
-            setFareError("Please calculate fares before creating booking");
+            toast.error("Please calculate fares before creating booking");
             return;
         }
 
@@ -532,9 +580,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
             formData.append('special_request', values.special_request || '');
             formData.append('payment_reference', values.payment_reference || '');
 
-            if (!values.driver) {
-                formData.append('booking_system', values.booking_system || 'auto_dispatch');
-            }
+            formData.append('booking_system', values.booking_system || 'auto_dispatch');
 
             formData.append('parking_charge', values.parking_charges || '');
             formData.append('waiting_charge', values.waiting_charges || '');
@@ -550,20 +596,24 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
             const response = await apiCreateBooking(formData);
 
             if (response?.data?.success === 1) {
-                console.log("Booking created successfully:", response.data);
+                toast.success(response?.data?.message || "Booking created successfully");
 
-                if (onSubCompanyCreated) {
-                    onSubCompanyCreated(response.data);
+                if (response?.data?.alertMessage) {
+                    setAlertModal({
+                        isOpen: true,
+                        message: response.data.alertMessage
+                    });
+                    return; // ⛔ stop further execution
                 }
 
                 unlockBodyScroll();
                 setIsOpen({ type: "new", isOpen: false });
             } else {
-                alert(response?.data?.message || "Failed to create booking");
+                toast.error(response?.data?.message || "Failed to create booking");
             }
         } catch (error) {
             console.error("Error creating booking:", error);
-            alert(error?.response?.data?.message || "An error occurred while creating booking");
+            toast.error(error?.response?.data?.message || "An error occurred while creating booking");
         } finally {
             setIsBookingLoading(false);
         }
@@ -585,6 +635,17 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
     return (
         <>
+
+            <AlertModal
+                isOpen={alertModal.isOpen}
+                message={alertModal.message}
+                onClose={() => {
+                    setAlertModal({ isOpen: false, message: '' });
+                    unlockBodyScroll();
+                    setIsOpen({ type: "new", isOpen: false });
+                }}
+            />
+
             <Formik
                 initialValues={{
                     pickup_point: "",
@@ -1145,40 +1206,38 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Auto Dispatch + Bidding - Only show if driver is not selected */}
-                                                        {!values.driver && (
-                                                            <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
-                                                                <div className="flex flex-col gap-3">
-                                                                    <label className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={values.auto_dispatch}
-                                                                            onChange={(e) => {
-                                                                                setFieldValue("auto_dispatch", e.target.checked);
-                                                                                if (e.target.checked) {
-                                                                                    setFieldValue("booking_system", "auto_dispatch");
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                        Auto Dispatch
-                                                                    </label>
+                                                        <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
+                                                            <div className="flex flex-col gap-3">
+                                                                <label className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={values.auto_dispatch}
+                                                                        onChange={(e) => {
+                                                                            setFieldValue("auto_dispatch", e.target.checked);
+                                                                            if (e.target.checked) {
+                                                                                setFieldValue("booking_system", "auto_dispatch");
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    Auto Dispatch
+                                                                </label>
 
-                                                                    <label className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={values.bidding}
-                                                                            onChange={(e) => {
-                                                                                setFieldValue("bidding", e.target.checked);
-                                                                                if (e.target.checked) {
-                                                                                    setFieldValue("booking_system", "bidding");
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                        Bidding
-                                                                    </label>
-                                                                </div>
+                                                                <label className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={values.bidding}
+                                                                        onChange={(e) => {
+                                                                            setFieldValue("bidding", e.target.checked);
+                                                                            if (e.target.checked) {
+                                                                                setFieldValue("booking_system", "bidding");
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    Bidding
+                                                                </label>
                                                             </div>
-                                                        )}
+                                                        </div>
+
                                                     </div>
 
                                                     <div className="grid md:grid-cols-3 grid-cols-1 gap-4">

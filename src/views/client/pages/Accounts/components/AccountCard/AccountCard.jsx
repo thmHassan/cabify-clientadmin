@@ -33,10 +33,6 @@ const AccountCard = ({ account, onEdit, onView, onDelete }) => {
                 </Button>
             </UserDropdown>
         </div>
-
-
-
-
     );
 };
 

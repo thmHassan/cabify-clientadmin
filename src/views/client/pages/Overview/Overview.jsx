@@ -267,7 +267,7 @@ const Overview = () => {
           </div>
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
             <PageTitle title={companyName} />
-            <PageSubTitle title="Welcome back! (Admin Name), Here's what's happening with your transportation business today." />
+            <PageSubTitle title="Welcome back! Here's what's happening with your transportation business today." />
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8">

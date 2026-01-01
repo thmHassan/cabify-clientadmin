@@ -1,61 +1,75 @@
-import { useState } from 'react';
-import DatePicker from 'react-datepicker';
+import { useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { format } from 'date-fns';
 import { useAppSelector } from '../../../../store';
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
-import CustomSelect from '../../../../components/ui/CustomSelect';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import Loading from '../../../../components/shared/Loading/Loading';
 import SnapshotCard from '../../../../components/shared/SnapshotCard/SnapshotCard';
-import CompaniesIcon from '../../../../components/svg/CompaniesIcon';
-import {
-  COMPANY_OPTIONS,
-  PAGE_SIZE_OPTIONS,
-  STATUS_OPTIONS
-} from '../../../../constants/selectOptions';
+import { PAGE_SIZE_OPTIONS } from '../../../../constants/selectOptions';
 import CardContainer from '../../../../components/shared/CardContainer';
-import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import RevenueStatementsCard from './components/RevenueStatementsCard/RevenueStatementsCard';
+import TotalRevenuesIcon from '../../../../components/svg/TotalRevenuesIcon';
+import RideEarningsIcon from '../../../../components/svg/RideEarningsIcon';
+import CommissionIcon from '../../../../components/svg/CommissionIcon';
+import JobsOfferedIcon from '../../../../components/svg/JobsOfferedIcon';
+import JobsAcceptedIcon from '../../../../components/svg/JobsAcceptedIcon';
+import AcceptanceRateIcon from '../../../../components/svg/AcceptanceRateIcon';
+import CompletedsJobsIcon from '../../../../components/svg/CompletedsJobsIcon';
+import { apiGetSubCompany } from '../../../../services/SubCompanyServices';
 
 const RevenueStatements = () => {
-  const [selectedCompany, setSelectedCompany] = useState(
-    COMPANY_OPTIONS.find((o) => o.value === "all") ?? COMPANY_OPTIONS[0]
-  );
-
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [startDate, endDate] = dateRange;
+  const [selectedCompany, setSelectedCompany] = useState();
   const [tableLoading, setTableLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const [subCompanyList, setSubCompanyList] = useState([]);
+  const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
 
   const savedPagination = useAppSelector(
     (state) => state?.app?.app?.pagination?.companies
   );
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const DASHBOARD_CARDS = [
     {
-      title: "Total Companies",
+      title: "Total Revenue",
       value: "25",
       change: "+3 from last hour",
-      icon: { component: CompaniesIcon },
+      icon: { component: TotalRevenuesIcon },
       backgroundColor: "#e5f9f0",
       color: "#534CB4",
     },
     {
-      title: "Active Companies",
+      title: "Ride Earnings",
       value: "15",
       change: "+3 from last hour",
-       icon: { component: CompaniesIcon },
+      icon: { component: RideEarningsIcon },
       backgroundColor: "#e5f9f0",
       color: "#3E9972",
     },
     {
-      title: "Monthly Revenue",
+      title: "Commission",
       value: "$6,800",
       change: "+3 from last hour",
-      icon: { component: CompaniesIcon },
+      icon: { component: CommissionIcon },
       backgroundColor: "#e5f9f0",
       color: "#C29569",
     },
@@ -63,33 +77,33 @@ const RevenueStatements = () => {
 
   const JOB_SUMMARY = [
     {
-      title: 'Total Jobs',
+      title: 'Jobs Offered',
       value: '125',
-      icon: { component: CompaniesIcon },
+      icon: { component: JobsOfferedIcon },
       backgroundColor: "#e5f9f0",
       change: '+12%',
       color: 'text-blue-500'
     },
     {
-      title: 'Completed',
+      title: 'Jobs Accepted',
       value: '98',
-      icon: { component: CompaniesIcon },
+      icon: { component: JobsAcceptedIcon },
       backgroundColor: "#e5f9f0",
       change: '+8%',
       color: 'text-green-500'
     },
     {
-      title: 'In Progress',
+      title: 'Completed Jobs',
       value: '15',
-      icon: { component: CompaniesIcon },
+      icon: { component: CompletedsJobsIcon },
       backgroundColor: "#e5f9f0",
       change: '+2%',
       color: 'text-yellow-500'
     },
     {
-      title: 'Cancelled',
+      title: 'Acceptance Rate',
       value: '12',
-      icon: { component: CompaniesIcon },
+      icon: { component: AcceptanceRateIcon },
       backgroundColor: "#e5f9f0",
       change: '-2%',
       color: 'text-red-500'
@@ -104,7 +118,7 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid",
+      status: "Paid",
       paymentStatus: "Cash"
     },
     {
@@ -124,7 +138,7 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid",
+      status: "Paid",
       paymentStatus: "Online"
     },
     {
@@ -134,26 +148,36 @@ const RevenueStatements = () => {
       usernName: "Dianne Russell",
       driverName: "john",
       amount: "45",
-      status: "paid",
+      status: "Paid",
       paymentStatus: "Cash"
     }
   ];
 
-  const formatDateRange = (start, end) => {
-    if (!start || !end) return 'Select date range';
-    return `${format(start, 'dd/MM/yy')} - ${format(end, 'dd/MM/yy')}`;
-  };
+  useEffect(() => {
+    const fetchSubCompanies = async () => {
+      setLoadingSubCompanies(true);
+      try {
+        const response = await apiGetSubCompany();
+        if (response?.data?.success === 1) {
+          const companies = response?.data?.list?.data || [];
+          const options = companies.map(company => ({
+            label: company.name,
+            value: company.id.toString(),
+          }));
+          setSubCompanyList(options);
+        }
+      } catch (error) {
+        console.error("Error fetching sub-companies:", error);
+      } finally {
+        setLoadingSubCompanies(false);
+      }
+    };
+    fetchSubCompanies();
+  }, []);
 
-  const handleDownload = () => {
-    if (selectedCompany.value === 'all') {
-      console.log('Downloading all companies');
-    } else {
-      console.log(`Downloading for: ${selectedCompany.label}`);
-    }
-  };
-
-  const handleCompanyChange = (selectedOption) => {
-    setSelectedCompany(selectedOption);
+  const handleSelect = (company) => {
+    setSelectedCompany(company);
+    setIsOpen(false);
   };
 
   const handlePageChange = (pageNumber) => {
@@ -165,80 +189,59 @@ const RevenueStatements = () => {
     setCurrentPage(1);
   };
 
-  const getStatusStyles = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'pending':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'Completed';
-      case 'in-progress':
-        return 'In Progress';
-      case 'pending':
-        return 'Pending';
-      default:
-        return 'Unknown';
-    }
-  };
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-8 min-h-[calc(100vh-85px)] bg-gray-50">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <PageTitle title="Revenue & Statements" />
-        {/* <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="w-full sm:w-48">
-            <CustomSelect
-              variant={2}
-              options={COMPANY_OPTIONS}
-              value={selectedCompany}
-              onChange={handleCompanyChange}
-              placeholder="Select company..."
-              isSearchable={true}
-            />
-          </div>
-          <div className="relative w-full sm:w-56">
-            <DatePicker
-              selectsRange={true}
-              startDate={startDate}
-              endDate={endDate}
-              onChange={(update) => setDateRange(update)}
-              dateFormat="dd/MM/yy"
-              className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              placeholderText="Select date range"
-              customInput={
-                <div className="flex items-center justify-between cursor-pointer border border-gray-300 rounded-md h-10 px-3 w-full">
-                  <span className="text-sm text-gray-700">
-                    {formatDateRange(startDate, endDate)}
-                  </span>
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div ref={dropdownRef} className="relative min-w-[300px]">
+            <div
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center justify-between px-4 py-2 border-[1px] border-[#6C6C6C] rounded-[6px] cursor-pointer bg-white"
+            >
+              <span className="text-[#252525] font-medium">
+                {selectedCompany ? selectedCompany.label : "Select a company"}
+              </span>
+              <span
+                className={`ml-2 transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"
+                  }`}
+              >
+                <svg width="18" height="11" viewBox="0 0 20 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L10 10L19 1" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+
+              </span>
+            </div>
+
+            {/* Dropdown menu */}
+            {isOpen && (
+              <ul className="absolute z-10 mt-1 w-full bg-white border-[1px] border-[#6C6C6C] rounded-[6px] shadow-lg">
+                {subCompanyList.map((company) => (
+                  <li
+                    key={company.value}
+                    onClick={() => handleSelect(company)}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-[#252525] font-medium"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              }
-            />
+                    {company.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        </div> */}
+
+          <div className="relative min-w-[230px]">
+            <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+              <input
+                type="date"
+                className="border-[1px] border-[#6C6C6C] rounded-[6px] px-3 py-2"
+                // value={_selectedDate}
+                // onChange={(e) => setSelectedDate(e.target.value)}
+                placeholder="Select Date"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>

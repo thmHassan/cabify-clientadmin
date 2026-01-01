@@ -19,20 +19,82 @@ import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
 import { getTenantData } from "../../../utils/functions/tokenEncryption";
+import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices"; 
 
 const UserPageContainer = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [bookingSystem, setBookingSystem] = useState(null);
+  const [isLoadingBookingSystem, setIsLoadingBookingSystem] = useState(true);
+  const [isSwitchingSystem, setIsSwitchingSystem] = useState(false);
 
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
   const tenantData = getTenantData();
-  const tenantHybrid = (tenantData?.uber_plot_hybrid || "").toLowerCase();
-  const userHybrid = (user?.uber_plot_hybrid || "").toLowerCase();
-  const hybridMode = tenantHybrid || userHybrid;
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch booking system on component mount
+  useEffect(() => {
+    fetchBookingSystem();
+  }, []);
+
+  const fetchBookingSystem = async () => {
+    try {
+      setIsLoadingBookingSystem(true);
+      const response = await apiGetBookingSystem();
+      console.log("Booking System Full Response:", response);
+      console.log("Response data:", response?.data);
+      
+      // Check if response has data property (axios style) or direct response
+      const data = response?.data || response;
+      console.log("Extracted data:", data);
+      
+      // Check for success: 1 or success: true
+      if (data && (data.success === 1 || data.success === true)) {
+        console.log("Setting booking system to:", data.company_booking_system);
+        setBookingSystem(data.company_booking_system);
+      } else {
+        console.error("API response did not indicate success:", data);
+      }
+    } catch (error) {
+      console.error("Error fetching booking system:", error);
+    } finally {
+      setIsLoadingBookingSystem(false);
+    }
+  };
+
+  const handleBookingSystemToggle = async () => {
+    if (isSwitchingSystem) return;
+
+    try {
+      setIsSwitchingSystem(true);
+      
+      // Determine new system based on current state
+      const newSystem = bookingSystem === "auto_dispatch" ? "bidding" : "auto_dispatch";
+      console.log("Switching from", bookingSystem, "to", newSystem);
+      
+      const formData = new FormData();
+      formData.append("company_booking_system", newSystem);
+      
+      const response = await apiUpdateBookingSystem(formData);
+      console.log("Update Full Response:", response);
+      
+      const data = response?.data || response;
+      console.log("Update extracted data:", data);
+      
+      if (data && (data.success === 1 || data.success === true)) {
+        setBookingSystem(newSystem);
+      } else {
+        console.error("Update failed:", data);
+      }
+    } catch (error) {
+      console.error("Error updating booking system:", error);
+    } finally {
+      setIsSwitchingSystem(false);
+    }
+  };
 
   // Close sidebar on route change for small screens
   useEffect(() => {
@@ -42,7 +104,6 @@ const UserPageContainer = ({ children }) => {
       }
     };
 
-    // Close sidebar when location changes on small screens
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -63,34 +124,111 @@ const UserPageContainer = ({ children }) => {
     }
   };
 
+  // Render booking system UI based on API response
+  const renderBookingSystemUI = () => {
+    console.log("Rendering UI with bookingSystem:", bookingSystem, "isLoading:", isLoadingBookingSystem);
+
+    if (isLoadingBookingSystem) {
+      return (
+        <div className="flex gap-2.5 items-center">
+          <span className="text-sm text-gray-500">Loading...</span>
+        </div>
+      );
+    }
+
+    // Check for "both" - show toggle switch
+    if (bookingSystem === "both") {
+      return (
+        <div className="flex gap-2.5 items-center">
+          <PageSubTitle
+            title="Auto Dispatch System"
+            className="!leading-[22px]"
+            textColor={2}
+          />
+          <div className="relative">
+            <button
+              onClick={handleBookingSystemToggle}
+              disabled={isSwitchingSystem}
+              className={`w-12 h-6 rounded-full transition-colors ${
+                bookingSystem === "bidding" ? "bg-blue-500" : "bg-gray-300"
+              } ${isSwitchingSystem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                  bookingSystem === "bidding" ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          <PageSubTitle
+            title="Bidding System"
+            className="!leading-[22px]"
+            textColor={2}
+          />
+        </div>
+      );
+    }
+
+    // Check for "auto_dispatch" - show only Auto Dispatch
+    if (bookingSystem === "auto_dispatch") {
+      return (
+        <div className="flex gap-2.5 items-center">
+          <PageSubTitle
+            title="Auto Dispatch System"
+            className="!leading-[22px]"
+            textColor={2}
+          />
+        </div>
+      );
+    }
+
+    // For "bidding" only - show only Bidding
+    if (bookingSystem === "bidding") {
+      return (
+        <div className="flex gap-2.5 items-center">
+          <PageSubTitle
+            title="Bidding System"
+            className="!leading-[22px]"
+            textColor={2}
+          />
+        </div>
+      );
+    }
+
+    // Fallback - no system set or unknown value
+    return (
+      <div className="flex gap-2.5 items-center">
+        <span className="text-sm text-gray-500">System: {bookingSystem || "Not Set"}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex">
-       <div
-  className={`
-    border-r-[0.7px] border-[#7A7A7A] pb-[21px]   
-    h-screen overflow-auto fixed z-[70] bg-[#ffffff]
-    transition-all duration-300 ease-in-out
+      <div
+        className={`
+          border-r-[0.7px] border-[#7A7A7A] pb-[21px]   
+          h-screen overflow-auto fixed z-[70] bg-[#ffffff]
+          transition-all duration-300 ease-in-out
 
-    ${isSidebarOpen ? "w-[19.7rem]" : "w-16"}   /* width change here */
-    
-    /* Mobile slide animation */
-    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-    lg:translate-x-0
-  `}
->
-
+          ${isSidebarOpen ? "w-[19.7rem]" : "w-16"}
+          
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          lg:translate-x-0
+        `}
+      >
         <div className={`${isSidebarOpen ? "mb-10" : "mb-0"} px-6 lg:px-8 flex items-center justify-center relative`}>
           <AppLogoIcon height={95} width={95} />
-    <button
-  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-  className="absolute top-4 right-[13px] w-8 h-8  flex items-center justify-center transition lg:block md:hidden"
->
-  {isSidebarOpen ? (
-    <CloseIcon width={18} height={18} fill="#3D3D3D" /> 
-  ) : (
-    <DrawerIcon width={30} height={30} fill="#000000" /> 
-  )}
-</button>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="absolute top-4 right-[13px] w-8 h-8 flex items-center justify-center transition lg:block md:hidden"
+          >
+            {isSidebarOpen ? (
+              <CloseIcon width={18} height={18} fill="#3D3D3D" /> 
+            ) : (
+              <DrawerIcon width={30} height={30} fill="#000000" /> 
+            )}
+          </button>
         </div>
         <div className="flex flex-col gap-[30px]">
           {NAV_ELEMENTS.map(({ title, routes }, index) => (
@@ -107,7 +245,7 @@ const UserPageContainer = ({ children }) => {
           ))}
         </div>
       </div>
-      {/* overlay for small screens when sidebar is open */}
+
       <div
         className={`fixed inset-0 bg-black/40 lg:hidden z-[60] ${
           isSidebarOpen ? "block" : "hidden"
@@ -115,18 +253,19 @@ const UserPageContainer = ({ children }) => {
         aria-hidden="true"
         onClick={() => setIsSidebarOpen(false)}
       ></div>
-           <div
-  className={`w-full transition-all duration-300 ease-in-out
-    ${isSidebarOpen 
-      ? "lg:ml-[19.7rem] lg:w-[calc(100%-325px)]" 
-      : "lg:ml-16 lg:w-[calc(100%-64px)]"
-    }
-  `}
->
-  <div className={`h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full ] z-50 ${isSidebarOpen 
-      ? "lg:ml-0 lg:w-[calc(100%-315px)]" 
-      : "lg:ml-0 lg:w-[calc(100%-64px)]"
-    }`}>
+
+      <div
+        className={`w-full transition-all duration-300 ease-in-out
+          ${isSidebarOpen 
+            ? "lg:ml-[19.7rem] lg:w-[calc(100%-325px)]" 
+            : "lg:ml-16 lg:w-[calc(100%-64px)]"
+          }
+        `}
+      >
+        <div className={`h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full z-50 ${isSidebarOpen 
+            ? "lg:ml-0 lg:w-[calc(100%-315px)]" 
+            : "lg:ml-0 lg:w-[calc(100%-64px)]"
+          }`}>
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 pr-2 sm:pr-5">
             <button
               type="button"
@@ -142,44 +281,10 @@ const UserPageContainer = ({ children }) => {
               </span>
             </button>
           </div>
-          <div className="flex gap-2.5 items-center">
-            {hybridMode === "both" && (
-              <>
-                <PageSubTitle
-                  title="Auto Dispatch System"
-                  className="!leading-[22px]"
-                  textColor={2}
-                />
-                <PlainSwitch />
-                <PageSubTitle
-                  title="Bidding System"
-                  className="!leading-[22px]"
-                  textColor={2}
-                />
-                <PlainSwitch />
-              </>
-            )}
-            {hybridMode === "auto" && (
-              <>
-                <PageSubTitle
-                  title="Auto Dispatch System"
-                  className="!leading-[22px]"
-                  textColor={2}
-                />
-               
-              </>
-            )}
-            {hybridMode !== "auto" && hybridMode !== "both" && (
-              <>
-                <PageSubTitle
-                  title="Bidding System"
-                  className="!leading-[22px]"
-                  textColor={2}
-                />
-               
-              </>
-            )}
-          </div>
+
+          {/* Booking System UI - Now based on API response */}
+          {renderBookingSystemUI()}
+
           <div className="flex gap-1.5 sm:gap-3 lg:gap-5 items-center flex-shrink-0">
             <div className="flex min-w-[40px] h-[40px] sm:min-w-[50px] sm:h-[50px] rounded-full bg-[#FFFFFF] justify-center items-center">
               <div className="w-[18px] h-[20px] sm:w-[22px] sm:h-[24px] flex items-center justify-center">
@@ -208,18 +313,18 @@ const UserPageContainer = ({ children }) => {
             >
               <div className="max-w-[200px] w-full rounded-[30px] bg-[#ffffff] py-1 sm:py-[5px] px-1 sm:px-[5px] lg:pl-[5px] lg:pr-5 flex items-center gap-1.5 sm:gap-3">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0">
-                 <img
-                   src={
-                     tenantData?.picture
-                     ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
-                      : "/default-avatar.png"
+                  <img
+                    src={
+                      tenantData?.picture
+                        ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
+                        : "/default-avatar.png"
                     }
-                     alt="Profile"
-                     className="w-full h-full object-cover"
+                    alt="Profile"
+                    className="w-full h-full object-cover"
                     onError={(e) => {
-                     e.currentTarget.src = "/default-avatar.png";
+                      e.currentTarget.src = "/default-avatar.png";
                     }}
-                   />
+                  />
                 </div>
                 <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] truncate capitalize">
                   <span>{tenantData?.company_name || user?.name || "Admin"}</span>
@@ -228,7 +333,7 @@ const UserPageContainer = ({ children }) => {
             </UserDropdown>
           </div>
         </div>
-        {/* Mobile sticky search bar under the header */}
+
         {isMobileSearchOpen && (
           <div className="sm:hidden fixed top-16 left-0 right-0 z-50 bg-[#F5F5F5] border-t border-[#e5e5e5] px-3 py-2 flex items-center gap-2">
             <div className="w-full">
@@ -263,6 +368,7 @@ const UserPageContainer = ({ children }) => {
             </button>
           </div>
         )}
+
         <div
           className={`${
             isMobileSearchOpen ? "mt-[112px]" : "mt-16"

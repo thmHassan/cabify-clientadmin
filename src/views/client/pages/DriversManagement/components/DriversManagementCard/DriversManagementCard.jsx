@@ -137,7 +137,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                             ? "bg-[#10B981] text-white"
                             : status === "rejected"
                                 ? "bg-[#FF4747] text-white"
-                                : "bg-[#F59E0B] text-white"
+                                : "bg-[#F5C60B] text-white"
                             } text-center xl:h-10 lg:h-10 md:h-10 h-10 w-28 xl:py-3 lg:py-3 md:py-3 py-1 rounded-full flex items-center justify-center cursor-pointer`}
                     >
                         <p className="font-semibold text-sm">

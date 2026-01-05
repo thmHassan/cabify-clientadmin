@@ -32,7 +32,7 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
             className="bg-white rounded-[15px] p-4 gap-2 flex items-center hover:shadow-md overflow-x-auto"
         >
             <div className="flex items-center gap-3">
-                <div className="w-52">
+                <div className="w-60">
                     <p className="font-semibold text-xl">{user.name}</p>
                     <p className="text-[10px]">{user.email}</p>
                     <p className="text-xs">{user?.country_code|| "+91"} {user.phone_no}</p>

@@ -60,7 +60,7 @@ const Users = () => {
     setCurrentPage(1);
   };
 
-  const getUser = useCallback(async () => {
+  const getUser = async () => {
     try {
       setIsUserLoadnig(true);
 
@@ -82,17 +82,17 @@ const Users = () => {
 
         setTotalItems(result.data.users.total || 0);
         setTotalPages(result.data.users.last_page || 1);
-        setUserList(rows); // ✅ single state
+        setUserList(rows);
       }
       console.log("users-----",);
-      
+
     } catch (error) {
       console.error(error);
       setUserList([]);
     } finally {
       setIsUserLoadnig(false);
     }
-  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+  }
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -105,12 +105,9 @@ const Users = () => {
   }, [_searchQuery]);
 
   useEffect(() => {
-    if (!hasCalledInitial.current) {
-      hasCalledInitial.current = true;
-      return;
-    }
     getUser();
-  }, [refreshTrigger]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, refreshTrigger]);
+
 
   useEffect(() => {
     if (!hasCalledInitial.current) {

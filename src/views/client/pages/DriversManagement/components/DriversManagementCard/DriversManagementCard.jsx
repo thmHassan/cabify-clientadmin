@@ -9,7 +9,7 @@ import { getTenantData } from "../../../../../../utils/functions/tokenEncryption
 
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
-    const [status, setStatus] = useState(driver.status);
+    const [status, setStatus] = useState(driver?.status || "pending");
     const [loading, setLoading] = useState(false);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
 

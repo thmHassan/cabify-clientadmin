@@ -38,8 +38,9 @@ const Users = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isUserLoadnig, setIsUserLoadnig] = useState(false);
-  const [userListRaw, setUserListRaw] = useState([]);
-  const [userListDisplay, setUserListDisplay] = useState([]);
+  // const [userListRaw, setUserListRaw] = useState([]);
+  // const [userListDisplay, setUserListDisplay] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const hasCalledInitial = useRef(false);
@@ -62,31 +63,32 @@ const Users = () => {
   const getUser = useCallback(async () => {
     try {
       setIsUserLoadnig(true);
+
       const params = {
         page: currentPage,
         perPage: itemsPerPage,
       };
-      if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
+
+      if (debouncedSearchQuery?.trim()) {
         params.search = debouncedSearchQuery.trim();
       }
-
-      console.log("API Call Params:", params);
 
       const result = await apiGetUser(params);
 
       if (result?.status === 200 && result?.data?.users) {
-        const list = result?.data?.users?.data;
-        const rows = Array.isArray(list) ? list : [];
+        const rows = Array.isArray(result.data.users.data)
+          ? result.data.users.data
+          : [];
 
-        setTotalItems(result?.data?.users?.total || 0);
-        setTotalPages(result?.data?.users?.last_page || 1);
-        setUserListRaw(rows);
-        setUserListDisplay(rows);
+        setTotalItems(result.data.users.total || 0);
+        setTotalPages(result.data.users.last_page || 1);
+        setUserList(rows); // ✅ single state
       }
-    } catch (errors) {
-      console.log(errors, "err---");
-      setUserListRaw([]);
-      setUserListDisplay([]);
+      console.log("users-----",);
+      
+    } catch (error) {
+      console.error(error);
+      setUserList([]);
     } finally {
       setIsUserLoadnig(false);
     }
@@ -204,7 +206,7 @@ const Users = () => {
         </div>
 
         <div className="flex flex-col gap-4 pt-4">
-          {userListDisplay.map((user) => (
+          {userList.map((user) => (
             <UserDetails
               key={user.id}
               user={user}
@@ -214,7 +216,7 @@ const Users = () => {
           ))}
         </div>
 
-        {userListDisplay.length > 0 && (
+        {userList.length > 0 && (
           <div className="mt-4 border-t border-[#E9E9E9] pt-4">
             <Pagination
               currentPage={currentPage}

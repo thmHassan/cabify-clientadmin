@@ -8,11 +8,16 @@ import { apiCreateDispatcher, apiEditDispatcher } from "../../../../../../servic
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import { DISPATCHER_VALIDATION_SCHEMA } from "../../../../validators/pages/dispatcher.validation";
 import toast from "react-hot-toast";
+import { useAppSelector } from "../../../../../../store";
+import { getTenantData, getTenantId } from "../../../../../../utils/functions/tokenEncryption";
+import { useSocket } from "../../../../../../components/routes/SocketProvider";
 
 const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const reduxUserId = useAppSelector((state) => state?.auth?.user?.id);
+  const userId = reduxUserId || getTenantData()?.company_id || getTenantId() || null;
 
   useEffect(() => {
     setIsEditMode(!!initialValue?.id);
@@ -75,6 +80,26 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
       setIsLoading(false);
     }
   };
+
+  console.log("userId====", userId);
+
+  const echo = useSocket();
+
+  useEffect(() => {
+    if (!echo || !userId) return;
+
+    console.log("Subscribing to user:", userId);
+
+    const channel = echo.private(`App.Models.User.${userId}`);
+
+    channel.notification((notification) => {
+      console.log("Notification:", notification);
+    });
+
+    return () => {
+      echo.leave(`App.Models.User.${userId}`);
+    };
+  }, [echo, userId]);
 
   return (
     <div>

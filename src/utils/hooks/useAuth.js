@@ -39,17 +39,31 @@ function useAuth() {
         const { token } = resp.data;
         console.log(resp.data.user, "resp.data.user====");
         dispatch(signInSuccess(token));
-        if (resp.data.user) {
-          dispatch(
-            setUser(
-              resp.data.user || {
-                avatar: "",
-                name: "Anonymous",
-                // role: "client",
-                email: "",
-              }
-            )
-          );
+
+        // Build user data: prefer explicit user, otherwise derive from tenant_data
+        const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+        const tenantId =
+          resp.data?.tenant_id ||
+          resp.data?.tenantId ||
+          resp.data?.data?.tenant_id ||
+          resp.data?.data?.tenantId ||
+          null;
+
+        const userData = resp.data.user || {
+          id: tenantData?.company_id || tenantId || "",
+          avatar: tenantData?.picture || "",
+          name: tenantData?.company_name || "Anonymous",
+          // role: "client",
+          email: tenantData?.email || "",
+        };
+
+        dispatch(setUser(userData));
+
+        // Persist legacy auth_user for helpers that read from localStorage
+        try {
+          localStorage.setItem("auth_user", JSON.stringify(userData));
+        } catch (e) {
+          console.warn("Failed to persist auth_user", e);
         }
 
         // Persist tenant metadata if present
@@ -169,9 +183,16 @@ function useAuth() {
   const handleSignOut = () => {
     clearAllAuthData();
 
+    try {
+      localStorage.removeItem("auth_user");
+    } catch (e) {
+      console.warn("Failed to remove auth_user from localStorage", e);
+    }
+
     dispatch(signOutSuccess());
     dispatch(
       setUser({
+        id: "",
         avatar: "",
         name: "",
         email: "",

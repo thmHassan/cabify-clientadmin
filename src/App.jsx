@@ -8,6 +8,7 @@ import mockServer from "./mock";
 import AllRoutes from "./components/routes/AllRoutes";
 import ScrollToTop from "./components/shared/ScrollToTop";
 import Loading from "./components/shared/Loading/Loading";
+import { SocketProvider } from "./components/routes/SocketProvider";
 
 const environment = import.meta.env.VITE_NODE_ENV;
 
@@ -21,7 +22,9 @@ function App() {
       <BrowserRouter>
         <ScrollToTop>
           <Suspense fallback={<Loading />}>
-            <AllRoutes />
+            <SocketProvider>
+              <AllRoutes />
+            </SocketProvider>
           </Suspense>
         </ScrollToTop>
         <Toaster

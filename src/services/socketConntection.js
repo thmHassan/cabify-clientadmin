@@ -47,13 +47,24 @@ export function initSocket() {
   try {
     window.Pusher = Pusher;
 
+    // echoInstance = new Echo({
+    //   broadcaster: "pusher",
+    //   key: "local",
+    //   cluster: "mt1",
+    //   wsHost: "backend.cabifyit.com",
+    //   wsPort: 443,
+    //   wssPort: 443,
+    //   forceTLS: true,
+    //   encrypted: true,
+    //   enabledTransports: ["ws", "wss"],
+    //   authEndpoint: "https://backend.cabifyit.com/api/broadcasting/auth",
+    // });
     echoInstance = new Echo({
       broadcaster: "pusher",
       key: "local",
-      cluster: "mt1",
       wsHost: "backend.cabifyit.com",
-      wsPort: 443,
-      wssPort: 443,
+      wsPort: 443,       // must be 443
+      wssPort: 443,      // must be 443
       forceTLS: true,
       encrypted: true,
       enabledTransports: ["ws", "wss"],

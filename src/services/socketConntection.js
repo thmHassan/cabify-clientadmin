@@ -51,19 +51,13 @@ export function initSocket() {
       broadcaster: "pusher",
       key: "local",
       cluster: "mt1",
-
-      // Use domain (no protocol, no trailing slash)
-      wsHost: "clientadmin.cabifyit.com",
+      wsHost: "backend.cabifyit.com",
       wsPort: 6002,
       wssPort: 6002,
-
-      // Enable TLS and secure websocket transport
       forceTLS: true,
       encrypted: true,
       enabledTransports: ["ws", "wss"],
-
-      // Point auth endpoint to the production domain
-      authEndpoint: "https://clientadmin.cabifyit.com/api/broadcasting/auth",
+      authEndpoint: "https://backend.cabifyit.com/api/broadcasting/auth",
     });
 
     window.Echo = echoInstance;

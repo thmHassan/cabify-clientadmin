@@ -54,8 +54,8 @@ export function initSocket() {
 
       // Use domain (no protocol, no trailing slash)
       wsHost: "clientadmin.cabifyit.com",
-      wsPort: 6001,
-      wssPort: 6001,
+      wsPort: 6002,
+      wssPort: 6002,
 
       // Enable TLS and secure websocket transport
       forceTLS: true,

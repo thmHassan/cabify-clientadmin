@@ -62,6 +62,7 @@ export function initSocket() {
     echoInstance = new Echo({
       broadcaster: "pusher",
       key: "local",
+      cluster: "mt1",
       wsHost: "backend.cabifyit.com",
       wsPort: 443,       // must be 443
       wssPort: 443,      // must be 443

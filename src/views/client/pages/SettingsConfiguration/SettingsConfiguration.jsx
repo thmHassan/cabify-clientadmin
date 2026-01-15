@@ -9,6 +9,7 @@ import Security from './components/Security';
 import Billing from './components/Billing';
 import Integrations from './components/Integrations';
 import MobileApp from './components/MobileApp';
+import DispatchSystem from './components/DispatchSystem';
 
 const SettingsConfiguration = () => {
   const [tableLoading] = useState(false);
@@ -22,6 +23,7 @@ const SettingsConfiguration = () => {
       case "Integrations": return <Integrations />;
       case "Mobile App": return <MobileApp />;
       case "Commission": return <Commission />;
+      case "Dispatch System": return <DispatchSystem />
       default: return null;
     }
   };
@@ -33,6 +35,7 @@ const SettingsConfiguration = () => {
     "Integrations",
     "Mobile App",
     "Commission",
+    "Dispatch System"
   ];
 
   return (

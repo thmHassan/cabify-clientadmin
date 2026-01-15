@@ -103,6 +103,8 @@ export const GATE_STRIPE_INFORMATION = "/company/stripe-information"
 export const GATE_INVOICE_HISTORY = "/company/payment-history"
 export const GET_THIRD_PARTY_INFORMATION = "/company/third-party-information"
 export const SAVE_THIRD_PARTY_INFORMATION = "/company/third-party-information"
+export const SAVE_DISPATCH_SYSTEM = "/company/set-dispatch-system"
+export const GATE_DISPATCH_SYSTEM = "/company/get-dispatch-system"
 
 //api for account
 export const GET_ACCOUNT = "/company/list-account";

@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { apiGetBookingSystem } from "../../../../../../services/AddBookingServices";
-import { apiGetDispatchSystem, apiSaveDispatchSystem } from "../../../../../../services/SettingsConfigurationServices";
-import toast from 'react-hot-toast';
+import {
+    apiGetDispatchSystem,
+    apiSaveDispatchSystem,
+    apiSavePassword,
+} from "../../../../../../services/SettingsConfigurationServices";
+import toast from "react-hot-toast";
 import Button from "../../../../../../components/ui/Button/Button";
+import CardContainer from "../../../../../../components/shared/CardContainer";
 
 const dispatchData = [
     {
@@ -10,17 +15,20 @@ const dispatchData = [
         type: "auto_dispatch",
         systemKey: "auto_dispatch_plot_base",
         followUps: [
-            { label: "Immediately show on dispatcher panel", key: "p1_immediate", stepKey: "immediately_show_on_dispatcher_panel" },
+            { label: "Immediately show on dispatcher panel", key: "p1_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p1_main" },
             {
                 label: "Show only after not selected in auto dispatch",
                 key: "p1_retry",
+                stepKey: "show_only_after_not_selected_in_auto_dispatch",
+                type: "toggle",
+                group: "p1_main",
                 children: [
                     { label: "First try", key: "p1_first", stepKey: "show_only_after_not_selected_in_auto_dispatch_first_try" },
                     { label: "Second try", key: "p1_second", stepKey: "show_only_after_not_selected_in_auto_dispatch_second_try" },
                     { label: "Third try onwards", key: "p1_third", stepKey: "show_only_after_not_selected_in_auto_dispatch_third_try" },
                 ],
             },
-            { label: "Put in bidding panel", key: "p1_bidding", stepKey: "put_in_bidding_panel" },
+            { label: "Put in bidding panel", key: "p1_bidding", stepKey: "put_in_bidding_panel", type: "checkbox" },
         ],
     },
     {
@@ -28,9 +36,15 @@ const dispatchData = [
         type: "bidding",
         systemKey: "bidding_fixed_fare_plot_base",
         followUps: [
-            { label: "Wait Time ___ seconds", key: "p2_wait", stepKey: "wait_time_seconds" },
-            { label: "Immediately show on dispatcher panel", key: "p2_immediate", stepKey: "immediately_show_on_dispatcher_panel" },
-            { label: "Shows up after first rejection or wait time elapsed", key: "p2_reject", stepKey: "shows_up_after_first_rejection_or_wait_time_elapsed" },
+            { label: "Wait Time ___ seconds", key: "p2_wait", stepKey: "wait_time_seconds", type: "toggle", group: "p2_main" },
+            { label: "Immediately show on dispatcher panel", key: "p2_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p2_main" },
+            {
+                label: "Shows up after first rejection or wait time elapsed",
+                key: "p2_reject",
+                stepKey: "shows_up_after_first_rejection_or_wait_time_elapsed",
+                type: "toggle",
+                group: "p2_main",
+            },
         ],
     },
     {
@@ -38,17 +52,21 @@ const dispatchData = [
         type: "auto_dispatch",
         systemKey: "auto_dispatch_nearest_driver",
         followUps: [
-            { label: "Immediately show on dispatcher panel", key: "p3_immediate", stepKey: "immediately_show_on_dispatcher_panel" },
+            { label: "Wait Time ___ seconds", key: "p3_wait", stepKey: "wait_time_seconds", type: "toggle", group: "p3_main" },
+            { label: "Immediately show on dispatcher panel", key: "p3_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p3_main" },
             {
                 label: "Show only after not selected in auto dispatch",
                 key: "p3_retry",
+                stepKey: "show_only_after_not_selected_in_auto_dispatch",
+                type: "toggle",
+                group: "p3_main",
                 children: [
                     { label: "First try", key: "p3_first", stepKey: "show_only_after_not_selected_in_auto_dispatch_first_try" },
                     { label: "Second try", key: "p3_second", stepKey: "show_only_after_not_selected_in_auto_dispatch_second_try" },
                     { label: "Third try onwards", key: "p3_third", stepKey: "show_only_after_not_selected_in_auto_dispatch_third_try" },
                 ],
             },
-            { label: "Put in bidding panel", key: "p3_bidding", stepKey: "put_in_bidding_panel" },
+            { label: "Put in bidding panel", key: "p3_bidding", stepKey: "put_in_bidding_panel", type: "checkbox" },
         ],
     },
     {
@@ -64,10 +82,13 @@ const dispatchData = [
         type: "bidding",
         systemKey: "bidding",
         followUps: [
-            { label: "Immediately show on dispatcher panel", key: "p5_immediate", stepKey: "immediately_show_on_dispatcher_panel" },
+            { label: "Immediately show on dispatcher panel", key: "p5_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p5_main" },
             {
                 label: "Show only after not selected in auto dispatch",
                 key: "p5_retry",
+                stepKey: "show_only_after_not_selected_in_auto_dispatch",
+                type: "toggle",
+                group: "p5_main",
                 children: [
                     { label: "If not received bid in first 10 seconds", key: "p5_10s", stepKey: "if_not_received_bid_in_first_10_seconds" },
                     { label: "First try", key: "p5_first", stepKey: "show_only_after_not_selected_in_auto_dispatch_first_try" },
@@ -77,40 +98,50 @@ const dispatchData = [
             },
         ],
     },
-    {
-        priority: "Priority 6",
-        type: "bidding",
-        systemKey: "bidding_fixed_fare_nearest_driver",
-        followUps: [
-            { label: "Wait Time ___ seconds", key: "p6_wait", stepKey: "wait_time_seconds" },
-            { label: "Immediately show on dispatcher panel", key: "p6_immediate", stepKey: "immediately_show_on_dispatcher_panel" },
-            { label: "Shows up after first rejection or wait time elapsed", key: "p6_reject", stepKey: "shows_up_after_first_rejection_or_wait_time_elapsed" },
-        ],
-    },
 ];
 
 const DispatchSystem = () => {
     const [checkedState, setCheckedState] = useState({});
+    const [systemStatus, setSystemStatus] = useState({});
     const [bookingSystem, setBookingSystem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [priorities, setPriorities] = useState({});
+    const [showWarning, setShowWarning] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [password, setPassword] = useState("");
+    const [verifying, setVerifying] = useState(false);
 
-    const getSystemDisplayName = (systemKey) => {
-        const displayNames = {
-            "auto_dispatch_plot_base": "Auto Dispatch Plot Based",
-            "bidding_fixed_fare_plot_base": "Bidding Fixed Fare - Plot Based (Will go from nearest to farthest driver every x seconds if not selected. If they reject immediately shows to next one. Incase they are already seeing a ride request both can show with a timer difference so 1 person doesn't reject them)",
-            "auto_dispatch_nearest_driver": "Auto Dispatch nearest driver",
-            "manual_dispatch_only": "Manual Dispatch Only",
-            "bidding": "Bidding",
-            "bidding_fixed_fare_nearest_driver": "Bidding Fixed Fare - Nearest Driver"
-        };
-        return displayNames[systemKey] || systemKey;
-    };
+    const getSystemDisplayName = (key) => ({
+        auto_dispatch_plot_base: "Auto Dispatch Plot Based",
+        bidding_fixed_fare_plot_base: "Bidding Fixed Fare - Plot Based",
+        auto_dispatch_nearest_driver: "Auto Dispatch Nearest Driver",
+        manual_dispatch_only: "Manual Dispatch Only",
+        bidding: "Bidding",
+        bidding_fixed_fare_nearest_driver: "Bidding Fixed Fare - Nearest Driver",
+    }[key] || key);
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const newSystemStatus = {};
+        
+        dispatchData.forEach((p) => {
+            const hasAnyEnabled = p.followUps.some((f) => {
+                if (checkedState[f.key]) return true;
+                if (f.children) {
+                    return f.children.some((c) => checkedState[c.key]);
+                }
+                return false;
+            });
+            
+            newSystemStatus[p.systemKey] = hasAnyEnabled;
+        });
+        
+        setSystemStatus(newSystemStatus);
+    }, [checkedState]);
 
     const fetchData = async () => {
         try {
@@ -121,198 +152,373 @@ const DispatchSystem = () => {
 
             const dispatchRes = await apiGetDispatchSystem();
             if (dispatchRes?.data?.success === 1) {
-                const configData = dispatchRes.data.data;
-                const initialState = {};
+                const initial = {};
+                const initialPriorities = {};
 
-                configData.forEach((item) => {
-                    dispatchData.forEach((priority) => {
-                        if (priority.systemKey === item.dispatch_system) {
-                            priority.followUps.forEach((followUp) => {
-                                if (followUp.stepKey === item.steps) {
-                                    initialState[followUp.key] = item.status === "enable";
+                dispatchRes.data.data.forEach((item) => {
+                    dispatchData.forEach((p) => {
+                        if (p.systemKey === item.dispatch_system) {
+                            if (item.priority) {
+                                initialPriorities[p.systemKey] = parseInt(item.priority);
+                            }
+
+                            if (item.steps === null && p.systemKey === "manual_dispatch_only") {
+                                p.followUps.forEach((f) => {
+                                    if (!f.stepKey) {
+                                        initial[f.key] = item.status === "enable";
+                                    }
+                                });
+                            }
+
+                            p.followUps.forEach((f) => {
+                                if (f.stepKey === item.steps) {
+                                    initial[f.key] = item.status === "enable";
                                 }
-                                if (followUp.children) {
-                                    followUp.children.forEach((child) => {
-                                        if (child.stepKey === item.steps) {
-                                            initialState[child.key] = item.status === "enable";
+
+                                let hasEnabledChild = false;
+                                f.children?.forEach((c) => {
+                                    if (c.stepKey === item.steps) {
+                                        initial[c.key] = item.status === "enable";
+                                        if (item.status === "enable") {
+                                            hasEnabledChild = true;
                                         }
-                                    });
+                                    }
+                                });
+
+                                if (hasEnabledChild && f.children) {
+                                    initial[f.key] = true;
                                 }
                             });
                         }
                     });
+                });
 
-                    if (item.dispatch_system === "manual_dispatch_only") {
-                        initialState["p4_manual"] = item.status === "enable";
+                const filteredData = dispatchData.filter((d) =>
+                    bookingRes.data.company_booking_system === "both" ? true : d.type === bookingRes.data.company_booking_system
+                );
+
+                filteredData.forEach((p, index) => {
+                    if (!initialPriorities[p.systemKey]) {
+                        initialPriorities[p.systemKey] = index + 1;
                     }
                 });
 
-                setCheckedState(initialState);
+                setCheckedState(initial);
+                setPriorities(initialPriorities);
             }
-        } catch (err) {
-            console.error("Error fetching data:", err);
+        } catch (e) {
+            console.error(e);
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredDispatchData = dispatchData.filter((item) => {
-        if (bookingSystem === "both") return true;
-        return item.type === bookingSystem;
-    });
+    const toggle = (key) =>
+        setCheckedState((p) => ({ ...p, [key]: !p[key] }));
 
-    const currentPriority = filteredDispatchData[currentIndex];
-    const isFirst = currentIndex === 0;
-    const isLast = currentIndex === filteredDispatchData.length - 1;
+    const handleToggleGroupChange = (group, selectedKey) => {
+        setCheckedState((prev) => {
+            const newState = { ...prev };
 
-    const toggle = (key) => {
-        setCheckedState((prev) => ({ ...prev, [key]: !prev[key] }));
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            const formData = new FormData();
-
-            dispatchData.forEach((priority) => {
-                const systemKey = priority.systemKey;
-
-                if (systemKey === "manual_dispatch_only") {
-                    const followUp = priority.followUps[0];
-                    const status = checkedState[followUp.key] ? "enable" : "disable";
-                    formData.append(systemKey, status);
-                    return;
-                }
-
-                priority.followUps.forEach((followUp) => {
-                    if (followUp.stepKey) {
-                        const status = checkedState[followUp.key] ? "enable" : "disable";
-                        formData.append(`${systemKey}[${followUp.stepKey}]`, status);
-                    }
-
-                    if (followUp.children) {
-                        followUp.children.forEach((child) => {
-                            const status = checkedState[child.key] ? "enable" : "disable";
-                            formData.append(`${systemKey}[${child.stepKey}]`, status);
-                        });
+            dispatchData.forEach((p) => {
+                p.followUps.forEach((f) => {
+                    if (f.group === group) {
+                        if (f.key === selectedKey) {
+                            newState[f.key] = !prev[selectedKey];
+                        } else {
+                            newState[f.key] = false;
+                        }
                     }
                 });
             });
 
-            const response = await apiSaveDispatchSystem(formData);
+            return newState;
+        });
+    };
 
-            if (response?.data?.success === 1) {
-                toast.success("Dispatch system saved successfully!");
+    const handlePriorityChange = (systemKey, newPriority) => {
+        setPriorities((prev) => ({
+            ...prev,
+            [systemKey]: parseInt(newPriority)
+        }));
+    };
+
+    const handleSave = async () => {
+        setShowWarning(true);
+    };
+
+    const handleConfirmSave = () => {
+        setShowWarning(false);
+        setShowPasswordModal(true);
+    };
+
+    const handlePasswordSubmit = async () => {
+        if (!password.trim()) {
+            toast.error("Please enter your password");
+            return;
+        }
+
+        setVerifying(true);
+        try {
+            const formData = new FormData();
+            formData.append("password", password);
+
+            const passwordRes = await apiSavePassword(formData);
+
+            if (passwordRes?.data?.success === 1) {
+                await saveDispatchSystem();
+                setShowPasswordModal(false);
+                setPassword("");
             } else {
-                toast.error("Failed to save dispatch system. Please try again.");
+                toast.error("Incorrect password");
             }
-        } catch (err) {
-            console.error("Error saving dispatch system:", err);
-            alert("An error occurred while saving. Please try again.");
+        } catch (e) {
+            toast.error("Password verification failed");
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    const saveDispatchSystem = async () => {
+        setSaving(true);
+        try {
+            const formData = new FormData();
+
+            dispatchData.forEach((p, i) => {
+                formData.append(
+                    `${p.systemKey}[status]`,
+                    systemStatus[p.systemKey] ? "enable" : "disable"
+                );
+
+                formData.append(
+                    `${p.systemKey}[priority]`,
+                    priorities[p.systemKey] || i + 1
+                );
+
+                p.followUps.forEach((f) => {
+                    if (f.stepKey) {
+                        const shouldEnable = systemStatus[p.systemKey] && checkedState[f.key];
+                        formData.append(
+                            `${p.systemKey}[${f.stepKey}]`,
+                            shouldEnable ? "enable" : "disable"
+                        );
+                    }
+                    f.children?.forEach((c) => {
+                        const shouldEnable = systemStatus[p.systemKey] && checkedState[c.key];
+                        formData.append(
+                            `${p.systemKey}[${c.stepKey}]`,
+                            shouldEnable ? "enable" : "disable"
+                        );
+                    });
+                });
+            });
+
+            const res = await apiSaveDispatchSystem(formData);
+            res?.data?.success === 1
+                ? toast.success("Dispatch system saved successfully")
+                : toast.error("Save failed");
+        } catch {
+            toast.error("Something went wrong");
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) {
-        return <div className="text-center py-10">Loading...</div>;
-    }
-
-    if (!currentPriority) return null;
+    const filteredDispatchData = dispatchData.filter((d) =>
+        bookingSystem === "both" ? true : d.type === bookingSystem
+    );
 
     return (
-        <div className="max-w-3xl mx-auto p-4 md:p-6">
-            <div>
-                {/* TITLE */}
-                <h2 className="text-lg font-semibold pb-3">
-                    {getSystemDisplayName(currentPriority.systemKey)}
-                    <span className="text-sm font-medium"> (Priority {currentIndex + 1})</span>
-                </h2>
-
-                {/* FOLLOW UPS */}
-                <div className="space-y-3">
-                    {currentPriority.followUps.map((item) => (
-                        <div key={item.key}>
-                            <label className="flex gap-2 text-sm text-gray-700">
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+            {filteredDispatchData.map((p, i) => (
+                <CardContainer key={p.systemKey} className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
+                    <div className="w-full">
+                        <div className="flex flex-row gap-3 items-start">
+                            <div className="flex gap-3 mt-1.5">
                                 <input
                                     type="checkbox"
-                                    checked={!!checkedState[item.key]}
-                                    onChange={() => toggle(item.key)}
-                                    className="h-4 w-4 text-green-600"
+                                    checked={!!systemStatus[p.systemKey]}
+                                    className="h-4 w-4"
+                                    onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        setSystemStatus((prev) => ({
+                                            ...prev,
+                                            [p.systemKey]: isChecked,
+                                        }));
+                                        
+                                        if (!isChecked) {
+                                            const newState = { ...checkedState };
+                                            p.followUps.forEach((f) => {
+                                                newState[f.key] = false;
+                                                if (f.children) {
+                                                    f.children.forEach((c) => {
+                                                        newState[c.key] = false;
+                                                    });
+                                                }
+                                            });
+                                            setCheckedState(newState);
+                                        }
+                                    }}
                                 />
-                                {item.label}
-                            </label>
+                            </div>
+                            <div className="flex-1">
+                                <h2 className="font-semibold pb-3">
+                                    {getSystemDisplayName(p.systemKey)} (Priority {priorities[p.systemKey] || i + 1})
+                                </h2>
 
-                            {item.children && (
-                                <div className="ml-6 mt-2 space-y-1">
-                                    {item.children.map((child) => (
-                                        <label
-                                            key={child.key}
-                                            className="flex gap-2 text-sm text-gray-600"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={!!checkedState[child.key]}
-                                                onChange={() => toggle(child.key)}
-                                                className="h-4 w-4 text-green-600"
-                                            />
-                                            {child.label}
-                                        </label>
-                                    ))}
+                                <div className="mb-4">
+                                    <label className="text-sm text-gray-600 block mb-1">Select Priority</label>
+                                    <select
+                                        value={priorities[p.systemKey] || i + 1}
+                                        onChange={(e) => handlePriorityChange(p.systemKey, e.target.value)}
+                                        className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {[1, 2, 3, 4, 5].map((priority) => (
+                                            <option key={priority} value={priority}>
+                                                Priority {priority}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                            )}
+
+                                {p.followUps.map((f) => (
+                                    <div key={f.key} className="mb-2 py-2">
+                                        <label className="flex gap-2 text-sm items-center">
+                                            {f.type === "toggle" ? (
+                                                <div className="relative inline-block w-10 h-5">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!checkedState[f.key]}
+                                                        onChange={() => handleToggleGroupChange(f.group, f.key)}
+                                                        className="sr-only peer"
+                                                    />
+                                                    <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!checkedState[f.key]}
+                                                    onChange={() => toggle(f.key)}
+                                                    className="h-4 w-4"
+                                                />
+                                            )}
+                                            {f.label}
+                                        </label>
+
+                                        {f.children && checkedState[f.key] && (
+                                            <div className="ml-6 mt-1 space-y-2 mt-3">
+                                                {f.children.map((c) => (
+                                                    <label key={c.key} className="flex gap-2 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!checkedState[c.key]}
+                                                            onChange={() => toggle(c.key)}
+                                                            className="h-4 w-4"
+                                                        />
+                                                        {c.label}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    ))}
-                </div>
-
-                {/* FOOTER BUTTONS */}
-                <div>
-                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-                        {!isFirst && !isLast && (
-                            <Button
-                                btnSize="md"
-                                type="filledGray"
-                                onClick={() => setCurrentIndex((p) => p - 1)}
-                            >
-                                Back
-                            </Button>
-                        )}
-
-                        {!isLast && (
-                            <Button
-                                btnSize="md"
-                                type="filled"
-                                onClick={() => setCurrentIndex((p) => p + 1)}
-                            >
-                                Go to next Priority
-                            </Button>
-                        )}
                     </div>
+                </CardContainer>
+            ))}
 
-                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-                        {isLast && (
-                            <>
-                                <Button
-                                    btnSize="md"
-                                    type="filledGray"
-                                    onClick={() => setCurrentIndex(0)}
-                                >
-                                    Cancel
-                                </Button>
+            <div className="flex justify-end pt-4 gap-2">
+                <Button
+                    type="filledGray"
+                    btnSize="md"
+                >
+                    Cancel
+                </Button>
 
-                                <Button
-                                    btnSize="md"
-                                    type="filled"
-                                    onClick={handleSave}
-                                    disabled={saving}
-                                >
-                                    {saving ? "Saving..." : "Save"}
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
+                <Button
+                    type="filled"
+                    btnSize="md"
+                    onClick={handleSave}
+                    disabled={saving}
+                >
+                    {saving ? "Saving..." : "Save"}
+                </Button>
             </div>
+
+            {showWarning && (
+                <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-semibold mb-4">Confirm Changes</h3>
+                        <p className="text-gray-600 mb-6">
+                            The changes you make will affect the entire system. Are you sure you want to proceed?
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <Button
+                                type="filledGray"
+                                btnSize="md"
+                                onClick={() => setShowWarning(false)}
+                            >
+                                No
+                            </Button>
+                            <Button
+                                type="filled"
+                                btnSize="md"
+                                onClick={handleConfirmSave}
+                            >
+                                Yes
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showPasswordModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-semibold mb-4">Enter Your Password</h3>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter your password"
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handlePasswordSubmit();
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <Button
+                                type="filledGray"
+                                btnSize="md"
+                                onClick={() => {
+                                    setShowPasswordModal(false);
+                                    setPassword("");
+                                }}
+                                disabled={verifying}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="filled"
+                                btnSize="md"
+                                onClick={handlePasswordSubmit}
+                                disabled={verifying}
+                            >
+                                {verifying ? "Verifying..." : "Submit"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

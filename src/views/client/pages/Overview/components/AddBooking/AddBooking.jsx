@@ -50,21 +50,13 @@ const AlertModal = ({ isOpen, message, onClose }) => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Alert</h3>
                         <p className="text-sm text-gray-600">{message}</p>
                     </div>
-                    {/* <button
-                        onClick={onClose}
-                        className="flex-shrink-0 text-gray-400 hover:text-gray-600"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button> */}
                 </div>
             </div>
         </div>
     );
 };
 
-const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
+const AddBooking = ({ setIsOpen }) => {
     const [subCompanyList, setSubCompanyList] = useState([]);
     const [vehicleList, setVehicleList] = useState([]);
     const [driverList, setDriverList] = useState([]);
@@ -81,9 +73,9 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const [showDestination, setShowDestination] = useState(false);
     const [showVia, setShowVia] = useState({});
 
-    const [pickupPlot, setPickupPlot] = useState("");
-    const [destinationPlot, setDestinationPlot] = useState("");
-    const [viaPlots, setViaPlots] = useState({});
+    const [pickupPlotData, setPickupPlotData] = useState(null);
+    const [destinationPlotData, setDestinationPlotData] = useState(null);
+    const [viaPlotData, setViaPlotData] = useState({});
 
     const [fareData, setFareData] = useState(null);
     const [fareLoading, setFareLoading] = useState(false);
@@ -295,12 +287,25 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
             if (res?.data?.success === 1) {
                 if (res.data.found === 1 && res.data.record) {
-                    return res.data.record;
+                    return {
+                        found: true,
+                        id: res.data.record.id,
+                        name: res.data.record.name
+                    };
                 }
             }
-            return "No Plot Found";
-        } catch {
-            return "No Plot Found";
+            return {
+                found: false,
+                id: null,
+                name: "Plot Not Found"
+            };
+        } catch (error) {
+            console.error("Error fetching plot:", error);
+            return {
+                found: false,
+                id: null,
+                name: "Plot Not Found"
+            };
         }
     };
 
@@ -324,25 +329,37 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
             latLng = { lat: item.lat, lng: item.lng };
         }
 
-        let plot = "No Plot Found";
+        let plotData = {
+            found: false,
+            id: null,
+            name: "Plot Not Found"
+        };
+
         if (latLng) {
-            plot = await fetchPlotName(latLng.lat, latLng.lng);
+            plotData = await fetchPlotName(latLng.lat, latLng.lng);
 
             if (type === "pickup") {
                 setFieldValue("pickup_latitude", latLng.lat);
                 setFieldValue("pickup_longitude", latLng.lng);
+                setFieldValue("pickup_plot_id", plotData.id);
             } else if (type === "destination") {
                 setFieldValue("destination_latitude", latLng.lat);
                 setFieldValue("destination_longitude", latLng.lng);
+                setFieldValue("destination_plot_id", plotData.id);
             } else {
                 setFieldValue(`via_latitude[${index}]`, latLng.lat);
                 setFieldValue(`via_longitude[${index}]`, latLng.lng);
+                setFieldValue(`via_plot_id[${index}]`, plotData.id);
             }
         }
 
-        if (type === "pickup") setPickupPlot(plot);
-        else if (type === "destination") setDestinationPlot(plot);
-        else setViaPlots((p) => ({ ...p, [index]: plot }));
+        if (type === "pickup") {
+            setPickupPlotData(plotData);
+        } else if (type === "destination") {
+            setDestinationPlotData(plotData);
+        } else {
+            setViaPlotData((p) => ({ ...p, [index]: plotData }));
+        }
 
         invalidateFare();
     };
@@ -485,22 +502,26 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
         const viaPoint = values.via_points[index];
         const viaLat = values.via_latitude?.[index];
         const viaLng = values.via_longitude?.[index];
-        const viaPlotValue = viaPlots[index];
+        const viaPlotId = values.via_plot_id?.[index];
+        const viaPlotDataValue = viaPlotData[index];
 
         const destination = values.destination;
         const destLat = values.destination_latitude;
         const destLng = values.destination_longitude;
-        const destPlotValue = destinationPlot;
+        const destPlotId = values.destination_plot_id;
+        const destPlotDataValue = destinationPlotData;
 
         setFieldValue(`via_points[${index}]`, destination);
         setFieldValue(`via_latitude[${index}]`, destLat);
         setFieldValue(`via_longitude[${index}]`, destLng);
-        setViaPlots((p) => ({ ...p, [index]: destPlotValue }));
+        setFieldValue(`via_plot_id[${index}]`, destPlotId);
+        setViaPlotData((p) => ({ ...p, [index]: destPlotDataValue }));
 
         setFieldValue('destination', viaPoint);
         setFieldValue('destination_latitude', viaLat);
         setFieldValue('destination_longitude', viaLng);
-        setDestinationPlot(viaPlotValue);
+        setFieldValue('destination_plot_id', viaPlotId);
+        setDestinationPlotData(viaPlotDataValue);
 
         invalidateFare();
     };
@@ -508,6 +529,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
     const handleCreateBooking = async (values) => {
         if (!fareCalculated) {
             toast.error("Please calculate fares before creating booking");
+            return;
+        }
+
+        if (shouldDisableDispatchOptions(values) && !values.driver) {
+            toast.error("Driver is required for future or multi bookings");
             return;
         }
 
@@ -544,11 +570,19 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
             if (pickupCoords) {
                 formData.append('pickup_point', `${pickupCoords.latitude}, ${pickupCoords.longitude}`);
                 formData.append('pickup_location', values.pickup_point);
+
+                if (values.pickup_plot_id) {
+                    formData.append('pickup_point_id', values.pickup_plot_id);
+                }
             }
 
             if (destinationCoords) {
                 formData.append('destination_point', `${destinationCoords.latitude}, ${destinationCoords.longitude}`);
                 formData.append('destination_location', values.destination);
+
+                if (values.destination_plot_id) {
+                    formData.append('destination_point_id', values.destination_plot_id);
+                }
             }
 
             if (values.via_points && values.via_points.length > 0) {
@@ -560,6 +594,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                             formData.append(`via_point[${i}][latitude]`, viaCoords.latitude.toString());
                             formData.append(`via_point[${i}][longitude]`, viaCoords.longitude.toString());
                             formData.append(`via_location[${i}]`, viaPoint);
+
+                            const viaPlotId = values.via_plot_id?.[i];
+                            if (viaPlotId) {
+                                formData.append(`via_point_id[${i}]`, viaPlotId);
+                            }
                         }
                     }
                 }
@@ -603,7 +642,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                         isOpen: true,
                         message: response.data.alertMessage
                     });
-                    return; // ⛔ stop further execution
+                    return;
                 }
 
                 unlockBodyScroll();
@@ -633,9 +672,62 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
         "ac_waiting_charges",
     ];
 
+    const shouldDisableDispatchOptions = (values) => {
+        if (isMultiBooking) return true;
+
+        const now = new Date();
+
+        let year, month, day;
+
+        if (values.booking_date?.includes("-")) {
+            const parts = values.booking_date.split("-");
+            if (parts[0].length === 4) {
+                year = parts[0];
+                month = parts[1];
+                day = parts[2];
+            } else {
+                day = parts[0];
+                month = parts[1];
+                year = parts[2];
+            }
+        } else if (values.booking_date?.includes("/")) {
+            const parts = values.booking_date.split("/");
+            if (parts[2].length === 4) {
+                month = parts[0];
+                day = parts[1];
+                year = parts[2];
+            } else {
+                // dd/mm/yyyy
+                day = parts[0];
+                month = parts[1];
+                year = parts[2];
+            }
+        } else {
+            const d = new Date();
+            year = d.getFullYear();
+            month = d.getMonth() + 1;
+            day = d.getDate();
+        }
+
+        const time = values.pickup_time || "00:00";
+        const [hour, minute] = time.split(":");
+
+        const selectedDateTime = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            0
+        );
+
+        console.log("CHECK", { now, selectedDateTime });
+
+        return selectedDateTime > now;
+    };
+
     return (
         <>
-
             <AlertModal
                 isOpen={alertModal.isOpen}
                 message={alertModal.message}
@@ -653,6 +745,9 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                     via_points: [],
                     via_latitude: [],
                     via_longitude: [],
+                    pickup_plot_id: null,
+                    destination_plot_id: null,
+                    via_plot_id: [],
                     account: "",
                     vehicle: "",
                     driver: "",
@@ -752,7 +847,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex xl:flex-row lg:flex-row md:flex-col flex-col gap-4">
+                                <div className="flex xl:flex-row lg:flex-row md:flex-col flex-col gap-4 mb-2">
                                     <div className="">
                                         {isMultiBooking && (
                                             <div className="w-full mb-3">
@@ -762,7 +857,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                         Select day of the week
                                                     </span>
 
-                                                    <div className="flex flex-wrap gap-3 pb-3">
+                                                    <div className="flex flex-wrap gap-3 pb-4">
                                                         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                                                             const value = day.toLowerCase();
                                                             const checked = values.multi_days?.includes(value);
@@ -794,7 +889,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                                                    <div className="flex flex-row gap-2 inline-flex">
+                                                    {/* <div className="flex flex-row gap-2 inline-flex">
                                                         <label className="text-sm font-semibold md:w-20 w-20">Week</label>
                                                         <select
                                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
@@ -807,7 +902,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             <option value="every">Every Week</option>
                                                             <option value="alternate">Alternate Weeks</option>
                                                         </select>
-                                                    </div>
+                                                    </div> */}
 
                                                     <div className="flex flex-row gap-2 inline-flex">
                                                         <label className="text-sm font-semibold md:w-9 w-20">Start At</label>
@@ -894,11 +989,10 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                     </div>
 
                                                     <div className="relative flex gap-2 w-full flex-col md:flex-row">
-                                                        {/* <label className="font-semibold">Pick up Point</label> */}
                                                         <InputBox
                                                             label="Pick up Point"
                                                             value={values.pickup_point}
-                                                            plot={pickupPlot}
+                                                            plot={pickupPlotData?.name || ""}
                                                             suggestions={pickupSuggestions}
                                                             show={showPickup}
                                                             placeholder="Search location..."
@@ -909,19 +1003,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             onSelect={(i) => selectLocation(i, "pickup", setFieldValue)}
 
                                                         />
-                                                        {/* {showPickup && (
-                                                            <ul className="absolute bg-white border w-20 z-50 max-h-48 overflow-auto">
-                                                                {pickupSuggestions.map((i, idx) => (
-                                                                    <li
-                                                                        key={idx}
-                                                                        onClick={() => selectLocation(i, "pickup", setFieldValue)}
-                                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                                    >
-                                                                        {i.label}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        )} */}
                                                         <div className="flex justify-end">
                                                             <button
                                                                 type="button"
@@ -941,7 +1022,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             <InputBox
                                                                 label={`Via ${i + 1}`}
                                                                 value={values.via_points[i]}
-                                                                plot={viaPlots[i]}
+                                                                plot={viaPlotData[i]?.name || ""}
                                                                 suggestions={viaSuggestions[i] || []}
                                                                 placeholder="Search location..."
                                                                 show={showVia[i]}
@@ -953,19 +1034,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                     selectLocation(i2, "via", setFieldValue, i)
                                                                 }
                                                             />
-                                                            {/* {showVia[i] && (
-                                                                    <ul className="absolute bg-white border w-full z-50 overflow-auto">
-                                                                        {(viaSuggestions[i] || []).map((item, idx) => (
-                                                                            <li
-                                                                                key={idx}
-                                                                                onClick={() => selectLocation(item, "via", setFieldValue, i)}
-                                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                                            >
-                                                                                {item.label}
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                )} */}
                                                             <div className="flex justify-end gap-2">
                                                                 <button
                                                                     title="Swap with destination"
@@ -974,16 +1042,14 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 >
                                                                     ⇅ Swap
                                                                 </button>
-                                                                {/* Remove Button */}
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
                                                                         const newViaPoints = values.via_points.filter((_, idx) => idx !== i);
                                                                         setFieldValue("via_points", newViaPoints);
-                                                                        // Clean up via plots
-                                                                        const newViaPlots = { ...viaPlots };
+                                                                        const newViaPlots = { ...viaPlotData };
                                                                         delete newViaPlots[i];
-                                                                        setViaPlots(newViaPlots);
+                                                                        setViaPlotData(newViaPlots);
                                                                         invalidateFare();
                                                                     }}
                                                                     title="Remove via point"
@@ -1000,7 +1066,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                             <InputBox
                                                                 label="Desti-nation"
                                                                 value={values.destination}
-                                                                plot={destinationPlot}
+                                                                plot={destinationPlotData?.name || ""}
                                                                 suggestions={destinationSuggestions}
                                                                 show={showDestination}
                                                                 placeholder="Search location..."
@@ -1010,27 +1076,11 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 }}
                                                                 onSelect={(i) => selectLocation(i, "destination", setFieldValue)}
                                                             />
-                                                            {/* {showDestination && (
-                                                                <ul className="absolute bg-white border w-full z-50 max-h-48 overflow-auto">
-                                                                    {destinationSuggestions.map((i, idx) => (
-                                                                        <li
-                                                                            key={idx}
-                                                                            onClick={() =>
-                                                                                selectLocation(i, "destination", setFieldValue)
-                                                                            }
-                                                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                                        >
-                                                                            {i.label}
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            )} */}
                                                         </div>
                                                     </div>
 
                                                     <div className="flex md:flex-row flex-col">
                                                         <div className="w-full gap-3 grid">
-                                                            {/* name, email */}
                                                             <div className="flex md:flex-row flex-col gap-2">
                                                                 <div className="text-left flex">
                                                                     <label className="text-sm font-semibold mb-1 md:w-28 w-20">Name</label>
@@ -1055,7 +1105,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* Mobile / Tel */}
                                                             <div className="flex md:flex-row flex-col gap-2">
                                                                 <div className="text-left flex">
                                                                     <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
@@ -1082,7 +1131,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* Journey, account */}
                                                             <div className="w-full">
                                                                 <div className="md:flex-row flex-col flex gap-2 w-full">
                                                                     <div className="text-left flex items-center gap-2">
@@ -1159,7 +1207,6 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* vehicle, driver */}
                                                             <div className="flex gap-2 w-full md:flex-row flex-col">
                                                                 <div className="flex md:flex-row items-center flex-row gap-2 w-full">
                                                                     <label className="text-sm font-semibold md:w-24 w-16">Vehicle</label>
@@ -1183,7 +1230,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                     <ErrorMessage name="vehicle" component="div" className="text-red-500 text-sm mt-1" />
                                                                 </div>
 
-                                                                <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
+                                                                {/* <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
                                                                     <label className="text-sm font-semibold text-left md:w-16 w-16">Driver</label>
                                                                     <div className="w-full">
                                                                         <select
@@ -1202,12 +1249,35 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                         </select>
                                                                         <ErrorMessage name="driver" component="div" className="text-red-500 text-sm mt-1" />
                                                                     </div>
+                                                                </div> */}
+                                                                <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
+                                                                    <label className="text-sm font-semibold text-left md:w-16 w-16">
+                                                                        Driver { }
+                                                                    </label>
+                                                                    <div className="w-full">
+                                                                        <select
+                                                                            name="driver"
+                                                                            value={values.driver || ""}
+                                                                            onChange={(e) => setFieldValue("driver", e.target.value)}
+                                                                            disabled={loadingSubCompanies}
+                                                                            className={`border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50`}
+                                                                            required={shouldDisableDispatchOptions(values)}
+                                                                        >
+                                                                            <option value="">Select Driver</option>
+                                                                            {driverList?.map((item) => (
+                                                                                <option key={item.value} value={item.value}>
+                                                                                    {item.label}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+                                                                        <ErrorMessage name="driver" component="div" className="text-red-500 text-sm mt-1" />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
-                                                            <div className="flex flex-col gap-3">
+                                                            {/* <div className="flex flex-col gap-3">
                                                                 <label className="flex items-center gap-2">
                                                                     <input
                                                                         type="checkbox"
@@ -1226,6 +1296,37 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={values.bidding}
+                                                                        onChange={(e) => {
+                                                                            setFieldValue("bidding", e.target.checked);
+                                                                            if (e.target.checked) {
+                                                                                setFieldValue("booking_system", "bidding");
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    Bidding
+                                                                </label>
+                                                            </div> */}
+                                                            <div className="flex flex-col gap-3">
+                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={values.auto_dispatch}
+                                                                        disabled={shouldDisableDispatchOptions(values)}
+                                                                        onChange={(e) => {
+                                                                            setFieldValue("auto_dispatch", e.target.checked);
+                                                                            if (e.target.checked) {
+                                                                                setFieldValue("booking_system", "auto_dispatch");
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    Auto Dispatch
+                                                                </label>
+
+                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={values.bidding}
+                                                                        disabled={shouldDisableDispatchOptions(values)}
                                                                         onChange={(e) => {
                                                                             setFieldValue("bidding", e.target.checked);
                                                                             if (e.target.checked) {
@@ -1438,6 +1539,7 @@ const AddBooking = ({ initialValue = {}, setIsOpen, onSubCompanyCreated }) => {
 };
 
 export default AddBooking;
+
 const InputBox = ({
     label,
     value,
@@ -1446,8 +1548,7 @@ const InputBox = ({
     show,
     onSelect,
     plot,
-    placeholder
-}) => (
+    placeholder }) => (
     <div className="relative flex md:flex-row max-sm:w-full gap-2">
         <label className="font-semibold text-sm md:w-20 w-20 text-left">{label}</label>
         <div className="flex max-sm:flex-col gap-2 w-full">

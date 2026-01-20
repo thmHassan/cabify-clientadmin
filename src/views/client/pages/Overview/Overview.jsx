@@ -29,6 +29,7 @@ import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import AddBooking from "./components/AddBooking/AddBooking";
+import { apiGetDispatchSystem } from "../../../../services/SettingsConfigurationServices";
 
 const DASHBOARD_CARDS = [
   {
@@ -210,8 +211,10 @@ const Overview = () => {
   const [isBookingModelOpen, setIsBookingModelOpen] = useState({
     type: "new",
     isOpen: false,
-  })
+  });
   const [companyName, setCompanyName] = useState("Autocare Services");
+  const [isAddBookingDisabled, setIsAddBookingDisabled] = useState(false);
+  const [isLoadingDispatchSystem, setIsLoadingDispatchSystem] = useState(true);
 
   const resolveTenantData = () => {
     const stored = getTenantData();
@@ -232,6 +235,32 @@ const Overview = () => {
 
   const tenantData = resolveTenantData();
 
+  // Check dispatch system and disable button if any bidding entry is enabled
+  const checkDispatchSystem = async () => {
+    try {
+      setIsLoadingDispatchSystem(true);
+      const response = await apiGetDispatchSystem();
+      
+      if (response?.data) {
+        // Check if any entry with dispatch_system "bidding" and priority "5" has status "enable"
+        const hasBiddingEnabled = response.data.some(
+          (item) =>
+            item.dispatch_system === "bidding" &&
+            item.priority === "5" &&
+            item.status === "enable"
+        );
+        
+        setIsAddBookingDisabled(hasBiddingEnabled);
+      }
+    } catch (error) {
+      console.error("Error fetching dispatch system:", error);
+      // On error, keep button enabled (fail open)
+      setIsAddBookingDisabled(false);
+    } finally {
+      setIsLoadingDispatchSystem(false);
+    }
+  };
+
   useEffect(() => {
     const tenantData = resolveTenantData();
     console.debug("Resolved tenant data for overview:", tenantData);
@@ -246,7 +275,11 @@ const Overview = () => {
         setCompanyName(detectedName);
       }
     }
+
+    // Check dispatch system on component mount
+    checkDispatchSystem();
   }, []);
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -275,9 +308,12 @@ const Overview = () => {
             type="filled"
             btnSize="2xl"
             onClick={() => {
-              lockBodyScroll();
-              setIsBookingModelOpen({ isOpen: true, type: "new" });
+              if (!isAddBookingDisabled) {
+                lockBodyScroll();
+                setIsBookingModelOpen({ isOpen: true, type: "new" });
+              }
             }}
+            disabled={isAddBookingDisabled || isLoadingDispatchSystem}
             className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">

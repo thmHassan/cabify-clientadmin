@@ -1,85 +1,53 @@
-// import Pusher from "pusher-js";
-// import Echo from "laravel-echo";
+import { io } from "socket.io-client";
+import { getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
 
-// let echoInstance = null;
+let socket = null;
 
-// export function initSocket() {
-//   if (echoInstance) return echoInstance;
+const initSocket = () => {
+  if (socket) return socket;
 
-//   try {
-//     window.Pusher = Pusher;
+  const tenantId = getTenantId();
+  const token = getDecryptedToken();
 
-//     echoInstance = new Echo({
-//       broadcaster: "pusher",
-//       key: "local",
-//       cluster: "mt1",
+  console.log("Socket database:", tenantId);
+  console.log("token===", token);
 
-//       wsHost: "localhost",
-//       wsPort: 6001,
 
-//       forceTLS: false,
-//       encrypted: false,
-//       enabledTransports: ["ws"],
-
-//       authEndpoint: "http://localhost/api/broadcasting/auth",
-//     });
-
-//     window.Echo = echoInstance;
-
-//     console.log("✅ Echo initialized");
-//     return echoInstance;
-//   } catch (error) {
-//     console.error("❌ Failed to initialize Echo:", error);
-//     return null;
-//   }
-// }
-
-// export default initSocket;
-
-import Pusher from "pusher-js";
-import Echo from "laravel-echo";
-
-let echoInstance = null;
-
-export function initSocket() {
-  if (echoInstance) return echoInstance;
-
-  try {
-    window.Pusher = Pusher;
-
-    // echoInstance = new Echo({
-    //   broadcaster: "pusher",
-    //   key: "local",
-    //   cluster: "mt1",
-    //   wsHost: "backend.cabifyit.com",
-    //   wsPort: 443,
-    //   wssPort: 443,
-    //   forceTLS: true,
-    //   encrypted: true,
-    //   enabledTransports: ["ws", "wss"],
-    //   authEndpoint: "https://backend.cabifyit.com/api/broadcasting/auth",
-    // });
-    echoInstance = new Echo({
-      broadcaster: "pusher",
-      key: "local",
-      cluster: "mt1",
-      wsHost: "backend.cabifyit.com",
-      wsPort: 443,       // must be 443
-      wssPort: 443,      // must be 443
-      forceTLS: true,
-      encrypted: true,
-      enabledTransports: ["ws", "wss"],
-      authEndpoint: "https://backend.cabifyit.com/api/broadcasting/auth",
-    });
-
-    window.Echo = echoInstance;
-
-    console.log("✅ Echo initialized");
-    return echoInstance;
-  } catch (error) {
-    console.error("❌ Failed to initialize Echo:", error);
+  if (!tenantId) {
+    console.warn("❌Tenant ID not found, socket not connected");
     return null;
   }
-}
+
+  socket = io("wss://backend.cabifyit.com", {
+    path: "/socket.io",
+    transports: ["polling", "websocket",],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
+    query: {
+      role: "driver",
+      driver_id: "1",
+      database: tenantId,
+    },
+    extraHeaders: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("Socket disconnected:", reason);
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("⚠️ Socket connection error:", error.message);
+  });
+
+  return socket;
+};
 
 export default initSocket;

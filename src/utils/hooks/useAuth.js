@@ -217,7 +217,7 @@ function useAuth() {
 
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
-      console.log("Restoring authentication state from encrypted token");
+      // console.log("Restoring authentication state from encrypted token");
       dispatch(signInSuccess("restored")); // We don't need the actual token in Redux
 
       // Restore user data from token

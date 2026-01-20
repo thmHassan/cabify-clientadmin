@@ -1230,26 +1230,6 @@ const AddBooking = ({ setIsOpen }) => {
                                                                     <ErrorMessage name="vehicle" component="div" className="text-red-500 text-sm mt-1" />
                                                                 </div>
 
-                                                                {/* <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
-                                                                    <label className="text-sm font-semibold text-left md:w-16 w-16">Driver</label>
-                                                                    <div className="w-full">
-                                                                        <select
-                                                                            name="driver"
-                                                                            value={values.driver || ""}
-                                                                            onChange={(e) => setFieldValue("driver", e.target.value)}
-                                                                            disabled={loadingSubCompanies}
-                                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
-                                                                        >
-                                                                            <option value="">Select Driver</option>
-                                                                            {driverList?.map((item) => (
-                                                                                <option key={item.value} value={item.value}>
-                                                                                    {item.label}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-                                                                        <ErrorMessage name="driver" component="div" className="text-red-500 text-sm mt-1" />
-                                                                    </div>
-                                                                </div> */}
                                                                 <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
                                                                     <label className="text-sm font-semibold text-left md:w-16 w-16">
                                                                         Driver { }
@@ -1277,35 +1257,6 @@ const AddBooking = ({ setIsOpen }) => {
                                                         </div>
 
                                                         <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
-                                                            {/* <div className="flex flex-col gap-3">
-                                                                <label className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={values.auto_dispatch}
-                                                                        onChange={(e) => {
-                                                                            setFieldValue("auto_dispatch", e.target.checked);
-                                                                            if (e.target.checked) {
-                                                                                setFieldValue("booking_system", "auto_dispatch");
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                    Auto Dispatch
-                                                                </label>
-
-                                                                <label className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={values.bidding}
-                                                                        onChange={(e) => {
-                                                                            setFieldValue("bidding", e.target.checked);
-                                                                            if (e.target.checked) {
-                                                                                setFieldValue("booking_system", "bidding");
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                    Bidding
-                                                                </label>
-                                                            </div> */}
                                                             <div className="flex flex-col gap-3">
                                                                 <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                                     <input

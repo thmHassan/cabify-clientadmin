@@ -44,16 +44,12 @@ const UserPageContainer = ({ children }) => {
     try {
       setIsLoadingBookingSystem(true);
       const response = await apiGetBookingSystem();
-      console.log("Booking System Full Response:", response);
-      console.log("Response data:", response?.data);
       
       // Check if response has data property (axios style) or direct response
       const data = response?.data || response;
-      console.log("Extracted data:", data);
       
       // Check for success: 1 or success: true
       if (data && (data.success === 1 || data.success === true)) {
-        console.log("Setting booking system to:", data.company_booking_system);
         setBookingSystem(data.company_booking_system);
       } else {
         console.error("API response did not indicate success:", data);
@@ -126,7 +122,6 @@ const UserPageContainer = ({ children }) => {
 
   // Render booking system UI based on API response
   const renderBookingSystemUI = () => {
-    console.log("Rendering UI with bookingSystem:", bookingSystem, "isLoading:", isLoadingBookingSystem);
 
     if (isLoadingBookingSystem) {
       return (

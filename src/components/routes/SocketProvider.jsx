@@ -9,31 +9,28 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     const socketInstance = initSocket();
-    
-    if (!socketInstance) {
-      console.error("Socket initialization failed");
-      return;
-    }
 
-    // Socket connect thaya pachi j state update karo
-    socketInstance.on("connect", () => {
-      console.log("✅ Socket connected in Provider:", socketInstance.id);
+    if (!socketInstance) return;
+
+    const onConnect = () => {
+      console.log("✅ Connected in Provider:", socketInstance.id);
       setIsConnected(true);
-    });
+    };
 
-    socketInstance.on("disconnect", () => {
-      console.log("❌ Socket disconnected in Provider");
+    const onDisconnect = () => {
+      console.log("❌ Disconnected in Provider");
       setIsConnected(false);
-    });
+    };
+
+    socketInstance.on("connect", onConnect);
+    socketInstance.on("disconnect", onDisconnect);
 
     setSocket(socketInstance);
 
     return () => {
-      if (socketInstance) {
-        socketInstance.off("connect");
-        socketInstance.off("disconnect");
-        // socketInstance.disconnect();
-      }
+      socketInstance.off("connect", onConnect);
+      socketInstance.off("disconnect", onDisconnect);
+      // socketInstance.disconnect(); // optional
     };
   }, []);
 
@@ -46,10 +43,10 @@ export const SocketProvider = ({ children }) => {
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
-  return context?.socket || null;
+  return context?.socket ?? null;
 };
 
 export const useSocketStatus = () => {
   const context = useContext(SocketContext);
-  return context?.isConnected || false;
+  return context?.isConnected ?? false;
 };

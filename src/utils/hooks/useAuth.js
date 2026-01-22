@@ -23,6 +23,7 @@ import {
   getUserDataFromToken,
   storeTenantId,
   storeTenantData,
+  storeCompanyId, 
 } from "../functions/tokenEncryption";
 
 function useAuth() {
@@ -80,9 +81,15 @@ function useAuth() {
           const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
           if (tenantData) {
             storeTenantData(tenantData);
+            
+            // STORE COMPANY_ID - ADD THIS
+            if (tenantData.company_id) {
+              storeCompanyId(tenantData.company_id);
+              console.log("✅ Stored company_id:", tenantData.company_id);
+            }
           }
         } catch (e) {
-          // ignore tenant storage errors
+          console.warn("Failed to store tenant metadata", e);
         }
 
         const redirectUrl = query.get(REDIRECT_URL_KEY);
@@ -150,9 +157,15 @@ function useAuth() {
           const tenantData = data.tenant_data || data.data?.tenant_data || null;
           if (tenantData) {
             storeTenantData(tenantData);
+            
+            // STORE COMPANY_ID - ADD THIS
+            if (tenantData.company_id) {
+              storeCompanyId(tenantData.company_id);
+              console.log("✅ Stored company_id:", tenantData.company_id);
+            }
           }
         } catch (e) {
-          // ignore tenant storage errors
+          console.warn("Failed to store tenant metadata", e);
         }
 
         // Redirect to home page on success

@@ -239,21 +239,70 @@ const Overview = () => {
   const checkDispatchSystem = async () => {
     try {
       setIsLoadingDispatchSystem(true);
-      const response = await apiGetDispatchSystem();
-      
-      if (response?.data) {
-        // Check if any entry with dispatch_system "bidding" and priority "5" has status "enable"
-        const hasBiddingEnabled = response.data.some(
-          (item) =>
-            item.dispatch_system === "bidding" &&
-            item.priority === "5" &&
-            item.status === "enable"
-        );
-        
-        setIsAddBookingDisabled(hasBiddingEnabled);
+      const response = await apiGetDispatchSystem()
+
+      // Extract actual data - handle multiple response structures
+      let data = response?.data?.data || response?.data || response;
+
+      // console.log("📊 Extracted data:", data);
+      // console.log("📊 Is Array:", Array.isArray(data));
+
+      // Check if data is an array
+      if (!Array.isArray(data)) {
+        console.warn("⚠️ Response data is not an array:", typeof data, data);
+
+        // If data is an object with a nested array property
+        if (data && typeof data === 'object') {
+          // Try common nested array keys
+          const possibleArrayKeys = ['items', 'results', 'dispatches', 'systems', 'list'];
+          for (const key of possibleArrayKeys) {
+            if (Array.isArray(data[key])) {
+              // console.log(`✅ Found array at data.${key}`);
+              data = data[key];
+              break;
+            }
+          }
+        }
+
+        // If still not an array, wrap it in an array if it's a valid object
+        if (!Array.isArray(data)) {
+          if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+            // console.log("📦 Wrapping single object in array");
+            data = [data];
+          } else {
+            console.warn("❌ Could not convert data to array, disabling button");
+            setIsAddBookingDisabled(false);
+            return;
+          }
+        }
       }
+
+      // console.log("🔍 Checking", data.length, "items for bidding system");
+
+      // Check if any entry with dispatch_system "bidding" and priority "5" has status "enable"
+      const hasBiddingEnabled = data.some((item) => {
+        const isBidding = item.dispatch_system === "bidding";
+        const isPriority5 = item.priority === "5" || item.priority === 5;
+        const isEnabled = item.status === "enable" || item.status === "enabled" || item.status === 1 || item.status === true;
+
+        if (isBidding && isPriority5 && isEnabled) {
+          // console.log("✅ Found matching bidding entry:", item);
+        }
+
+        return isBidding && isPriority5 && isEnabled;
+      });
+
+      // console.log("🎯 Has Bidding Enabled:", hasBiddingEnabled);
+      setIsAddBookingDisabled(hasBiddingEnabled);
+
     } catch (error) {
-      console.error("Error fetching dispatch system:", error);
+      console.error("❌ Error fetching dispatch system:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response,
+        data: error.response?.data
+      });
+
       // On error, keep button enabled (fail open)
       setIsAddBookingDisabled(false);
     } finally {

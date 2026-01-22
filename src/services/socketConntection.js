@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
+import { getCompanyId, getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
 
 let socket = null;
 
@@ -7,33 +7,33 @@ const initSocket = () => {
   if (socket) return socket;
 
   const tenantId = getTenantId();
+  const companyId = getCompanyId()
   const token = getDecryptedToken();
 
-  console.log("Socket database:", tenantId);
+  console.log("tenantId:", tenantId);
+  console.log("companyId:", companyId);
   console.log("token===", token);
-
 
   if (!tenantId) {
     console.warn("❌Tenant ID not found, socket not connected");
     return null;
   }
 
-  socket = io("wss://backend.cabifyit.com", {
+  socket = io("https://backend.cabifyit.com", {
     path: "/socket.io",
-    transports: ["polling", "websocket",],
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 2000,
     query: {
-      role: "driver",
-      driver_id: "1",
+      role: "client",
+      client_id: companyId,
       database: tenantId,
     },
     extraHeaders: {
       Authorization: `Bearer ${token}`
     }
   });
-
 
   socket.on("connect", () => {
     console.log("Socket connected:", socket.id);

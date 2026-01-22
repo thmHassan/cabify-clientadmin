@@ -109,6 +109,19 @@ export const storeTenantId = (tenantId) => {
 };
 
 /**
+ * Stores company id in localStorage (plain string)
+ * @param {string} companyId
+ */
+export const storeCompanyId = (companyId) => {
+  try {
+    if (!companyId) return;
+    localStorage.setItem('company_id', companyId);
+  } catch (error) {
+    console.error('Failed to store company id:', error);
+  }
+};
+
+/**
  * Stores tenant data (e.g. company profile) in localStorage
  * @param {object} tenantData
  */
@@ -135,6 +148,19 @@ export const getTenantId = () => {
 };
 
 /**
+ * Retrieves company id from localStorage
+ * @returns {string|null}
+ */
+export const getCompanyId = () => {
+  try {
+    return localStorage.getItem('company_id');
+  } catch (error) {
+    console.error('Failed to get company id:', error);
+    return null;
+  }
+};
+
+/**
  * Retrieves tenant data from localStorage
  * @returns {object|null}
  */
@@ -156,6 +182,17 @@ export const removeTenantId = () => {
     localStorage.removeItem('tenant_id');
   } catch (error) {
     console.error('Failed to remove tenant id:', error);
+  }
+};
+
+/**
+ * Removes company id from localStorage
+ */
+export const removeCompanyId = () => {
+  try {
+    localStorage.removeItem('company_id');
+  } catch (error) {
+    console.error('Failed to remove company id:', error);
   }
 };
 
@@ -195,6 +232,10 @@ export const clearAllAuthData = () => {
     
     // Remove tenant id
     localStorage.removeItem('tenant_id');
+    
+    // Remove company id
+    localStorage.removeItem('company_id');
+    
     // Remove tenant data
     localStorage.removeItem('tenant_data');
 

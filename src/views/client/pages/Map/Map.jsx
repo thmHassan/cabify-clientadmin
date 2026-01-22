@@ -38,6 +38,38 @@ const loadGoogleMaps = () => {
   });
 };
 
+// Smooth marker animation function
+const animateMarker = (marker, newPosition, duration = 1000) => {
+  const startPosition = marker.getPosition();
+  const startLat = startPosition.lat();
+  const startLng = startPosition.lng();
+  const endLat = newPosition.lat;
+  const endLng = newPosition.lng;
+
+  const startTime = Date.now();
+
+  const animate = () => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing function for smooth animation (ease-in-out)
+    const easeProgress = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    const currentLat = startLat + (endLat - startLat) * easeProgress;
+    const currentLng = startLng + (endLng - startLng) * easeProgress;
+
+    marker.setPosition({ lat: currentLat, lng: currentLng });
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  };
+
+  animate();
+};
+
 const Map = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(
@@ -106,37 +138,77 @@ const Map = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleDriverUpdate = (data) => {
+    const handleDriverUpdate = (rawData) => {
       if (!mapInstance.current) {
         console.warn("Map not initialized yet");
         return;
       }
 
-      console.log("Received driver-location-update:", data);
+      console.log("Received driver-location-update:", rawData);
 
-      let driver_id, latitude, longitude, status, name;
+      // Parse JSON string if needed
+      let data;
+      try {
+        if (typeof rawData === 'string') {
+          // Try to fix common JSON issues before parsing
+          let fixedData = rawData
+            .replace(/,\s*}/g, '}')  // Remove trailing commas
+            .replace(/,\s*]/g, ']')   // Remove trailing commas in arrays
+            .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');  // Fix unquoted keys
 
-      if (typeof data === 'object' && !Array.isArray(data)) {
-        // Your backend sends latitude/longitude swapped, so we need to swap them back
-        driver_id = data.driver_id;
-        // SWAPPING: Your backend's "latitude" is actually longitude and vice versa
-        latitude = data.longitude;  // Backend's longitude is actual latitude
-        longitude = data.latitude;  // Backend's latitude is actual longitude
-        status = data.status || "online";
-        name = data.name || `Driver ${driver_id}`;
+          data = JSON.parse(fixedData);
+          console.log("✅ Parsed JSON data:", data);
+        } else {
+          data = rawData;
+        }
+      } catch (error) {
+        console.error("❌ Failed to parse JSON:", error);
+        console.log("Raw data:", rawData);
+
+        // Try alternative parsing - extract values manually
+        if (typeof rawData === 'string') {
+          try {
+            const latMatch = rawData.match(/"latitude":\s*([\d.]+)/);
+            const lngMatch = rawData.match(/"longitude":\s*([\d.]+)/);
+            const clientMatch = rawData.match(/"client_id":\s*"([^"]*)/);
+            const dispatchMatch = rawData.match(/"dispatcher_id":\s*(\d+)/);
+            const statusMatch = rawData.match(/"status":\s*"([^"]*)"/);
+
+            if (latMatch && lngMatch) {
+              data = {
+                latitude: parseFloat(latMatch[1]),
+                longitude: parseFloat(lngMatch[1]),
+                client_id: clientMatch ? clientMatch[1] : null,
+                dispatcher_id: dispatchMatch ? parseInt(dispatchMatch[1]) : null,
+                status: statusMatch ? statusMatch[1] : 'online'
+              };
+              console.log("✅ Manually extracted data:", data);
+            } else {
+              return;
+            }
+          } catch (manualError) {
+            console.error("❌ Manual extraction also failed:", manualError);
+            return;
+          }
+        } else {
+          return;
+        }
       }
 
-      if (!latitude || !longitude) {
-        console.warn("❌ Could not extract location from data");
+      // Extract data from response - support multiple ID fields
+      const driver_id = data.client_id || data.dispatcher_id || data.driver_id || data.id || `driver_${Date.now()}`;
+      const latitude = data.latitude;
+      const longitude = data.longitude;
+      const status = data.status || "online";
+      const name = data.name || data.driver_name || `Driver ${driver_id}`;
+
+      // Check if latitude and longitude exist and are valid numbers
+      if (latitude == null || longitude == null || isNaN(latitude) || isNaN(longitude)) {
+        console.warn("❌ Invalid location data:", { latitude, longitude, data });
         return;
       }
 
-      // Ensure driver_id exists
-      if (!driver_id) {
-        driver_id = `driver_${Date.now()}`;
-      }
-
-      console.log("✅ Corrected coordinates:", { driver_id, latitude, longitude, status });
+      console.log("✅ Extracted data:", { driver_id, latitude, longitude, status, name });
 
       const position = {
         lat: Number(latitude),
@@ -146,7 +218,7 @@ const Map = () => {
       // Store driver data for filtering
       setDriverData((prev) => ({
         ...prev,
-        [driver_id]: { ...data, position },
+        [driver_id]: { ...data, position, status, name },
       }));
 
       // Determine marker icon based on status
@@ -156,14 +228,47 @@ const Map = () => {
       else if (status === "pending") markerIcon = MARKER_ICONS.pending;
 
       if (markers.current[driver_id]) {
-        markers.current[driver_id].setPosition(position);
-        markers.current[driver_id].setIcon(markerIcon);
-        console.log(`Updated driver ${driver_id} to:`, position);
+        // Update existing marker with smooth animation
+        const marker = markers.current[driver_id];
+        const oldPosition = marker.getPosition();
+        const oldLat = oldPosition.lat();
+        const oldLng = oldPosition.lng();
+
+        // Calculate distance between old and new position
+        const latDiff = Math.abs(oldLat - position.lat);
+        const lngDiff = Math.abs(oldLng - position.lng);
+        const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+
+        // Only animate if distance is small (to avoid long animations across the map)
+        // 0.01 degrees is roughly 1 km
+        if (distance < 0.01) {
+          animateMarker(marker, position, 1000); // 1 second smooth animation
+        } else {
+          // For large jumps, just set position directly
+          marker.setPosition(position);
+        }
+
+        marker.setIcon(markerIcon);
+
+        // Update info window content
+        if (marker.infoWindow) {
+          marker.infoWindow.setContent(`
+            <div style="padding: 8px;">
+              <strong>${name}</strong><br/>
+              ID: ${driver_id}<br/>
+              Status: <span style="text-transform: capitalize;">${status}</span><br/>
+              Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}
+            </div>
+          `);
+        }
+
+        console.log(`✅ Animated driver ${driver_id} to:`, position);
       } else {
+        // Create new marker
         const marker = new window.google.maps.Marker({
           position,
           map: mapInstance.current,
-          title: name || `Driver ${driver_id}`,
+          title: name,
           icon: markerIcon,
           animation: window.google.maps.Animation.DROP,
         });
@@ -172,8 +277,9 @@ const Map = () => {
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
             <div style="padding: 8px;">
-              <strong>${name || `Driver ${driver_id}`}</strong><br/>
-              Status: <span style="text-transform: capitalize;">${status || 'online'}</span><br/>
+              <strong>${name}</strong><br/>
+              ID: ${driver_id}<br/>
+              Status: <span style="text-transform: capitalize;">${status}</span><br/>
               Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}
             </div>
           `,
@@ -189,14 +295,16 @@ const Map = () => {
 
         marker.infoWindow = infoWindow;
         markers.current[driver_id] = marker;
-        console.log(`Created marker for driver ${driver_id} at:`, position);
+        console.log(`✅ Created marker for driver ${driver_id} at:`, position);
       }
 
       // Apply filter based on selected status
       updateMarkerVisibility();
 
-      // Auto-fit map to show all markers
-      setTimeout(() => fitMapToMarkers(), 100);
+      // Auto-fit map to show all markers (only on first marker creation)
+      if (Object.keys(markers.current).length <= 1) {
+        setTimeout(() => fitMapToMarkers(), 100);
+      }
     };
 
     socket.on("driver-location-update", handleDriverUpdate);
@@ -207,8 +315,8 @@ const Map = () => {
   }, [socket, selectedStatus, searchQuery]);
 
   const updateMarkerVisibility = () => {
-    Object.entries(markers.current).forEach(([driverId, marker]) => {
-      const driver = driverData[driverId];
+    Object.entries(markers.current).forEach(([dispatcherId, marker]) => {
+      const driver = driverData[dispatcherId];
       if (!driver) return;
 
       let visible = true;
@@ -221,7 +329,7 @@ const Map = () => {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
           driver.name?.toLowerCase().includes(query) ||
-          driver.driver_id?.toString().includes(query);
+          dispatcherId.toString().includes(query);
         visible = visible && matchesSearch;
       }
 

@@ -216,7 +216,7 @@ const Dispatcher = () => {
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8 flex gap-[15px]">
-          <Button
+          {/* <Button
             type="bgOutlined"
             btnSize="2xl"
             onClick={() => {
@@ -234,7 +234,7 @@ const Dispatcher = () => {
               </span>
               <span>Export Report</span>
             </div>
-          </Button>
+          </Button> */}
           <Button
             type="filled"
             btnSize="2xl"

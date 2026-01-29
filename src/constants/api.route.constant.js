@@ -18,6 +18,7 @@ export const GATE_BOOKING_SYSTEM = "/company/get-company-booking-system"
 export const CREATE_DISPATCHER = "/company/create-dispatcher";
 export const DELETE_DISPATCHER = "/company/delete-dispatcher";
 export const EDIT_DISPATCHER = "/company/edit-dispatcher";
+export const DISPATCHER_LOGS = "company/dispatcher-logs";
 
 // api for user
 export const CREATE_USER = "/company/create-user";
@@ -52,6 +53,10 @@ export const CREATE_DRIVERS_DOCUMENT = "/company/create-document-type";
 export const DELETE_DRIVERS_DOCUMENT = "/company/delete-document-type";
 export const EDIT_DRIVERS_DOCUMENT = "/company/edit-document-type";
 export const GET_DRIVERS_DOCUMENT_BY_ID = "/company/edit-document-type";
+
+// api for document Request
+
+export const GET_DOCUMENT_REQUESTS = '/company/pending-document-list'
 
 // api for Reviews
 export const GET_CUSTOMER_RATINGS = "/company/customer-ratings"
@@ -113,6 +118,8 @@ export const UPDATE_ACCOUNT = "/company/edit-account";
 export const CREATE_ACCOUNT = "/company/create-account";
 export const DELETE_ACCOUNT = "/company/delete-account";
 export const GET_ACCOUNT_BY_ID = "/company/edit-account";
+export const ACCOUNT_RIDE_HISTORY = "/company/account-ride-history";
+export const COLLECT_ACCOUNT = "/company/collect-account-amount"
 
 // api for tickets
 export const GET_TICKETS = "/company/list-ticket";

@@ -47,6 +47,12 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/DriversManagement/components/DriverDetails")),
     authority: [],
   },
+    {
+    key: KEY.DOCUMENT_REQUESTS_KEY,
+    path: PATH.DOCUMENT_REQUESTS_PATH,
+    component: lazy(() => import("../../../views/client/pages/DocumentRequest")),
+    authority: [],
+  },
   {
     key: KEY.GENERAL_NOTIFICATION_KEY,
     path: PATH.GENERAL_NOTIFICATION_PATH,

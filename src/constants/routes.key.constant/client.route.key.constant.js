@@ -3,6 +3,7 @@ export const ACCOUNTS_KEY = "accounts";
 export const CANCELLATIONS_KEY = "cancellations";
 export const DISPATCHER_KEY = "dispatcher";
 export const DRIVER_DOCUMENTS_KEY = "driver-documents";
+export const DOCUMENT_REQUESTS_KEY = "document-requests";
 export const DRIVERS_MANAGEMENT_KEY = "drivers-management";
 export const DRIVERS_DETAILS_KEY = "driver-details"
 export const GENERAL_NOTIFICATION_KEY = "general-notification";

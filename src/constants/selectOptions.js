@@ -8,6 +8,19 @@ export const STATUS_OPTIONS = [
   { value: "suspended", label: "Suspended" },
 ];
 
+export const DOCUMENT_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "pending", label: "Pending" },
+  { value: "verified", label: "Verified" },
+  { value: "failed", label: "Rejected" }
+]
+
+export const MAP_STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "idle", label: "Idle" },
+]
+
 export const PLAN_OPTIONS = [
   { value: "all", label: "All Plans" },
   { value: "basic", label: "Basic Plan" },
@@ -40,10 +53,10 @@ export const PAGE_SIZE_OPTIONS = [
 ];
 
 export const COMPANY_OPTIONS = [
-    { value: 'all', label: 'All Sub Company' },
-    { value: 'company_a', label: 'Company A' },
-    { value: 'company_b', label: 'Company B' },
-    { value: 'company_c', label: 'Company C' },
-    { value: 'company_d', label: 'Company D' },
-    { value: 'company_e', label: 'Company E' },
-  ];
+  { value: 'all', label: 'All Sub Company' },
+  { value: 'company_a', label: 'Company A' },
+  { value: 'company_b', label: 'Company B' },
+  { value: 'company_c', label: 'Company C' },
+  { value: 'company_d', label: 'Company D' },
+  { value: 'company_e', label: 'Company E' },
+];

@@ -35,22 +35,18 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     ];
 
     const getStatusOptions = () => {
-        const allStatuses = [
-            {
-                label: "Accepted",
-                onClick: () => handleStatusChange("accepted"),
-            },
-            {
-                label: "Rejected",
-                onClick: () => handleStatusChange("rejected"),
-            },
-            {
-                label: "Pending",
-                onClick: () => handleStatusChange("pending"),
-            },
+        const statuses = [
+            { value: "accepted", label: "Accept" },
+            { value: "rejected", label: "Reject" },
+            { value: "pending", label: "Pending" },
         ];
 
-        return allStatuses.filter(option => option.label.toLowerCase() !== status);
+        return statuses
+            .filter(s => s.value !== status)
+            .map(s => ({
+                label: s.label,
+                onClick: () => handleStatusChange(s.value),
+            }));
     };
 
     const handleStatusChange = async (newStatus) => {
@@ -128,7 +124,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Wallet Balance</p>
-                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm"> {currencySymbol} {driver.wallet_balance}</p>
+                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm"> {currencySymbol} {driver.wallet_balance || "0"}</p>
                 </div>
 
                 <UserDropdown options={getStatusOptions()} itemData={driver}>

@@ -1,4 +1,4 @@
-import { CREATE_ACCOUNT, DELETE_ACCOUNT, GET_ACCOUNT, GET_ACCOUNT_BY_ID, UPDATE_ACCOUNT } from "../constants/api.route.constant";
+import { ACCOUNT_RIDE_HISTORY, COLLECT_ACCOUNT, CREATE_ACCOUNT, DELETE_ACCOUNT, GET_ACCOUNT, GET_ACCOUNT_BY_ID, UPDATE_ACCOUNT } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
@@ -45,6 +45,28 @@ export async function apiDeleteAccount(id) {
     return ApiService.fetchData({
         url: `${DELETE_ACCOUNT}?id=${id}`,
         method: METHOD_GET,
+    });
+}
+
+export async function apiGetAccountRideHistory(id) {
+    return ApiService.fetchData({
+        url: `${ACCOUNT_RIDE_HISTORY}?id=${id}`,
+        method: METHOD_GET,
+    });
+}
+
+export async function apiCollectAccount(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: COLLECT_ACCOUNT,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
     });
 }
 

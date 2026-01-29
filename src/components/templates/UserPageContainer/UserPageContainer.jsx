@@ -20,7 +20,7 @@ import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
 import { getTenantData } from "../../../utils/functions/tokenEncryption";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
-import { useSocket } from "../../routes/SocketProvider";
+import { useSocket, useSocketStatus} from "../../routes/SocketProvider";
 
 const UserPageContainer = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -41,6 +41,7 @@ const UserPageContainer = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const socket = useSocket();
+  const isConnected = useSocketStatus();
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
@@ -54,39 +55,65 @@ const UserPageContainer = ({ children }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!socket) return;
-    console.log("Received send-reminder:");
+
+  console.log("📢 RECEIVED send-reminder:");
+
+  const handleSendReminder = (data) => {
+    console.log("📢 RECEIVED send-reminder event:", data);
+    console.log("📢 Data type:", typeof data);
+    console.log("📢 Data keys:", Object.keys(data));
     
-    const handleSendReminder = (data) => {
-      console.log("📢 Received send-reminder:", data);
-      
-      setNotifications((prev) => [
-        {
-          id: Date.now(),
-          ...data,
-          timestamp: new Date(),
-          read: false
-        },
-        ...prev
-      ]);
-      
-      setUnreadCount((prev) => prev + 1);
-      
-      if (Notification.permission === "granted") {
-        new Notification("New Reminder", {
-          body: data.description || data.message || "You have a new reminder",
-          icon: "/notification-icon.png"
-        });
-      }
-    };
+    setNotifications((prev) => {
+      const newNotification = {
+        id: Date.now(),
+        ...data,
+        timestamp: new Date(),
+        read: false
+      };
+      console.log("✅ Adding notification:", newNotification);
+      return [newNotification, ...prev];
+    });
+    
+    setUnreadCount((prev) => {
+      console.log("✅ Incrementing unread count from", prev, "to", prev + 1);
+      return prev + 1;
+    });
+    
+    if (Notification.permission === "granted") {
+      new Notification("New Reminder", {
+        body: data.description || data.message || "You have a new reminder",
+        icon: "/notification-icon.png"
+      });
+    }
+  };
 
-    socket.on("send-reminder", handleSendReminder);
+  const handleConnect = () => {
+    console.log("🔌 Socket connected in component:", socket.id);
+    console.log("🔌 Registering send-reminder listener on connect");
+  };
 
-    return () => {
-      socket.off("send-reminder", handleSendReminder);
-    };
-  }, [socket]);
+  const handleDisconnect = () => {
+    console.log("❌ Socket disconnected");
+  };
+
+  // Register listeners
+  socket.on("connect", handleConnect);
+  socket.on("disconnect", handleDisconnect);
+  socket.on("send-reminder", handleSendReminder);
+
+  console.log("🔌 All listeners registered");
+
+  return () => {
+    console.log("🔌 Cleaning up listeners");
+    socket.off("connect", handleConnect);
+    socket.off("disconnect", handleDisconnect);
+    socket.off("send-reminder", handleSendReminder);
+    socket.offAny();
+  };
+}, [socket]);
+
 
   useEffect(() => {
     if (Notification.permission === "default") {

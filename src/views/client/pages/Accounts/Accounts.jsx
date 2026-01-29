@@ -4,7 +4,7 @@ import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import Button from '../../../../components/ui/Button/Button';
 import PlusIcon from '../../../../components/svg/PlusIcon';
 import { useAppSelector } from '../../../../store';
-import { lockBodyScroll } from '../../../../utils/functions/common.function';
+import { lockBodyScroll, unlockBodyScroll } from '../../../../utils/functions/common.function';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
@@ -12,6 +12,7 @@ import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectO
 import Modal from '../../../../components/shared/Modal/Modal';
 import AccountCard from './components/AccountCard';
 import AddAccountModel from './components/AddAccountsModel';
+import AccountRideHistory from './components/AccountRideHistory';
 import { apiDeleteAccount, apiGetAccount } from '../../../../services/AccountService';
 import toast from 'react-hot-toast';
 import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
@@ -21,6 +22,8 @@ const Accounts = () => {
     type: "new",
     isOpen: false,
   });
+  const [isRideHistoryOpen, setIsRideHistoryOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
@@ -90,19 +93,25 @@ const Accounts = () => {
       isOpen: true,
       accountData: account,
     });
+    lockBodyScroll();
   };
 
   const handleView = (account) => {
-    setIsAccountModelOpen({
-      type: "view",
-      isOpen: true,
-      accountData: account,
-    });
-  }
+    setSelectedAccount(account);
+    setIsRideHistoryOpen(true);
+    lockBodyScroll();
+  };
+
+  const handleCloseRideHistory = () => {
+    setIsRideHistoryOpen(false);
+    setSelectedAccount(null);
+    unlockBodyScroll();
+  };
 
   const handleDeleteClick = (account) => {
     setAccountToDelete(account);
     setDeleteModalOpen(true);
+    lockBodyScroll();
   };
 
   const handleDeleteAccount = async () => {
@@ -115,8 +124,9 @@ const Accounts = () => {
       if (response?.data?.success === 1 || response?.status === 200) {
         setDeleteModalOpen(false);
         setAccountToDelete(null);
-        fetchAccounts(); // refresh table
+        fetchAccounts();
         toast.success('Account deleted successfully');
+        unlockBodyScroll();
       } else {
         console.error("Failed to delete account");
         toast.error('Failed to delete account');
@@ -143,7 +153,7 @@ const Accounts = () => {
         <div className="sm:mb-[30px] mb-1 sm:w-[calc(100%-240px)] w-full flex gap-5 items-center">
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
             <PageTitle title="Accounts" />
-            <PageSubTitle title="Need content here" />
+            {/* <PageSubTitle title="Need content here" /> */}
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8">
@@ -225,6 +235,16 @@ const Accounts = () => {
           onAccountCreated={fetchAccounts}
         />
       </Modal>
+
+      {/* Ride History Modal */}
+      <Modal isOpen={isRideHistoryOpen} className="p-4 sm:p-6 lg:p-10">
+        <AccountRideHistory
+          account={selectedAccount}
+          handleClose={handleCloseRideHistory}
+        />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
       <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-3">Delete Account?</h2>
@@ -238,6 +258,7 @@ const Accounts = () => {
               onClick={() => {
                 setDeleteModalOpen(false);
                 setAccountToDelete(null);
+                unlockBodyScroll();
               }}
               className="px-6 py-2 rounded-md"
             >

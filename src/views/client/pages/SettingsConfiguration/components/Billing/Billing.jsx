@@ -56,7 +56,7 @@ const Billing = () => {
         try {
             const response = await apiGetInvoiceHistory();
             if (response?.data?.success === 1) {
-                const invoiceList = response?.data?.data || response?.data?.invoices || [];
+                const invoiceList = response?.data?.history || response?.data?.history || [];
                 setInvoices(Array.isArray(invoiceList) ? invoiceList : []);
             }
         } catch (error) {
@@ -194,17 +194,27 @@ const Billing = () => {
                 ) : invoices.length > 0 ? (
                     <>
                         {invoices.map((inv, idx) => (
-                            <div key={idx} className="flex flex-col md:flex-row justify-between items-center py-3 border-b last:border-none">
+                            <div key={idx} className="flex md:flex-row justify-between items-center py-3 border-b last:border-none">
                                 <div className="font-medium">{inv.plan_name || "Professional Plan"}</div>
-                                <div className="text-gray-500">{inv.date || inv.created_at || "N/A"}</div>
-                                <div className="font-semibold">{inv.amount || "$0.00"}</div>
+                                <div className="flex gap-1">
+                                    <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
+                                        <p className="text-[#333333] text-center font-semibold text-sm">
+                                            {inv.date || inv.created_at || "N/A"}
+                                        </p>
+                                    </div>
+                                    <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
+                                        <p className="text-[#333333] text-center font-semibold text-sm">
+                                            ${inv.amount || "$0.00"}
+                                        </p>
+                                    </div>
+                                </div>
 
-                                <div className="flex gap-2 mt-2 md:mt-0">
+                                {/* <div className="flex gap-2 mt-2 md:mt-0">
                                     <button className="px-4 py-1 rounded border text-sm hover:bg-gray-50">View Invoice</button>
                                     <button className="px-4 py-1 rounded border text-sm bg-blue-600 text-white hover:bg-blue-700">
                                         Download
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
                         ))}
                         <button className="mt-4 text-blue-600 font-medium hover:underline">View All</button>
@@ -249,21 +259,11 @@ const Billing = () => {
 
                     <div className="grid md:grid-cols-2 gap-6 mt-6">
                         <InputField
-                            label="Stripe Webhook Secret"
-                            placeholder=""
-                            value={stripeData.stripe_webhook_secret}
-                            onChange={(e) => setStripeData({ ...stripeData, stripe_webhook_secret: e.target.value })}
+                            label="Stripe Country"
+                            placeholder="Enter country code"
+                            value={stripeData.stripe_country}
+                            onChange={(e) => setStripeData({ ...stripeData, stripe_country: e.target.value })}
                         />
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Stripe Country</label>
-                            <input
-                                type="text"
-                                className="w-full border rounded-lg p-2 focus:ring"
-                                placeholder="Enter country code"
-                                value={stripeData.stripe_country}
-                                onChange={(e) => setStripeData({ ...stripeData, stripe_country: e.target.value })}
-                            />
-                        </div>
                     </div>
 
                     {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
@@ -313,16 +313,19 @@ const ToggleItem = ({ label, checked = false, onChange }) => (
     </div>
 );
 
-const InputField = ({ label, placeholder, value, onChange }) => (
+const InputField = ({ label, placeholder, value, onChange, disabled = false }) => (
     <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
-        <input
-            type="text"
-            className="w-full border rounded-lg p-2 focus:ring"
-            placeholder={placeholder}
-            value={value || ""}
-            onChange={onChange}
-        />
+        <div className="sm:h-16 h-14">
+            <input
+                type="text"
+                disabled={disabled}
+                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
+                placeholder={placeholder}
+                value={value || ""}
+                onChange={onChange}
+            />
+        </div>
     </div>
 );
 

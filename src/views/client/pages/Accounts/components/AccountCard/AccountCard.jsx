@@ -5,10 +5,10 @@ import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 
 const AccountCard = ({ account, onEdit, onView, onDelete }) => {
     const actionOptions = [
-        // {
-        //     label: "View",
-        //     onClick: () => onView(account),
-        // },
+        {
+            label: "View",
+            onClick: () => onView(account),
+        },
         {
             label: "Edit",
             onClick: () => onEdit(account),

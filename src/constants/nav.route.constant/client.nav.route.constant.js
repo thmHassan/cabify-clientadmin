@@ -151,6 +151,20 @@ const userNavRoutes = [
         subMenu: [],
         isStatic: false,
       },
+            {
+        key: KEY.DOCUMENT_REQUESTS_KEY,
+        title: "Document Request",
+        icon: {
+          active: DriverIcon,
+          component: DriverIcon,
+          size: 20,
+        },
+        route: PATH.DOCUMENT_REQUESTS_PATH,
+        active: [],
+        isSubMenu: false,
+        subMenu: [],
+        isStatic: false,
+      },
       {
         key: KEY.DRIVERS_MANAGEMENT_KEY,
         title: "Drivers Management",

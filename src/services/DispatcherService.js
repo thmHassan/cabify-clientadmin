@@ -1,4 +1,4 @@
-import { CREATE_DISPATCHER, DELETE_DISPATCHER, EDIT_DISPATCHER } from "../constants/api.route.constant";
+import { CREATE_DISPATCHER, DELETE_DISPATCHER, DISPATCHER_LOGS, EDIT_DISPATCHER } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
@@ -19,14 +19,13 @@ export async function apiCreateDispatcher(data) {
 }
 
 
-// export async function apiGetSubCompanyById(params) {
-//     return ApiService.fetchData({
-//         url: params
-//             ? replaceSlash(params, GET_SUB_COMPANY_BY_ID)
-//             : GET_SUB_COMPANY_BY_ID,
-//         method: METHOD_GET,
-//     });
-// }
+export async function apiGetDispatcherLog({ dispatcher_id, date }) {
+    return ApiService.fetchData({
+        url: DISPATCHER_LOGS,
+        method: "GET",
+        params: { dispatcher_id, date },
+    });
+}
 
 export async function apiDeleteDispatcher(id) {
     return ApiService.fetchData({
@@ -38,7 +37,7 @@ export async function apiDeleteDispatcher(id) {
 export async function apiEditDispatcher(data) {
     const isFormData = data instanceof FormData;
     let dispatcherId = null;
-    
+
     if (isFormData) {
         dispatcherId = data.get('id');
     }

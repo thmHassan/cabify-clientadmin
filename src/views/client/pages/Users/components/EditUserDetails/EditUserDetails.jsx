@@ -102,10 +102,10 @@ const EditUserDetails = () => {
         try {
             const response = await apiGetRideHistory(id);
 
-            if (response?.status === 200 && Array.isArray(response?.data?.rideHistory)) {
-                setRideHistory(response.data.rideHistory);
-                // setTotalItems(response.data.total || response.data.data.length);
-                // setTotalPages(response.data.last_page || 1);
+            if (response?.status === 200 && Array.isArray(response?.data?.rideHistory?.data)) {
+                setRideHistory(response.data.rideHistory.data);
+                setTotalItems(response.data.rideHistory.total || response.data.data.length);
+                setTotalPages(response.data.rideHistory.last_page || 1);
             } else {
                 setRideHistory([]);
             }

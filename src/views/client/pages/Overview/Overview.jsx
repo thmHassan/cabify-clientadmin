@@ -62,16 +62,16 @@ const DASHBOARD_CARDS = [
     backgroundColor: "#e5f9f0",
     color: "#3E9972",
   },
-  {
-    title: "Drivers On Break",
-    value: 12,
-    change: "+3 from last hour",
-    icon: {
-      component: MonthlyRevenueIcon,
-    },
-    backgroundColor: "#fdf3e7",
-    color: "#C29569",
-  },
+  // {
+  //   title: "Drivers On Break",
+  //   value: 12,
+  //   change: "+3 from last hour",
+  //   icon: {
+  //     component: MonthlyRevenueIcon,
+  //   },
+  //   backgroundColor: "#fdf3e7",
+  //   color: "#C29569",
+  // },
 ];
 
 const ICONS = {
@@ -378,7 +378,7 @@ const Overview = () => {
         </div>
       </div>
       <div className="flex flex-col sm:gap-5 gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 1.5xl:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 1.5xl:grid-cols-3 gap-4 sm:gap-5">
           {DASHBOARD_CARDS.map((card, index) => (
             <SnapshotCard
               key={index}

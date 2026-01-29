@@ -3,6 +3,7 @@ export const ACCOUNTS_PATH = "/accounts";
 export const CANCELLATIONS_PATH = "/cancellations";
 export const DISPATCHER_PATH = "/dispatcher";
 export const DRIVER_DOCUMENTS_PATH = "/driver-documents";
+export const DOCUMENT_REQUESTS_PATH = "/document-requests"
 export const DRIVERS_MANAGEMENT_PATH = "/drivers-management";
 export const DRIVER_DETAILS_PATH = "/driver-management/:id"
 export const GENERAL_NOTIFICATION_PATH = "/general-notification";

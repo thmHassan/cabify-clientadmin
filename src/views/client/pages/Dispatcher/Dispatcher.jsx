@@ -21,12 +21,14 @@ import ThreeDotsIcon from "../../../../components/svg/ThreeDotsIcon";
 import ApiService from "../../../../services/ApiService";
 import { apiDeleteDispatcher } from "../../../../services/DispatcherService";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
+import ViewLogModel from "./components/ViewLogModel";
 
 const Dispatcher = () => {
   const [isDispatcherModalOpen, setIsDispatcherModalOpen] = useState({
     type: "new",
     isOpen: false,
   });
+  const [isLogModalOpen, setIsLogModalOpen] = useState({ type: "new", isOpen: false, });
   const [tableLoading, setTableLoading] = useState(false);
   const [_searchQuery, setSearchQuery] = useState("");
   const [companyListDisplay, setCompanyListDisplay] = useState([]);
@@ -150,6 +152,16 @@ const Dispatcher = () => {
       label: "Edit",
       onClick: (dispatcher) => {
         setIsDispatcherModalOpen({ type: "edit", isOpen: true, data: dispatcher });
+        lockBodyScroll();
+      },
+    },
+    {
+      label: "View Logs",
+      onClick: (dispatcher) => {
+        setIsLogModalOpen({
+          isOpen: true,
+          dispatcher,
+        });
         lockBodyScroll();
       },
     },
@@ -370,6 +382,15 @@ const Dispatcher = () => {
           initialValue={isDispatcherModalOpen.type === "edit" ? isDispatcherModalOpen.data : {}}
           setIsOpen={setIsDispatcherModalOpen}
           onDispatcherCreated={handleonDispatcherCreated} />
+      </Modal>
+      <Modal
+        isOpen={isLogModalOpen.isOpen}
+        className="p-4 sm:p-6 lg:p-10"
+      >
+        <ViewLogModel
+          dispatcher={isLogModalOpen.dispatcher}
+          setIsOpen={setIsLogModalOpen}
+        />
       </Modal>
       <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">

@@ -40,9 +40,9 @@ const DriverRideHistory = ({ driver }) => {
     };
 
     const statusColors = {
-        Rescheduled: "bg-[#F59E0B] text-white",
+        pending: "bg-[#F59E0B] text-white",
         cancelled: "bg-[#E24B4B] text-white",
-        Onboarding: "bg-[#10B981] text-white",
+        ongoing: "bg-[#10B981] text-white",
     };
 
     const capitalizeFirst = (value) => {

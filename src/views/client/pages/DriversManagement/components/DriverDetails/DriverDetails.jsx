@@ -18,7 +18,6 @@ import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
 
-
 const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name }) => {
     return (
         <div className="flex flex-col gap-1">
@@ -61,7 +60,6 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
         </div>
     );
 };
-
 
 const DriverDetails = () => {
     const { id: driverId } = useParams();
@@ -869,7 +867,7 @@ const DriverDetails = () => {
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="verified">Approved</option>
-                                        <option value="rejected">Rejected</option>
+                                        <option value="failed">Rejected</option>
                                     </select>
                                     <Button
                                         type="filled"

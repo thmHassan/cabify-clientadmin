@@ -40,9 +40,9 @@ const RideHistory = ({ user }) => {
     };
 
     const statusColors = {
-        Rescheduled: "bg-[#F59E0B] text-white",
+        pending: "bg-[#F5C60B] text-white",
         cancelled: "bg-[#E24B4B] text-white",
-        Onboarding: "bg-[#10B981] text-white",
+        ongoing: "bg-[#10B981] text-white",
     };
 
     const capitalizeFirst = (value) => {
@@ -64,12 +64,10 @@ const RideHistory = ({ user }) => {
                 <div className="w-60">
                     <p className="font-semibold text-xl">{user.booking_id}</p>
                     <p
-                        className={`
-                            text-[10px] px-3 py-1 rounded-full inline-block 
-                            ${statusColors[user.booking_status] || "bg-[#EFEFEF] text-gray-600"}
-                        `}
+                        className={`text-[10px] px-3 py-1 rounded-full inline-block 
+                        ${statusColors[user.booking_status] || "bg-[#EFEFEF] text-gray-600"}`}
                     >
-                        {user.booking_status}
+                        {capitalizeFirst(user.booking_status)}
                     </p>
                 </div>
             </div>

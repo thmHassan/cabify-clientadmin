@@ -85,21 +85,21 @@ const AddDispatcherModal = ({ initialValue = {}, setIsOpen, onDispatcherCreated 
 
   const echo = useSocket();
 
-  useEffect(() => {
-    if (!echo || !userId) return;
+  // useEffect(() => {
+  //   if (!echo || !userId) return;
 
-    console.log("Subscribing to user:", userId);
+  //   console.log("Subscribing to user:", userId);
 
-    const channel = echo.private(`App.Models.User.${userId}`);
+  //   const channel = echo.private(`App.Models.User.${userId}`);
 
-    channel.notification((notification) => {
-      console.log("Notification:", notification);
-    });
+  //   channel.notification((notification) => {
+  //     console.log("Notification:", notification);
+  //   });
 
-    return () => {
-      echo.leave(`App.Models.User.${userId}`);
-    };
-  }, [echo, userId]);
+  //   return () => {
+  //     echo.leave(`App.Models.User.${userId}`);
+  //   };
+  // }, [echo, userId]);
 
   return (
     <div>

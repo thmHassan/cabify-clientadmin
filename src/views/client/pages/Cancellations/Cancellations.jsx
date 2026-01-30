@@ -75,14 +75,6 @@ const Cancellations = () => {
     setCurrentPage(1);
   };
 
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -102,12 +94,22 @@ const Cancellations = () => {
             </div>
           </div>
           <div className="space-y-4 mt-6">
-            {cancellationsData?.map((cancellations) => (
-              <CancellationsCard
-                key={cancellations.id}
-                cancellations={cancellations}
-              />
-            ))}
+            {tableLoading ? (
+              <div className="flex justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : cancellationsData?.length > 0 ? (
+              cancellationsData.map((cancellations) => (
+                <CancellationsCard
+                  key={cancellations.id}
+                  cancellations={cancellations}
+                />
+              ))
+            ) : (
+              <p className="text-center text-gray-500 py-10">
+                No cancellations found
+              </p>
+            )}
           </div>
           {Array.isArray(cancellationsData) &&
             cancellationsData.length > 0 ? (

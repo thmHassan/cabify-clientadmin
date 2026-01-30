@@ -55,6 +55,30 @@ const DriverRideHistory = ({ driver }) => {
         return Number(amount).toFixed(2);
     };
 
+    const formatPickupTime = (value) => {
+        if (!value) return "-";
+
+        // ASAP case
+        if (typeof value === "string" && value.toLowerCase() === "asap") {
+            return "On Time";
+        }
+
+        // Date case
+        const date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return value; // fallback (just in case)
+        }
+
+        return date.toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
     return (
         <div
             className="bg-white rounded-[15px] p-4 flex items-center justify-between hover:shadow-md overflow-x-auto"
@@ -91,7 +115,7 @@ const DriverRideHistory = ({ driver }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[210px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Time</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm">{driver.pickup_time}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{formatPickupTime(driver.pickup_time)}</p>
                 </div>
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[107px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Fare</p>

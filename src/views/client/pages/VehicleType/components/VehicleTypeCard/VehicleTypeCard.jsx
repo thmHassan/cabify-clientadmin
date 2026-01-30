@@ -69,9 +69,10 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[150px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Mileage System</p>
-                    <p className="text-[#333333] font-semibold text-sm text-center">{vehicle.mileage_system || "-"}</p>
+                    <p className="text-[#333333] font-semibold text-sm text-center">
+                        {capitalizeFirst(vehicle.mileage_system)}
+                    </p>
                 </div>
-
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left w-[165px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Features</p>
 

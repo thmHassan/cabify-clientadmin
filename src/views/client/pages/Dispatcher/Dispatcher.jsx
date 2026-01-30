@@ -106,12 +106,17 @@ const Dispatcher = () => {
   };
 
   useEffect(() => {
-    fetchDispatcherCards();
-    const statusParam = _selectedStatus?.value ?? "all";
+    fetchDispatcherList(currentPage, itemsPerPage, debouncedSearchQuery);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, refreshTrigger]);
 
-    console.log(statusParam, "statusparam");
-    fetchDispatcherList(1, itemsPerPage, debouncedSearchQuery);
-  }, [refreshTrigger]);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(_searchQuery);
+      setCurrentPage(1);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [_searchQuery]);
 
   const DASHBOARD_CARDS = [
     {
@@ -209,14 +214,6 @@ const Dispatcher = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -289,7 +286,7 @@ const Dispatcher = () => {
                 <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
                   <SearchBar
                     value={_searchQuery}
-                    // onSearchChange={handleSearchChange}
+                    onSearchChange={(value) => setSearchQuery(value)}
                     className="w-full md:max-w-[400px] max-w-full"
                   />
                 </div>
@@ -303,57 +300,65 @@ const Dispatcher = () => {
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-4 pt-4 ">
-                {dispatcherListRaw.map((d) => (
-                  <div
-                    key={d.id}
-                    className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* <img
+              <div className="flex flex-col gap-4 pt-4">
+                {tableLoading ? (
+                  <div className="flex justify-center py-10">
+                    <AppLogoLoader />
+                  </div>
+                ) : dispatcherListRaw.length > 0 ? (
+                  dispatcherListRaw.map((d) => (
+                    <div key={d.id} className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* <img
                           src={d.picture}
                           className="w-14 h-14 rounded-md object-cover"
                           alt=""
                         /> */}
-                      <div className="">
-                        <p className="font-semibold text-xl">{d.name}</p>
-                        <p className="text-[10px]">{d.email}</p>
-                        <p className="text-xs">{d.phone}</p>
+                        <div className="">
+                          <p className="font-semibold text-xl">{d.name}</p>
+                          <p className="text-[10px]">{d.email}</p>
+                          <p className="text-xs">{d.phone}</p>
+                        </div>
                       </div>
+                      <div className="flex items-center justify-center gap-3">
+
+                        <Tag
+                          className={
+                            d.status === "active"
+                              ? "bg-[#E4FFF6] border border-[#10B981] text-[#10B981] w-28 py-3 text-center rounded-full"
+                              : "bg-[#FFF1F1] border border-[#FF4747] text-[#FF4747] text-center w-28 py-3 rounded-full"
+                          }
+                        >
+                          {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
+                        </Tag>
+
+                        <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
+                          <p className="text-xs text-[#6C6C6C]">Active Rides</p>
+                          <p className="text-[#1F41BB] font-semibold text-sm">
+                            {d.active_rides || "0"}
+                          </p>
+                        </div>
+
+                        <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
+                          <p className="text-xs text-[#6C6C6C]">Completed Today</p>
+                          <p className="text-[#00cc66] font-semibold text-sm">
+                            {d.completed_rides || "0"}
+                          </p>
+                        </div>
+                      </div>
+                      <UserDropdown options={actionOptions} itemData={d}>
+                        <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                          <ThreeDotsIcon />
+                        </Button>
+                      </UserDropdown>
                     </div>
-                    <div className="flex items-center justify-center gap-3">
-
-                      <Tag
-                        className={
-                          d.status === "active"
-                            ? "bg-[#E4FFF6] border border-[#10B981] text-[#10B981] w-28 py-3 text-center rounded-full"
-                            : "bg-[#FFF1F1] border border-[#FF4747] text-[#FF4747] text-center w-28 py-3 rounded-full"
-                        }
-                      >
-                        {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
-                      </Tag>
-
-                      <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
-                        <p className="text-xs text-[#6C6C6C]">Active Rides</p>
-                        <p className="text-[#1F41BB] font-semibold text-sm">
-                          {d.active_rides || 12}
-                        </p>
-                      </div>
-
-                      <div className="px-4 py-2 rounded-full bg-[#EFEFEF] text-center">
-                        <p className="text-xs text-[#6C6C6C]">Completed Today</p>
-                        <p className="text-[#00cc66] font-semibold text-sm">
-                          {d.completed_today || 12}
-                        </p>
-                      </div>
-                    </div>
-                    <UserDropdown options={actionOptions} itemData={d}>
-                      <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
-                        <ThreeDotsIcon />
-                      </Button>
-                    </UserDropdown>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 py-10">
+                    No dispatchers found
+                  </p>
+                )}
               </div>
               {Array.isArray(dispatcherListRaw) &&
                 dispatcherListRaw.length > 0 ? (

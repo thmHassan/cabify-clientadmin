@@ -115,11 +115,13 @@ const AccountRideHistory = ({ account, handleClose }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg max-w-5xl max-h-[90vh] flex flex-col">
+        <div className="text-xl sm:text-2xl  lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
             {/* Header */}
-            <div className="flex gap-5 justify-between items-center pb-4 bg-white px-6 pt-6">
+            <div className="flex justifty-between">
+                <span className="w-full">
+                    {account?.name || "Account"}
+                </span>
 
-                <h2 className="text-2xl font-semibold text-[#252525]">{account?.name || "Account"}</h2>
                 <div className="flex items-center gap-4 mt-2">
                     <p className="text-sm text-gray-600">
                         Total Amount: <span className="font-semibold text-[#252525]">${rideHistory.reduce((sum, ride) => sum + parseFloat(ride.offered_amount || 0), 0).toFixed(2)}</span>

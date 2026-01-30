@@ -50,7 +50,7 @@ export async function apiDeleteAccount(id) {
 
 export async function apiGetAccountRideHistory(id) {
     return ApiService.fetchData({
-        url: `${ACCOUNT_RIDE_HISTORY}?id=${id}`,
+        url: `${ACCOUNT_RIDE_HISTORY}?account_id=${id}`,
         method: METHOD_GET,
     });
 }

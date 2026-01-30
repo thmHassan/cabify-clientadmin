@@ -18,6 +18,7 @@ const RidesManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [_selectedDate, setSelectedDate] = useState("");
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
@@ -55,14 +56,8 @@ const RidesManagement = () => {
         perPage: itemsPerPage,
         status: _selectedStatus?.value === "all" ? "" : _selectedStatus?.value,
       };
-
-      if (debouncedSearchQuery?.trim()) {
-        params.search = debouncedSearchQuery.trim();
-      }
-
-      if (_selectedDate) {
-        params.date = _selectedDate;
-      }
+      if (debouncedSearchQuery?.trim()) params.search = debouncedSearchQuery.trim();
+      if (_selectedDate) params.date = _selectedDate;
 
       const response = await apiGetRidesManagement(params);
 
@@ -77,6 +72,7 @@ const RidesManagement = () => {
       setRideManagementData([]);
     } finally {
       setTableLoading(false);
+      setIsInitialLoad(false); // mark initial load done
     }
   }, [currentPage, itemsPerPage, debouncedSearchQuery, _selectedDate, _selectedStatus]);
 
@@ -130,14 +126,6 @@ const RidesManagement = () => {
     setIsViewOpen(false);
     setSelectedRide(null);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -217,13 +205,21 @@ const RidesManagement = () => {
           </div>
 
           <div className="flex flex-col gap-4 pt-4">
-            {filteredRides.map((ride) => (
-              <RidesManagementCard
-                key={ride.id}
-                ride={ride}
-                onView={handleViewRide}
-              />
-            ))}
+            {tableLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : filteredRides.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">No rides found</div>
+            ) : (
+              filteredRides.map((ride) => (
+                <RidesManagementCard
+                  key={ride.id}
+                  ride={ride}
+                  onView={handleViewRide}
+                />
+              ))
+            )}
           </div>
 
           {Array.isArray(rideManagementData) &&

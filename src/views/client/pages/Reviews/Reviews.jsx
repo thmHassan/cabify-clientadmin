@@ -117,14 +117,6 @@ const Reviews = () => {
   const activeData =
     activeTab === "customer" ? customerRatingData : driverRatingData;
 
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
 
@@ -177,11 +169,21 @@ const Reviews = () => {
               />
             </div>
           </div>
-            <div className="space-y-4">
-              {activeData?.map((rating) => (
+          <div className="space-y-4">
+            {tableLoading ? (
+              <div className="flex justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : activeData?.length > 0 ? (
+              activeData.map((rating) => (
                 <ReviewCard key={rating.id} rating={rating} />
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500 py-10">
+                No reviews found
+              </p>
+            )}
+          </div>
           {activeData?.length > 0 && (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination

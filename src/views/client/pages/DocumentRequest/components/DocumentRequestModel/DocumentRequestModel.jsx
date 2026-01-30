@@ -77,47 +77,7 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                                     </div>
                                 </div>
 
-                                <div className="w-[calc((100%-20px)/2)]">
-                                    <FormLabel htmlFor="driverStatus">Driver Status</FormLabel>
-                                    <div className="sm:h-16 h-14">
-                                        <Field
-                                            type="text"
-                                            name="driverStatus"
-                                            disabled
-                                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50 capitalize"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mb-6">
-                            <div className="flex flex-wrap gap-5 mb-4">
-                                {/* <div className="w-[calc((100%-20px)/2)]">
-                                    <FormLabel htmlFor="documentId">Document ID</FormLabel>
-                                    <div className="sm:h-16 h-14">
-                                        <Field
-                                            type="text"
-                                            name="documentId"
-                                            disabled
-                                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50"
-                                        />
-                                    </div>
-                                </div> */}
-
-                                <div className="w-[calc((100%-20px)/2)]">
-                                    <FormLabel htmlFor="documentStatus">Document Status</FormLabel>
-                                    <div className="sm:h-16 h-14">
-                                        <Field
-                                            type="text"
-                                            name="documentStatus"
-                                            disabled
-                                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50 capitalize"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* {document?.has_number_field && (
+                                  {document?.has_number_field && (
                                     <div className="w-[calc((100%-20px)/2)]">
                                         <FormLabel htmlFor="documentNumber">Document Number</FormLabel>
                                         <div className="sm:h-16 h-14">
@@ -129,7 +89,7 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                                             />
                                         </div>
                                     </div>
-                                )} */}
+                                )}
 
                                 {document?.has_expiry_date && (
                                     <div className="w-[calc((100%-20px)/2)]">
@@ -160,60 +120,6 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                                 )}
                             </div>
                         </div>
-
-                        {document?.driver_detail && (
-                            <div className="mb-6">
-                                <div className="flex flex-wrap gap-5 mb-4">
-                                    {/* <div className="w-[calc((100%-20px)/2)]">
-                                        <FormLabel htmlFor="vehicleType">Vehicle Type</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                type="text"
-                                                name="vehicleType"
-                                                disabled
-                                                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50"
-                                            />
-                                        </div>
-                                    </div> */}
-
-                                    <div className="w-[calc((100%-20px)/2)]">
-                                        <FormLabel htmlFor="plateNumber">Plate Number</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                type="text"
-                                                name="plateNumber"
-                                                disabled
-                                                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="w-[calc((100%-20px)/2)]">
-                                        <FormLabel htmlFor="color">Color</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                type="text"
-                                                name="color"
-                                                disabled
-                                                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="w-[calc((100%-20px)/2)]">
-                                        <FormLabel htmlFor="seats">Seats</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                type="text"
-                                                name="seats"
-                                                disabled
-                                                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold bg-gray-50"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Footer Buttons */}
                         <div className="mt-6 pt-4 border-t flex justify-end gap-3">

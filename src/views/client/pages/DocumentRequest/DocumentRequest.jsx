@@ -6,7 +6,6 @@ import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
-import CustomSelect from "../../../../components/ui/CustomSelect";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { apiGetDocumentRequests } from "../../../../services/DocumentRequestServices";
 import DocumentRequestCard from "./components/DocumentRequestCard";
@@ -15,6 +14,7 @@ const DocumentRequest = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [tableLoading, setTableLoading] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [documentData, setDocumentData] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState(
         DOCUMENT_OPTIONS.find((o) => o.value === "all") ?? DOCUMENT_OPTIONS[0]
@@ -40,7 +40,6 @@ const DocumentRequest = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    // Fetch documents
     const fetchDocuments = useCallback(async () => {
         setTableLoading(true);
         try {
@@ -49,12 +48,10 @@ const DocumentRequest = () => {
                 perPage: itemsPerPage,
             };
 
-            // Add status filter if not "all"
             if (selectedStatus?.value && selectedStatus.value !== "all") {
                 params.status = selectedStatus.value;
             }
 
-            // Add search query if exists
             if (debouncedSearchQuery?.trim()) {
                 params.search = debouncedSearchQuery.trim();
             }
@@ -72,44 +69,31 @@ const DocumentRequest = () => {
             setDocumentData([]);
         } finally {
             setTableLoading(false);
+            setIsInitialLoad(false); // 🔥 important
         }
-    }, [currentPage, itemsPerPage, debouncedSearchQuery, selectedStatus]); // ✅ Added selectedStatus here
+    }, [currentPage, itemsPerPage, debouncedSearchQuery, selectedStatus]);
 
-    // Trigger fetch when dependencies change
     useEffect(() => {
         fetchDocuments();
-    }, [fetchDocuments, refreshTrigger]); // ✅ Simplified dependencies
+    }, [fetchDocuments, refreshTrigger]);
 
-    // Handle status change after approve/reject
     const handleOnStatusChange = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    // Handle status filter change
     const handleStatusChange = (status) => {
         setSelectedStatus(status);
-        setCurrentPage(1); // Reset to first page when filter changes
+        setCurrentPage(1);
     };
 
-    // Handle page change
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    // Handle items per page change
     const handleItemsPerPageChange = (newItemsPerPage) => {
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1);
     };
-
-    // Initial loading state
-    if (tableLoading && documentData.length === 0) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <AppLogoLoader />
-            </div>
-        );
-    }
 
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -131,7 +115,7 @@ const DocumentRequest = () => {
                                 className="w-full md:max-w-[400px] max-w-full"
                             />
                         </div>
-                        <div className="md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+                        {/* <div className="md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
                             <CustomSelect
                                 variant={2}
                                 options={DOCUMENT_OPTIONS}
@@ -139,7 +123,7 @@ const DocumentRequest = () => {
                                 onChange={handleStatusChange}
                                 placeholder="All Status"
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     {tableLoading ? (
@@ -152,7 +136,7 @@ const DocumentRequest = () => {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-4 pt-4">
-                            {documentData?.map((document) => (
+                            {documentData.map((document) => (
                                 <DocumentRequestCard
                                     key={document.id}
                                     document={document}
@@ -161,6 +145,7 @@ const DocumentRequest = () => {
                             ))}
                         </div>
                     )}
+
 
                     {Array.isArray(documentData) && documentData.length > 0 ? (
                         <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">

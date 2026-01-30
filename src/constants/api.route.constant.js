@@ -1,5 +1,6 @@
 // api for dashboard
 export const GET_DASHBOARD_DETAILS = "/company/dashboard";
+export const GET_SYSTEM_ALERT = "/company/system-alert"
 
 // api for company
 export const GET_COMPANY_CARD_DETAILS = "/super-admin/company-cards";
@@ -129,6 +130,10 @@ export const REPLY_TICKET = "/company/reply-ticket";
 //api for Lost and Found
 export const GET_LOST_FOUND_LIST = "/company/list-lost-found"
 export const CHANGE_STATUS_LOST_FOUND = "/company/change-status-lost-found"
+
+// api for revenue
+export const GET_CARD_REVENUE = "/company/get-financial-summary"
+export const GET_REVENUE_HISTORY = "/company/get-ride-history"
 
 // api for subscriptions
 export const CREATE_SUBSCRIPTION = "/super-admin/create-subscription";

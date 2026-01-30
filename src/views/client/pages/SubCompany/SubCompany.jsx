@@ -134,13 +134,7 @@ const SubCompany = () => {
       accountData: account,
     });
   };
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -185,14 +179,24 @@ const SubCompany = () => {
           </div>
 
           <div className="flex flex-col gap-4 pt-4">
-            {subCompanyData?.map((company) => (
-              <SubCompantCard
-                key={company.id}
-                company={company}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-              />
-            ))}
+            {tableLoading ? (
+              <div className="flex justify-center py-8">
+                <AppLogoLoader />
+              </div>
+            ) : subCompanyData.length > 0 ? (
+              subCompanyData.map((company) => (
+                <SubCompantCard
+                  key={company.id}
+                  company={company}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No sub-companies found
+              </div>
+            )}
           </div>
           {Array.isArray(subCompanyData) &&
             subCompanyData.length > 0 ? (

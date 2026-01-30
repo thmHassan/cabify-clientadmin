@@ -112,14 +112,6 @@ const Tickets = () => {
     }
   };
 
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -152,14 +144,24 @@ const Tickets = () => {
         </div>
 
         <div className="flex flex-col gap-4 pt-4">
-          {ticketsData.map((ticket) => (
-            <TicketsCard
-              key={ticket.id}
-              tickets={ticket}
-              onReplyClick={handleReplyClick}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
+          {tableLoading ? (
+            <div className="flex justify-center py-8">
+              <AppLogoLoader />
+            </div>
+          ) : ticketsData.length > 0 ? (
+            ticketsData.map((ticket) => (
+              <TicketsCard
+                key={ticket.id}
+                tickets={ticket}
+                onReplyClick={handleReplyClick}
+                onStatusChange={handleStatusChange}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No tickets found
+            </div>
+          )}
         </div>
 
         {ticketsData.length > 0 && (

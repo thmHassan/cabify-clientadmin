@@ -26,6 +26,7 @@ const DriversManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [driversData, setDriversData] = useState([]);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
@@ -66,7 +67,6 @@ const DriversManagement = () => {
       }
 
       const response = await apiGetDriverManagement(params);
-      console.log("Drivers response:", response);
 
       if (response?.data?.success === 1) {
         const listData = response?.data?.list;
@@ -79,6 +79,7 @@ const DriversManagement = () => {
       setDriversData([]);
     } finally {
       setTableLoading(false);
+      setIsInitialLoad(false); // 🔥 mark initial load done
     }
   }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab]);
 
@@ -128,14 +129,6 @@ const DriversManagement = () => {
   const handleDriverStatusChange = () => {
     setRefreshTrigger(prev => prev + 1);
   };
-
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -223,23 +216,26 @@ const DriversManagement = () => {
             </div> */}
           </div>
           <div className="flex flex-col gap-4 pt-4">
-            {driversData?.map((driver) => (
-              <DriverManagementCard
-                key={driver.id}
-                driver={driver}
-                onDelete={handleDeleteClick}
-                onEdit={(driverToEdit) => navigate(`/driver-management/${driverToEdit.id}`)}
-                // onEdit={(driverToEdit) => {
-                //   lockBodyScroll();
-                //   setIsDriversManagementModalOpen({
-                //     isOpen: true,
-                //     type: "edit",
-                //     data: driverToEdit,
-                //   });
-                // }}
-                onStatusChange={handleDriverStatusChange}
-              />
-            ))}
+            {tableLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : driversData.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">No drivers found</div>
+            ) : (
+              <div className="flex flex-col gap-4 pt-4">
+                {driversData.map(driver => (
+                  <DriverManagementCard
+                    key={driver.id}
+                    driver={driver}
+                    onDelete={handleDeleteClick}
+                    onEdit={(d) => navigate(`/driver-management/${d.id}`)}
+                    onStatusChange={handleDriverStatusChange}
+                  />
+                ))}
+              </div>
+            )}
+
           </div>
           {Array.isArray(driversData) &&
             driversData.length > 0 ? (

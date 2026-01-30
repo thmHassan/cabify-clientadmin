@@ -308,3 +308,139 @@ const RevenueStatements = () => {
 };
 
 export default RevenueStatements;
+
+// import { useEffect, useState } from "react";
+// import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
+// import Pagination from "../../../../components/ui/Pagination/Pagination";
+// import Loading from "../../../../components/shared/Loading/Loading";
+// import CardContainer from "../../../../components/shared/CardContainer";
+// import SnapshotCard from "../../../../components/shared/SnapshotCard/SnapshotCard";
+// import RevenueStatementsCard from "./components/RevenueStatementsCard/RevenueStatementsCard";
+// import { apiGetRevenueCard, apiGetRevenueHistory } from "../../../../services/RevenueStatementsService";
+
+// const RevenueStatements = () => {
+//   const [loading, setLoading] = useState(false);
+//   const [summary, setSummary] = useState(null);
+//   const [history, setHistory] = useState([]);
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [totalPages, setTotalPages] = useState(1);
+//   const [startDate, setStartDate] = useState("2026-01-01");
+//   const [endDate, setEndDate] = useState("2026-01-30");
+
+// const SUMMARY_CARDS = summary
+//   ? [
+//       {
+//         title: "Ride Earnings",
+//         value: summary.ridesEarning ?? 0,
+//         icon: RideEarningsIcon,
+//       },
+//       {
+//         title: "Jobs Offered",
+//         value: summary.jobOfferedCount ?? 0,
+//         icon: JobsOfferedIcon,
+//       },
+//       {
+//         title: "Jobs Accepted",
+//         value: summary.jobAcceptedCount ?? 0,
+//         icon: JobsAcceptedIcon,
+//       },
+//     ]
+//   : [];
+
+//  useEffect(() => {
+//   const fetchSummary = async () => {
+//     const res = await apiGetRevenueCard({
+//       start_date: startDate,
+//       end_date: endDate,
+//     });
+
+//     if (res?.data?.success === 1) {
+//       setSummary(res.data);
+//     }
+//   };
+
+//   fetchSummary();
+// }, [startDate, endDate]);
+
+
+//   /* =======================
+//      RIDE HISTORY API
+//      ======================= */
+//   useEffect(() => {
+//     const fetchHistory = async () => {
+//       setLoading(true);
+//       try {
+//         const res = await apiGetRevenueHistory({
+//           page: currentPage,
+//         });
+
+//         if (res?.data?.success === 1) {
+//           setHistory(res.data.list.data);
+//           setTotalPages(res.data.list.last_page);
+//         }
+//       } catch (err) {
+//         console.error(err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchHistory();
+//   }, [currentPage]);
+
+//   return (
+//     <div className="px-4 py-5 bg-gray-50 min-h-screen">
+//       <PageTitle title="Revenue & Statements" />
+
+//       {/* Date Filter */}
+//       <div className="flex gap-3 mt-4">
+//         <input
+//           type="date"
+//           value={startDate}
+//           onChange={(e) => setStartDate(e.target.value)}
+//           className="border px-3 py-2 rounded"
+//         />
+//         <input
+//           type="date"
+//           value={endDate}
+//           onChange={(e) => setEndDate(e.target.value)}
+//           className="border px-3 py-2 rounded"
+//         />
+//       </div>
+
+//       {/* Financial Summary */}
+//       <div className="mt-6">
+//         <h2 className="text-lg font-semibold mb-3">Financial Summary</h2>
+
+//         <Loading loading={loading}>
+//           {summary && (
+//             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//               <SnapshotCard data={{ title: "Total Revenue", value: summary.total_revenue }} />
+//               <SnapshotCard data={{ title: "Commission", value: summary.commission }} />
+//               <SnapshotCard data={{ title: "Ride Earnings", value: summary.ride_earnings }} />
+//             </div>
+//           )}
+//         </Loading>
+//       </div>
+
+//       {/* Ride History */}
+//       <div className="mt-6">
+//         <CardContainer>
+//           <Loading loading={loading}>
+//             {history.map((item) => (
+//               <RevenueStatementsCard key={item.id} revenue={item} />
+//             ))}
+//           </Loading>
+
+//           <Pagination
+//             currentPage={currentPage}
+//             totalPages={totalPages}
+//             onPageChange={setCurrentPage}
+//           />
+//         </CardContainer>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default RevenueStatements;

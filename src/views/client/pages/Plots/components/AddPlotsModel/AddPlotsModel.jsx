@@ -26,23 +26,36 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     }, [initialValue]);
 
     useEffect(() => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
-        document.head.appendChild(link);
+        // Check if Leaflet is already loaded
+        if (window.L) {
+            setMapLoaded(true);
+            return;
+        }
 
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
-        script.onload = () => setMapLoaded(true);
-        document.body.appendChild(script);
+        const existingLink = document.querySelector('link[href*="leaflet.css"]');
+        const existingScript = document.querySelector('script[src*="leaflet.js"]');
+
+        if (!existingLink) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
+            link.setAttribute('data-leaflet-modal-css', 'true');
+            document.head.appendChild(link);
+        }
+
+        if (!existingScript) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+            script.setAttribute('data-leaflet-modal-script', 'true');
+            script.onload = () => setMapLoaded(true);
+            script.onerror = () => console.error('Failed to load Leaflet');
+            document.body.appendChild(script);
+        } else if (window.L) {
+            setMapLoaded(true);
+        }
 
         return () => {
-            if (document.head.contains(link)) {
-                document.head.removeChild(link);
-            }
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
+            // Cleanup is handled by parent component
         };
     }, []);
 
@@ -319,26 +332,24 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                     </div>
                                 </div>
 
-                                {/* Points Counter */}
-                                <div className="">
+                                {/* Points Counter and Actions */}
+                                <div className="mb-3">
                                     <div className="flex justify-between items-center">
-                                        {/* <div>
-                                            <span className="text-sm font-semibold text-blue-900">Points Added:</span>
-                                            <span className="ml-2 text-2xl font-bold text-blue-600">{values.coordinates.length}</span>
-                                        </div> */}
+                                        <div>
+                                        </div>
                                         {values.coordinates.length > 0 && (
                                             <div className="flex gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveLastPoint}
-                                                    className="text-orange-600 hover:text-orange-800 font-medium text-xs bg-white px-2 py-1 rounded"
+                                                    className="text-orange-600 hover:text-orange-800 font-medium text-xs bg-white px-2 py-1 rounded border border-orange-200"
                                                 >
                                                     Remove Last
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={handleClearCoordinates}
-                                                    className="text-red-600 hover:text-red-800 font-medium text-xs bg-white px-2 py-1 rounded"
+                                                    className="text-red-600 hover:text-red-800 font-medium text-xs bg-white px-2 py-1 rounded border border-red-200"
                                                 >
                                                     Clear All
                                                 </button>
@@ -346,17 +357,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Clicked Coordinate Display */}
-                                {/* {clickedCoord && (
-                                    <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm">
-                                        <div className="font-semibold text-green-900 mb-1">Last Clicked Point:</div>
-                                        <div className="text-green-700 text-xs">
-                                            <span className="font-medium">Lat:</span> {clickedCoord.lat.toFixed(6)} | 
-                                            <span className="font-medium ml-2">Lng:</span> {clickedCoord.lng.toFixed(6)}
-                                        </div>
-                                    </div>
-                                )} */}
 
                                 {/* Map Container */}
                                 <div className="relative w-full h-[300px] rounded-xl overflow-hidden border border-gray-200 mb-3">
@@ -374,19 +374,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Validation Message */}
-                                {/* {values.coordinates.length < 3 && (
-                                    <p className="text-amber-600 text-sm mb-3 p-2 bg-amber-50 border border-amber-200 rounded">
-                                        ⚠️ Click on the map to add points. Minimum 3 points required for a polygon.
-                                    </p>
-                                )} */}
-
-                                {/* {values.coordinates.length >= 3 && (
-                                    <p className="text-green-600 text-sm mb-3 p-2 bg-green-50 border border-green-200 rounded">
-                                        ✓ Polygon is ready with {values.coordinates.length} points
-                                    </p>
-                                )} */}
 
                                 <ErrorMessage
                                     name="coordinates"

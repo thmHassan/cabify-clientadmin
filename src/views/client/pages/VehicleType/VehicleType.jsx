@@ -106,13 +106,14 @@ const VehicleType = () => {
     }
   };
 
-  if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(_searchQuery);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [_searchQuery]);
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -148,20 +149,34 @@ const VehicleType = () => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
           </div>
-          <div className="flex flex-col gap-4 pt-4">
+          <div className="flex flex-col gap-4 pt-4 relative">
+            {tableLoading && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-lg">
+                <AppLogoLoader />
+              </div>
+            )}
+
             {vehicleTypeData.map((vehicle) => (
-              <VehicleTypeCard key={vehicle.id}
+              <VehicleTypeCard
+                key={vehicle.id}
                 vehicle={vehicle}
-                onEdit={(vehicleToEdit) => navigate(`${VEHICLE_TYPE_DETAILS_PATH}?id=${vehicleToEdit.id}`)}
+                onEdit={(vehicleToEdit) =>
+                  navigate(`${VEHICLE_TYPE_DETAILS_PATH}?id=${vehicleToEdit.id}`)
+                }
                 onDelete={handleDeleteClick}
               />
             ))}
+
+            {!tableLoading && vehicleTypeData.length === 0 && (
+              <p className="text-center text-gray-500">No vehicle types found</p>
+            )}
           </div>
+
           {Array.isArray(vehicleTypeData) &&
             vehicleTypeData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">

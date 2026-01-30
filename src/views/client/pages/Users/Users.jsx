@@ -22,7 +22,6 @@ const Users = () => {
     isOpen: false,
   });
   const [_searchQuery, setSearchQuery] = useState("");
-  const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
@@ -50,6 +49,8 @@ const Users = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -62,7 +63,11 @@ const Users = () => {
 
   const getUser = async () => {
     try {
-      setIsUserLoadnig(true);
+      if (initialLoading) {
+        setInitialLoading(true);
+      } else {
+        setTableLoading(true);
+      }
 
       const params = {
         page: currentPage,
@@ -84,15 +89,14 @@ const Users = () => {
         setTotalPages(result.data.users.last_page || 1);
         setUserList(rows);
       }
-      console.log("users-----",);
-
     } catch (error) {
       console.error(error);
       setUserList([]);
     } finally {
-      setIsUserLoadnig(false);
+      setInitialLoading(false);
+      setTableLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -152,14 +156,6 @@ const Users = () => {
     }
   };
 
-  if (isUserLoadnig) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
@@ -202,7 +198,13 @@ const Users = () => {
           </div> */}
         </div>
 
-        <div className="flex flex-col gap-4 pt-4">
+        <div className="flex flex-col gap-4 pt-4 relative">
+          {tableLoading && (
+            <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-lg">
+              <AppLogoLoader />
+            </div>
+          )}
+
           {userList.map((user) => (
             <UserDetails
               key={user.id}
@@ -211,7 +213,12 @@ const Users = () => {
               onDelete={handleDeleteClick}
             />
           ))}
+
+          {!tableLoading && userList.length === 0 && (
+            <p className="text-center text-gray-500">No users found</p>
+          )}
         </div>
+
 
         {userList.length > 0 && (
           <div className="mt-4 border-t border-[#E9E9E9] pt-4">

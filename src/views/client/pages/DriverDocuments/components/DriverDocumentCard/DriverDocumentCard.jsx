@@ -41,6 +41,7 @@ const DriverDocumentCard = ({ doc, onEdit, onDelete }) => {
                     {doc.backPhoto && <Chip label="Back Photo" />}
                     {doc.issueDate && <Chip label="Issue Date" />}
                     {doc.expiryDate && <Chip label="Expiry Date" />}
+                    {doc.numberField && <Chip label="Has Number" />}
                 </div>
 
                 {/* RIGHT : Action */}

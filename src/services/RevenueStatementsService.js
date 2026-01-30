@@ -1,12 +1,12 @@
-import { GET_DASHBOARD_DETAILS, GET_SYSTEM_ALERT } from "../constants/api.route.constant";
+import { GET_CARD_REVENUE, GET_REVENUE_HISTORY } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import ApiService from "./ApiService";
 
-export async function apiGetDashboardDetails(params) {
+export async function apiGetRevenueCard(params) {
     try {
         return ApiService.fetchData({
-            url: GET_DASHBOARD_DETAILS,
-            method: METHOD_POST,
+            url: GET_CARD_REVENUE,
+            method: METHOD_GET,
             params,
         });
     } catch (error) {
@@ -15,10 +15,10 @@ export async function apiGetDashboardDetails(params) {
     }
 }
 
-export async function apiGetSystemAlerts(params) {
+export async function apiGetRevenueHistory(params) {
     try {
         return ApiService.fetchData({
-            url: GET_SYSTEM_ALERT,
+            url: GET_REVENUE_HISTORY,
             method: METHOD_GET,
             params,
         });

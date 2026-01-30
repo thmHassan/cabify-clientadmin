@@ -39,17 +39,27 @@ const AlertModal = ({ isOpen, message, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                <div className="flex items-start gap-3">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl">
+                <div className="flex items-start gap-3 mb-4">
                     <div className="flex-shrink-0">
                         <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Alert</h3>
+                        <h3 className="text-xl font-semibold text-black font-semibold mb-2 text-center">Alert</h3>
                         <p className="text-sm text-gray-600">{message}</p>
                     </div>
+                </div>
+                <div className="flex justify-end">
+                    <Button
+                        btnSize="md"
+                        type="filled"
+                        className="px-4 py-3 text-xs text-white rounded"
+                        onClick={onClose}
+                    >
+                        Ok
+                    </Button>
                 </div>
             </div>
         </div>
@@ -528,7 +538,14 @@ const AddBooking = ({ setIsOpen }) => {
 
     const handleCreateBooking = async (values) => {
         if (!fareCalculated) {
-            toast.error("Please calculate fares before creating booking");
+            toast.error("Please calculate fares again before creating booking", {
+                duration: 4000,
+                style: {
+                    background: '#FEE2E2',
+                    color: '#991B1B',
+                    fontWeight: '600',
+                },
+            });
             return;
         }
 
@@ -785,7 +802,9 @@ const AddBooking = ({ setIsOpen }) => {
                                 0
                             );
 
-                            setFieldValue("total_charges", fareData.calculate_fare + additionalCharges);
+                            const totalCharges = fareData.calculate_fare + additionalCharges;
+                            // Format to 2 decimal places
+                            setFieldValue("total_charges", parseFloat(totalCharges.toFixed(2)));
                         }
                     }, [fareData]);
 
@@ -799,7 +818,9 @@ const AddBooking = ({ setIsOpen }) => {
                             );
 
                             const baseFare = Number(values.base_fare || 0);
-                            setFieldValue("total_charges", baseFare + additionalCharges);
+                            const totalCharges = baseFare + additionalCharges;
+                            // Format to 2 decimal places
+                            setFieldValue("total_charges", parseFloat(totalCharges.toFixed(2)));
                         }, 0);
                     };
 
@@ -1389,13 +1410,13 @@ const AddBooking = ({ setIsOpen }) => {
                                             >
                                                 {fareLoading ? "Calculating..." : "Calculate Fares"}
                                             </Button>
-                                            <Button
+                                            {/* <Button
                                                 btnSize="md"
                                                 type="filled"
                                                 className="px-4 py-3 text-xs text-white rounded"
                                             >
                                                 Show Map
-                                            </Button>
+                                            </Button> */}
                                         </div>
                                     </div>
 
@@ -1459,11 +1480,11 @@ const AddBooking = ({ setIsOpen }) => {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-3">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-3 ">
                                 <Button
                                     btnSize="md"
                                     type="filledGray"
-                                    className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                                    className="!px-10 pt-4 pb-[10px] w-full sm:w-auto"
                                     onClick={() => {
                                         unlockBodyScroll();
                                         setIsOpen({ type: "new", isOpen: false });
@@ -1477,9 +1498,17 @@ const AddBooking = ({ setIsOpen }) => {
                                     type="filled"
                                     className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                                     disabled={isBookingLoading || !fareCalculated}
+                                    title={!fareCalculated ? "Please calculate fares first" : ""}
                                 >
                                     <span>{isBookingLoading ? "Creating..." : "Create Booking"}</span>
                                 </Button>
+                            </div>
+                            <div>
+                                {!fareCalculated && (
+                                    <p className="text-xs text-red-600 font-medium text-center sm:text-right">
+                                        Please calculate fares first
+                                    </p>
+                                )}
                             </div>
                         </Form>
                     );
@@ -1537,6 +1566,7 @@ const ChargeInput = ({ label, name, value, onChange, readOnly = false }) => (
         <label className="text-sm font-medium w-40">{label}</label>
         <input
             type="number"
+            step="0.01"
             value={value || 0}
             readOnly={readOnly}
             onChange={(e) => onChange && onChange(name, e.target.value)}

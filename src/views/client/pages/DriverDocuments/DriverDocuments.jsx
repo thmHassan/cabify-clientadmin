@@ -158,14 +158,6 @@ const DriverDocuments = () => {
     lockBodyScroll();
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -209,7 +201,11 @@ const DriverDocuments = () => {
             </div>
           </div>
           <div className="flex flex-col gap-4 pt-4">
-            {documents && documents.length > 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : documents.length > 0 ? (
               documents.map((doc) => (
                 <DriverDocumentCard
                   key={doc.id || doc.name}
@@ -224,6 +220,7 @@ const DriverDocuments = () => {
               </div>
             )}
           </div>
+
           {Array.isArray(documents) &&
             documents.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">

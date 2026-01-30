@@ -29,13 +29,14 @@ import Modal from "../../../../components/shared/Modal/Modal";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import AddBooking from "./components/AddBooking/AddBooking";
 import { apiGetDispatchSystem } from "../../../../services/SettingsConfigurationServices";
-import { apiGetDashboardDetails } from "../../../../services/DashboardService";
+import { apiGetDashboardDetails, apiGetSystemAlerts } from "../../../../services/DashboardService";
+import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const DASHBOARD_CARDS = [
   {
     title: "Active Rides",
     key: "activeRides",
-    change: "+0 from last hour",
+    change: "Today",
     icon: { component: CompaniesIcon },
     backgroundColor: "#eeedff",
     color: "#534CB4",
@@ -43,7 +44,7 @@ const DASHBOARD_CARDS = [
   {
     title: "Cancelled Rides",
     key: "cancelRides",
-    change: "+0 from last hour",
+    change: "Today",
     icon: { component: SystemUptimeIcon },
     backgroundColor: "#e9f2ff",
     color: "#3C71B7",
@@ -51,7 +52,7 @@ const DASHBOARD_CARDS = [
   {
     title: "Jobs Waiting",
     key: "waitingRides",
-    change: "+0 from last hour",
+    change: "Today",
     icon: { component: SubscriptionIcon },
     backgroundColor: "#e5f9f0",
     color: "#3E9972",
@@ -92,45 +93,45 @@ const DASHBOARDS_CARDS = {
     { title: "Completed Jobs", key: "completedRides", icon: "completed" },
     { title: "Total Cancelled", key: "totalCancelRides", icon: "cancel" },
   ],
-  bookingStats: [
-    {
-      title: "Total Revenue",
-      value: 100,
-      icon: "revenue",
-    },
-    {
-      title: "Total Tip",
-      value: 100,
-      icon: "tip",
-    },
-    {
-      title: "Total Tip- Driver",
-      value: 100,
-      icon: "tip",
-    },
-    {
-      title: "Cash Payments",
-      value: 100,
-      icon: "cash",
-    },
-  ],
-  revenueStats: [
-    {
-      title: "iOS Users",
-      value: 100,
-      icon: "ios",
-    },
-    {
-      title: "Android users",
-      value: 100,
-      icon: "android",
-    },
-    {
-      title: "Admin User",
-      value: 100,
-      icon: "admin",
-    },
-  ],
+  // bookingStats: [
+  //   {
+  //     title: "Total Revenue",
+  //     value: 100,
+  //     icon: "revenue",
+  //   },
+  //   {
+  //     title: "Total Tip",
+  //     value: 100,
+  //     icon: "tip",
+  //   },
+  //   {
+  //     title: "Total Tip- Driver",
+  //     value: 100,
+  //     icon: "tip",
+  //   },
+  //   {
+  //     title: "Cash Payments",
+  //     value: 100,
+  //     icon: "cash",
+  //   },
+  // ],
+  // revenueStats: [
+  //   {
+  //     title: "iOS Users",
+  //     value: 100,
+  //     icon: "ios",
+  //   },
+  //   {
+  //     title: "Android users",
+  //     value: 100,
+  //     icon: "android",
+  //   },
+  //   {
+  //     title: "Admin User",
+  //     value: 100,
+  //     icon: "admin",
+  //   },
+  // ],
 };
 
 const ALERTS = [
@@ -181,6 +182,9 @@ const Overview = () => {
   const [isAddBookingDisabled, setIsAddBookingDisabled] = useState(false);
   const [isLoadingDispatchSystem, setIsLoadingDispatchSystem] = useState(true);
   const [dashboardDetails, setDashboardDetails] = useState({});
+  const [systemAlerts, setSystemAlerts] = useState([]);
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
+
 
   const resolveTenantData = () => {
     const stored = getTenantData();
@@ -201,39 +205,28 @@ const Overview = () => {
 
   const tenantData = resolveTenantData();
 
-  // Check dispatch system and disable button if any bidding entry is enabled
   const checkDispatchSystem = async () => {
     try {
       setIsLoadingDispatchSystem(true);
       const response = await apiGetDispatchSystem()
 
-      // Extract actual data - handle multiple response structures
       let data = response?.data?.data || response?.data || response;
 
-      // console.log("📊 Extracted data:", data);
-      // console.log("📊 Is Array:", Array.isArray(data));
-
-      // Check if data is an array
       if (!Array.isArray(data)) {
         console.warn("⚠️ Response data is not an array:", typeof data, data);
 
-        // If data is an object with a nested array property
         if (data && typeof data === 'object') {
-          // Try common nested array keys
           const possibleArrayKeys = ['items', 'results', 'dispatches', 'systems', 'list'];
           for (const key of possibleArrayKeys) {
             if (Array.isArray(data[key])) {
-              // console.log(`✅ Found array at data.${key}`);
               data = data[key];
               break;
             }
           }
         }
 
-        // If still not an array, wrap it in an array if it's a valid object
         if (!Array.isArray(data)) {
           if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-            // console.log("📦 Wrapping single object in array");
             data = [data];
           } else {
             console.warn("❌ Could not convert data to array, disabling button");
@@ -243,9 +236,7 @@ const Overview = () => {
         }
       }
 
-      // console.log("🔍 Checking", data.length, "items for bidding system");
 
-      // Check if any entry with dispatch_system "bidding" and priority "5" has status "enable"
       const hasBiddingEnabled = data.some((item) => {
         const isBidding = item.dispatch_system === "bidding";
         const isPriority5 = item.priority === "5" || item.priority === 5;
@@ -288,7 +279,6 @@ const Overview = () => {
     }
   };
 
-
   useEffect(() => {
     const tenantData = resolveTenantData();
     console.debug("Resolved tenant data for overview:", tenantData);
@@ -307,6 +297,28 @@ const Overview = () => {
     // Check dispatch system on component mount
     checkDispatchSystem();
     fetchDashboardDetails();
+  }, []);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        setIsLoadingAlerts(true);
+        const response = await apiGetSystemAlerts();
+
+        if (response?.data?.success === 1) {
+          setSystemAlerts(response.data.alerts || []);
+        } else {
+          setSystemAlerts([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch system alerts:", error);
+        setSystemAlerts([]);
+      } finally {
+        setIsLoadingAlerts(false);
+      }
+    };
+
+    fetchAlerts();
   }, []);
 
   return (
@@ -337,13 +349,21 @@ const Overview = () => {
             type="filled"
             btnSize="2xl"
             onClick={() => {
-              if (!isAddBookingDisabled) {
+              if (!isAddBookingDisabled && !isLoadingDispatchSystem) {
                 lockBodyScroll();
                 setIsBookingModelOpen({ isOpen: true, type: "new" });
               }
             }}
             disabled={isAddBookingDisabled || isLoadingDispatchSystem}
-            className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
+            className={`w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3 ${isAddBookingDisabled || isLoadingDispatchSystem
+              ? '!bg-gray-400 !cursor-not-allowed opacity-60 hover:!bg-gray-400'
+              : ''
+              }`}
+            style={
+              isAddBookingDisabled || isLoadingDispatchSystem
+                ? { pointerEvents: 'none' }
+                : {}
+            }
           >
             <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
               <span className="hidden sm:inline-block">
@@ -352,7 +372,9 @@ const Overview = () => {
               <span className="sm:hidden">
                 <PlusIcon height={16} width={16} />
               </span>
-              <span>Add New Booking</span>
+              <span>
+                {isLoadingDispatchSystem ? 'Add New Booking' : 'Add New Booking'}
+              </span>
             </div>
           </Button>
         </div>
@@ -372,7 +394,6 @@ const Overview = () => {
         <CardContainer className="p-3 sm:p-4 lg:px-5 lg:pt-[30px] lg:pb-5 bg-[#F5F5F5]">
           <div className="flex flex-col gap-2.5 mb-[34px]">
             <CardTitle title="Overview" />
-            <CardSubtitle subtitle="Need content from client" />
           </div>
           <div className="flex flex-col gap-[25px]">
             {Object.keys(DASHBOARDS_CARDS).map((key, index) => (
@@ -417,35 +438,32 @@ const Overview = () => {
               <span>Mark as Read</span>
             </Button>
           </div>
-          <div className="flex flex-col gap-2.5">
-            {ALERTS.map(
-              (
-                { title, description, priority: { label, theme }, timeAgo },
-                index
-              ) => (
+
+          {isLoadingAlerts ? (
+            <div className="flex justify-center py-10">
+              <AppLogoLoader />
+            </div>
+          ) : systemAlerts.length === 0 ? (
+            <div className="text-center py-5 text-gray-500">No system alerts</div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {systemAlerts.map((alert, index) => (
                 <CardContainer key={index} type={1} className="!p-[25px]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2 w-[500px]">
-                      <CardSubtitle type={1} variant={1} subtitle={title} />
-                      <ChildText size="md" text={description} />
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div className="flex flex-col gap-1 sm:w-[70%]">
+                      <CardSubtitle type={1} variant={1} subtitle={alert.title} />
+                      <ChildText size="md" text={alert.description} />
                     </div>
-                    <div className="flex pl-5 min-w-[150px]">
-                      <Tag
-                        variant={theme}
-                        className="!text-sm !pt-[7px] !pb-1.5 !px-[19px]"
-                      >
-                        <span>{label}</span>
-                      </Tag>
-                    </div>
-                    <div className="text-sm text-[#6C6C6C]">
-                      <span>{timeAgo}</span>
+                    <div className="text-sm text-[#6C6C6C] mt-2 sm:mt-0">
+                      <span>{alert.timeAgo || ""}</span>
                     </div>
                   </div>
                 </CardContainer>
-              )
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContainer>
+
       </div>
       <Modal
         isOpen={isBookingModelOpen.isOpen}

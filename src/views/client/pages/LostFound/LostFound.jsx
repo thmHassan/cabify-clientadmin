@@ -106,15 +106,6 @@ const LostFound = () => {
     }
   };
 
-    if (tableLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLogoLoader  />
-      </div>
-    );
-  }
-
-
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex flex-col gap-2.5 sm:mb-[30px] mb-6">
@@ -131,7 +122,7 @@ const LostFound = () => {
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
                 value={_searchQuery}
-                // onSearchChange={handleSearchChange}
+                onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
@@ -145,16 +136,25 @@ const LostFound = () => {
               />
             </div>
           </div>
-            <div className="flex flex-col gap-4 pt-4">
-              {lostFoundData.map((lostfound) => (
+          <div className="flex flex-col gap-4 pt-4">
+            {tableLoading ? (
+              <div className="flex justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : lostFoundData.length > 0 ? (
+              lostFoundData.map((lostfound) => (
                 <LostFoundCard
                   key={lostfound.id}
                   lostfound={lostfound}
-                  // onView={(lostfoundToView) => navigate(`/lost-found/${lostfoundToView.id}`)}
                   onStatusChange={handleStatusChange}
                 />
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                No records found.
+              </div>
+            )}
+          </div>
           {Array.isArray(lostFoundData) &&
             lostFoundData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">

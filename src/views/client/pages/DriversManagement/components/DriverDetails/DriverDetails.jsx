@@ -358,6 +358,28 @@ const DriverDetails = () => {
         }
     };
 
+    const handleApproveInOffice = async () => {
+        if (!driverData?.id) return;
+
+        try {
+            const payload = {
+                driver_id: driverData.id,
+                document_approved_office: 1,
+            };
+
+            const response = await apiChangeDriverDocument(payload);
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Approved in office");
+                await loadDriverData();
+            } else {
+                console.error("Approval failed");
+            }
+        } catch (error) {
+            console.error("Error approving in office:", error);
+        }
+    };
+
     const handleRejectVehicle = async () => {
         try {
             const formDataObj = new FormData();
@@ -736,7 +758,7 @@ const DriverDetails = () => {
                         />
 
                     </div>
-                    {Number(driverData?.vehicle_change_request) === 0 && (
+                    {Number(driverData?.vehicle_change_request) > 0 && (
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                             <Button
                                 btnSize="md"
@@ -810,9 +832,30 @@ const DriverDetails = () => {
                         Document Information
                     </h2>
                     {Number(driverData?.document_approved_office) === 0 && (
+                        <Button
+                            type="filledGreen"
+                            onClick={handleApproveInOffice}
+                            className="bg-[#10B981] hover:bg-[#10B981] text-white py-1.5 px-4 rounded-md text-sm"
+                            // disabled={isApproving}
+                        >
+                          Approve in office
+                        </Button>
+                    )}
+
+                    {Number(driverData?.document_approved_office) === 1 && (
                         <span className="bg-[#10B981] text-white text-sm px-3 py-1 rounded-full flex items-center gap-1">
-                            <svg className="w-4 h-4 bg-white rounded-full text-[#10B981] font-semibold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg
+                                className="w-4 h-4 bg-white rounded-full text-[#10B981]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                />
                             </svg>
                             Approved in office
                         </span>

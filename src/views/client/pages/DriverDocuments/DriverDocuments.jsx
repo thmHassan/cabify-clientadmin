@@ -13,7 +13,6 @@ import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import DriverDocumentCard from "./components/DriverDocumentCard";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import { apiDeleteDriverDocument, apiGetDocumentTypes } from "../../../../services/DriversDocumentServices";
-import { set } from "lodash";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const DriverDocuments = () => {

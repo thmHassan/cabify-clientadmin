@@ -348,7 +348,7 @@ const Commission = ({ isSidebarOpen }) => {
                         <h3 className="font-semibold text-lg text-gray-800">Additional Settings</h3>
                         <div className="grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-1 md:grid-cols-1 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium mb-1">
                                     Cancellation Per Day
                                 </label>
                                 <input
@@ -357,11 +357,11 @@ const Commission = ({ isSidebarOpen }) => {
                                     placeholder="Enter cancellation charge"
                                     value={commissionForm.cancellation_per_day}
                                     onChange={(e) => handleCommissionFormChange("cancellation_per_day", e.target.value)}
-                                    className="w-full border rounded-lg px-4 py-2 text-gray-700 shadow-sm bg-white"
+                                    className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium mb-1">
                                     Waiting Time Charge
                                 </label>
                                 <input
@@ -370,7 +370,7 @@ const Commission = ({ isSidebarOpen }) => {
                                     placeholder="Enter waiting time charge"
                                     value={commissionForm.waiting_time_charge}
                                     onChange={(e) => handleCommissionFormChange("waiting_time_charge", e.target.value)}
-                                    className="w-full border rounded-lg px-4 py-2 text-gray-700 shadow-sm bg-white"
+                                    className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                                 />
                             </div>
                         </div>

@@ -56,24 +56,24 @@ const Security = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <div>
-                    <label className="font-medium">Current Password</label>
+                    <label className="block text-sm font-medium mb-1">Current Password</label>
                     <input
                         type="password"
                         placeholder="Enter current password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full border rounded-lg px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                     />
                 </div>
 
                 <div>
-                    <label className="font-medium">New Password</label>
+                    <label className="block text-sm font-medium mb-1">New Password</label>
                     <input
                         type="password"
                         placeholder="Enter new password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full border rounded-lg px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                     />
                 </div>
             </div>
@@ -82,7 +82,7 @@ const Security = () => {
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-[#1F41BB] text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                     {loading ? "Saving..." : "Save Changes"}
                 </button>
@@ -93,7 +93,7 @@ const Security = () => {
                         setCurrentPassword("");
                         setNewPassword("");
                     }}
-                    className="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50"
+                    className="px-4 py-2 border border-[#1F41BB] rounded-lg text-[#1F41BB]"
                 >
                     Cancel
                 </button>

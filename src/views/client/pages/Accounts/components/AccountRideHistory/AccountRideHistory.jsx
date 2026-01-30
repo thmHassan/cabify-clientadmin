@@ -4,6 +4,7 @@ import { apiCollectAccount, apiGetAccountRideHistory } from "../../../../../../s
 import Button from "../../../../../../components/ui/Button/Button";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const AccountRideHistory = ({ account, handleClose }) => {
     const [rideHistory, setRideHistory] = useState([]);
@@ -11,6 +12,18 @@ const AccountRideHistory = ({ account, handleClose }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(3);
     const [collecting, setCollecting] = useState(false);
+    const [distanceUnit, setDistanceUnit] = useState("Miles");
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
+
+    const currencySymbols = {
+        INR: "₹",
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        AUD: "A$",
+        CAD: "C$",
+        AED: "د.إ",
+    };
 
     const handleCollectAmount = async () => {
         try {
@@ -62,16 +75,28 @@ const AccountRideHistory = ({ account, handleClose }) => {
         }
     };
 
-    // const formatTime = (pickupTime, bookingDate) => {
-    //     if (!pickupTime || !bookingDate) return "N/A";
-    //     return pickupTime;
-    // };
+    useEffect(() => {
+        const tenant = getTenantData();
 
-    // const formatRoute = (pickup, destination) => {
-    //     const pickupShort = pickup?.substring(0, 20) || "N/A";
-    //     const destinationShort = destination?.substring(0, 20) || "N/A";
-    //     return `${pickupShort}... to ${destinationShort}...`;
-    // };
+        if (tenant?.units) {
+            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
+            setDistanceUnit(unit);
+        }
+
+        if (tenant?.currency) {
+            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+        }
+    }, []);
+
+    const formatDistance = (distanceInMeters) => {
+        if (!distanceInMeters) return "-";
+
+        if (distanceUnit === "Km") {
+            return `${(distanceInMeters / 1000).toFixed(2)} Km`;
+        }
+
+        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
+    };
 
     const totalPages = Math.ceil(rideHistory.length / itemsPerPage);
 
@@ -86,7 +111,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
 
     const handleItemsPerPageChange = (limit) => {
         setItemsPerPage(limit);
-        setCurrentPage(1); // reset to first page
+        setCurrentPage(1);
     };
 
     return (
@@ -125,50 +150,44 @@ const AccountRideHistory = ({ account, handleClose }) => {
                             key={ride.id || index}
                             className="bg-white border-[1px] border-[#E9E9E9] rounded-[15px] p-4 gap-[13px] flex items-center justify-between hover:shadow-md overflow-x-auto"
                         >
-                            {/* Booking ID */}
                             <div className="inline-flex flex-col px-4 py-2 min-w-[165px]">
                                 <p className="text-[#333333] text-center font-semibold text-sm">
                                     {ride?.booking_id || "N/A"}
                                 </p>
                             </div>
 
-                            {/* Customer Name */}
                             <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[165px]">
                                 <p className="text-xs text-center text-[#6C6C6C] mb-1">Customer Name</p>
                                 <p className="text-[#333333] text-center font-semibold text-sm truncate">
-                                    {ride?.name || "N/A"}
+                                    {ride?.name || "-"}
                                 </p>
                             </div>
 
-                            {/* Route */}
                             <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[240px]">
                                 <p className="text-xs text-center text-[#6C6C6C] mb-1">Route</p>
                                 <p className="text-[#333333] text-center font-semibold text-xs truncate">
-                                    {ride?.pickup_location?.substring(0, 15) || "N/A"}... to {ride?.destination_location?.substring(0, 15) || "N/A"}...
+                                    {ride?.pickup_location?.substring(0, 15) || "-"}... to {ride?.destination_location?.substring(0, 15) || "-"}...
                                 </p>
                             </div>
 
-                            {/* Time */}
                             <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[200px]">
                                 <p className="text-xs text-center text-[#6C6C6C] mb-1">Time</p>
                                 <p className="text-[#333333] text-center font-semibold text-sm">
-                                    {ride?.pickup_time || "N/A"}
+                                    {ride?.pickup_time || "-"}
                                 </p>
                             </div>
 
-                            {/* Distance */}
                             <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
                                 <p className="text-xs text-center text-[#6C6C6C] mb-1">Distance</p>
                                 <p className="text-[#333333] text-center font-semibold text-sm">
-                                    {ride?.distance || "0"}km
+                                    {formatDistance(ride?.distance || "0")}
                                 </p>
                             </div>
 
-                            {/* Fare */}
                             <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[107px]">
                                 <p className="text-xs text-center text-[#6C6C6C] mb-1">Fare</p>
                                 <p className="text-[#333333] text-center font-semibold text-sm">
-                                    ${ride?.offered_amount || "0"}
+                                    {currencySymbol} {ride?.offered_amount || "0"}
                                 </p>
                             </div>
                         </div>

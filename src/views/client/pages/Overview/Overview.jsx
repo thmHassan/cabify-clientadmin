@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import CompaniesIcon from "../../../../components/svg/CompaniesIcon";
 import SystemUptimeIcon from "../../../../components/svg/SystemUptimeIcon";
 import SubscriptionIcon from "../../../../components/svg/SubscriptionIcon";
-import MonthlyRevenueIcon from "../../../../components/svg/MonthlyRevenueIcon";
 import SnapshotCard from "../../../../components/shared/SnapshotCard/SnapshotCard";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
@@ -30,35 +29,30 @@ import Modal from "../../../../components/shared/Modal/Modal";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import AddBooking from "./components/AddBooking/AddBooking";
 import { apiGetDispatchSystem } from "../../../../services/SettingsConfigurationServices";
+import { apiGetDashboardDetails } from "../../../../services/DashboardService";
 
 const DASHBOARD_CARDS = [
   {
     title: "Active Rides",
-    value: 100,
-    change: "+3 from last hour",
-    icon: {
-      component: CompaniesIcon,
-    },
+    key: "activeRides",
+    change: "+0 from last hour",
+    icon: { component: CompaniesIcon },
     backgroundColor: "#eeedff",
     color: "#534CB4",
   },
   {
     title: "Cancelled Rides",
-    value: 24,
-    change: "+3 from last hour",
-    icon: {
-      component: SystemUptimeIcon,
-    },
+    key: "cancelRides",
+    change: "+0 from last hour",
+    icon: { component: SystemUptimeIcon },
     backgroundColor: "#e9f2ff",
     color: "#3C71B7",
   },
   {
     title: "Jobs Waiting",
-    value: 30,
-    change: "+3 from last hour",
-    icon: {
-      component: SubscriptionIcon,
-    },
+    key: "waitingRides",
+    change: "+0 from last hour",
+    icon: { component: SubscriptionIcon },
     backgroundColor: "#e5f9f0",
     color: "#3E9972",
   },
@@ -91,41 +85,12 @@ const ICONS = {
 
 const DASHBOARDS_CARDS = {
   userStats: [
-    {
-      title: "Total User",
-      value: 100,
-      icon: "user",
-    },
-    {
-      title: "Total Drivers",
-      value: 100,
-      icon: "user",
-    },
-    {
-      title: "Total Bookings",
-      value: 100,
-      icon: "bookings",
-    },
-    {
-      title: "Scheduled Bookings",
-      value: 100,
-      icon: "calendar",
-    },
-    {
-      title: "Completed Jobs",
-      value: 100,
-      icon: "completed",
-    },
-    {
-      title: "Total Cancelled",
-      value: 100,
-      icon: "cancel",
-    },
-    {
-      title: "Cancelled Amount",
-      value: 100,
-      icon: "car-cancelled",
-    },
+    { title: "Total User", key: "totalUsers", icon: "user" },
+    { title: "Total Drivers", key: "totalDrivers", icon: "user" },
+    { title: "Total Bookings", key: "totalBookings", icon: "bookings" },
+    { title: "Scheduled Bookings", key: "scheduledBookings", icon: "calendar" },
+    { title: "Completed Jobs", key: "completedRides", icon: "completed" },
+    { title: "Total Cancelled", key: "totalCancelRides", icon: "cancel" },
   ],
   bookingStats: [
     {
@@ -215,6 +180,7 @@ const Overview = () => {
   const [companyName, setCompanyName] = useState("Autocare Services");
   const [isAddBookingDisabled, setIsAddBookingDisabled] = useState(false);
   const [isLoadingDispatchSystem, setIsLoadingDispatchSystem] = useState(true);
+  const [dashboardDetails, setDashboardDetails] = useState({});
 
   const resolveTenantData = () => {
     const stored = getTenantData();
@@ -310,6 +276,19 @@ const Overview = () => {
     }
   };
 
+  const fetchDashboardDetails = async () => {
+    try {
+      const response = await apiGetDashboardDetails();
+
+      if (response?.data?.success === 1) {
+        setDashboardDetails(response.data.data);
+      }
+    } catch (error) {
+      console.error("Dashboard API error:", error);
+    }
+  };
+
+
   useEffect(() => {
     const tenantData = resolveTenantData();
     console.debug("Resolved tenant data for overview:", tenantData);
@@ -327,6 +306,7 @@ const Overview = () => {
 
     // Check dispatch system on component mount
     checkDispatchSystem();
+    fetchDashboardDetails();
   }, []);
 
   return (
@@ -384,7 +364,7 @@ const Overview = () => {
               key={index}
               data={{
                 ...card,
-                // value: dashboardDetails[card.value] || 0
+                value: dashboardDetails[card.key] ?? 0,
               }}
             />
           ))}
@@ -416,7 +396,7 @@ const Overview = () => {
                       <div className="flex flex-col gap-2.5 justify-start h-full">
                         <PageTitle
                           className="!leading-[44px] -mt-0.5"
-                          title={card?.value}
+                          title={dashboardDetails[card.key] ?? 0}
                         />
                         <PageSubTitle
                           className="leading-[22px]"

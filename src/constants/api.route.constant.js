@@ -1,5 +1,5 @@
 // api for dashboard
-export const GET_DASHBOARD_DETAILS = "/super-admin/dashboard";
+export const GET_DASHBOARD_DETAILS = "/company/dashboard";
 
 // api for company
 export const GET_COMPANY_CARD_DETAILS = "/super-admin/company-cards";

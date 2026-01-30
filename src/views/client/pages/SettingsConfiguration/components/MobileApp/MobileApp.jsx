@@ -22,8 +22,8 @@ const Toggle = ({ label, checked, onChange }) => (
 );
 
 const Section = ({ children }) => (
-    <div className="bg-white rounded-xl border p-4 shadow-sm">
-        <div className="grid md:grid-cols-2 gap-x-16 gap-y-2">
+    <div className="bg-[#F5F9FE] rounded-xl p-4 shadow-sm text-[#252525]">
+        <div className="grid md:grid-cols-2 gap-x-16 gap-y-2 text-[#252525]">
             {children}
         </div>
     </div>
@@ -135,8 +135,9 @@ const MobileApp = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-xl font-semibold">Mobile App Settings</h2>
+        <form onSubmit={handleSubmit} className="">
+            <h2 className="text-2xl font-semibold text-[#252525]">Mobile App Settings</h2>
+            <p className="text-[#6C6C6C] mb-6">Configure mobile app features and permissions</p>
 
             <Section>
                 {Object.keys(toggleKeys).map((label) => (
@@ -155,7 +156,7 @@ const MobileApp = () => {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                    className="px-4 py-2 bg-[#1F41BB] text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                     {saving ? "Saving..." : "Save Changes"}
                 </button>

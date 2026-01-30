@@ -95,7 +95,7 @@ const DriverRideHistory = ({ driver }) => {
                 </div>
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[107px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Fare</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm"> {currencySymbol} {formatAmount(driver.booking_amount)}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm"> {currencySymbol} {formatAmount(driver.booking_amount || "0")}</p>
                 </div>
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[110px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Distance</p>

@@ -127,7 +127,7 @@ const Tickets = () => {
           <PageTitle title="Tickets" />
         </div>
         <div>
-          <PageSubTitle title="Need Content Here" />
+          {/* <PageSubTitle title="Need Content Here" /> */}
         </div>
       </div>
 

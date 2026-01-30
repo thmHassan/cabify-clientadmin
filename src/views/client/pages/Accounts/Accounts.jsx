@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
-import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import Button from '../../../../components/ui/Button/Button';
 import PlusIcon from '../../../../components/svg/PlusIcon';
 import { useAppSelector } from '../../../../store';

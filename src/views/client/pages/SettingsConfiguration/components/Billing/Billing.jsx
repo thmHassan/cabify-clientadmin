@@ -50,7 +50,6 @@ const Billing = () => {
         }
     }, []);
 
-
     const fetchInvoiceHistory = useCallback(async () => {
         setInvoiceLoading(true);
         try {
@@ -135,56 +134,77 @@ const Billing = () => {
         }));
     };
 
+    const formatInvoiceDate = (dateString) => {
+        if (!dateString) return "N/A";
+
+        const date = new Date(dateString);
+
+        const datePart = date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        });
+
+        const timePart = date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+
+        return `${datePart} @ ${timePart}`;
+    };
+
     return (
         <div className="">
-            <h1 className="text-2xl font-semibold">Billing & Subscription</h1>
-            <p className="text-gray-500 mb-6">Manage your subscription plan and billing information</p>
-
             <div className="bg-white rounded-xl shadow p-6 border">
-                {planLoading ? (
-                    <div className="py-4 text-center text-gray-500">Loading plan details...</div>
-                ) : (
-                    <>
-                        <div className="flex justify-between items-center">
-                            <div className="flex flex-row gap-2">
-                                <h2 className="text-xl font-semibold">{planDetails.plan_name}</h2>
-                                <span className={`font-medium text-sm px-2 py-1 rounded ${planDetails.status === "Active"
-                                    ? "text-green-600 bg-green-100"
-                                    : "text-gray-600 bg-gray-100"
-                                    }`}>
-                                    {planDetails.status}
-                                </span>
-                            </div>
-                            {planDetails.subscription_end_date && (
-                                <div className="flex flex-col text-end">
-                                    <span className="text-gray-500">Subscription End Date:</span>
-                                    <span className="text-end text-sm">
-                                        {new Date(planDetails.subscription_end_date).toLocaleDateString('en-GB', {
-                                            day: 'numeric',
-                                            month: 'short',
-                                            year: 'numeric'
-                                        })}
+                <h1 className="text-2xl font-semibold text-[#252525]">Billing & Subscription</h1>
+                <p className="text-[#6C6C6C] mb-6">Manage your subscription plan and billing information</p>
+                <div className="bg-[#F5F9FE] rounded-[8px] p-2">
+                    {planLoading ? (
+                        <div className="py-4 text-center text-gray-500">Loading plan details...</div>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center">
+                                <div className="flex flex-row gap-2">
+                                    <h2 className="font-semibold">{planDetails.plan_name}</h2>
+                                    <span className={`font-medium text-sm px-2 py-1 rounded ${planDetails.status === "Active"
+                                        ? "text-[#10B981] bg-[#BFF0DB]"
+                                        : "text-gray-600 bg-gray-100"
+                                        }`}>
+                                        {planDetails.status}
                                     </span>
                                 </div>
-                            )}
-                        </div>
+                                {planDetails.subscription_end_date && (
+                                    <div className="flex flex-col text-end">
+                                        <span className="text-gray-500">Subscription End Date:</span>
+                                        <span className="text-end text-sm">
+                                            {new Date(planDetails.subscription_end_date).toLocaleDateString('en-GB', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
 
-                        {planDetails.features && planDetails.features.length > 0 ? (
-                            <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-700">
-                                {planDetails.features.map((feature, idx) => (
-                                    <Feature key={idx} label={feature} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-700">
-                                <Feature label="Unlimited Rides" />
-                                <Feature label="Up to 100 drivers" />
-                                <Feature label="Advanced analytics" />
-                                <Feature label="24/7 support" />
-                            </div>
-                        )}
-                    </>
-                )}
+                            {planDetails.features && planDetails.features.length > 0 ? (
+                                <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-700">
+                                    {planDetails.features.map((feature, idx) => (
+                                        <Feature key={idx} label={feature} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap gap-4 mt-5 text-sm text-[#252525]">
+                                    <Feature label="Unlimited Rides" />
+                                    <Feature label="Up to 100 drivers" />
+                                    <Feature label="Advanced analytics" />
+                                    <Feature label="24/7 support" />
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow p-4 border mt-3">
@@ -192,14 +212,14 @@ const Billing = () => {
                 {invoiceLoading ? (
                     <div className="py-4 text-center text-gray-500">Loading invoices...</div>
                 ) : invoices.length > 0 ? (
-                    <>
+                    <div>
                         {invoices.map((inv, idx) => (
-                            <div key={idx} className="flex md:flex-row justify-between items-center py-3 border-b last:border-none">
+                            <div key={idx} className="flex border border-[#E9E9E9] p-2 rounded-[8px] md:flex-row justify-between items-center py-3">
                                 <div className="font-medium">{inv.plan_name || "Professional Plan"}</div>
                                 <div className="flex gap-1">
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
                                         <p className="text-[#333333] text-center font-semibold text-sm">
-                                            {inv.date || inv.created_at || "N/A"}
+                                            {formatInvoiceDate(inv.date || inv.created_at)}
                                         </p>
                                     </div>
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
@@ -208,17 +228,9 @@ const Billing = () => {
                                         </p>
                                     </div>
                                 </div>
-
-                                {/* <div className="flex gap-2 mt-2 md:mt-0">
-                                    <button className="px-4 py-1 rounded border text-sm hover:bg-gray-50">View Invoice</button>
-                                    <button className="px-4 py-1 rounded border text-sm bg-blue-600 text-white hover:bg-blue-700">
-                                        Download
-                                    </button>
-                                </div> */}
                             </div>
                         ))}
-                        <button className="mt-4 text-blue-600 font-medium hover:underline">View All</button>
-                    </>
+                    </div>
                 ) : (
                     <div className="py-4 text-center text-gray-500">No invoices found</div>
                 )}
@@ -257,18 +269,7 @@ const Billing = () => {
                         />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6 mt-6">
-                        <InputField
-                            label="Stripe Country"
-                            placeholder="Enter country code"
-                            value={stripeData.stripe_country}
-                            onChange={(e) => setStripeData({ ...stripeData, stripe_country: e.target.value })}
-                        />
-                    </div>
-
-                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-
-                    <div className="flex justify-start gap-3 pt-4 mt-6">
+                    {/* <div className="flex justify-start gap-3 pt-4 mt-6">
                         <button
                             type="submit"
                             disabled={isSubmitting}
@@ -282,7 +283,7 @@ const Billing = () => {
                         >
                             Cancel
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             </form>
         </div>
@@ -292,24 +293,29 @@ const Billing = () => {
 
 const Feature = ({ label }) => (
     <div className="flex items-center gap-2">
-        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.6 22.5L6.7 19.3L3.1 18.5L3.45 14.8L1 12L3.45 9.2L3.1 5.5L6.7 4.7L8.6 1.5L12 2.95L15.4 1.5L17.3 4.7L20.9 5.5L20.55 9.2L23 12L20.55 14.8L20.9 18.5L17.3 19.3L15.4 22.5L12 21.05L8.6 22.5ZM10.95 15.55L16.6 9.9L15.2 8.45L10.95 12.7L8.8 10.6L7.4 12L10.95 15.55Z" fill="#10B981" />
+        </svg>
+        </span>
         {label}
     </div>
 );
 
 const ToggleItem = ({ label, checked = false, onChange }) => (
-    <div className="flex justify-between items-center py-3 border-b last:border-none">
-        <span className="font-medium">{label}</span>
-        <label className="relative inline-flex items-center cursor-pointer">
-            <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={checked}
-                onChange={(e) => onChange && onChange(e.target.checked)}
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-checked:bg-blue-600 rounded-full peer transition-all"></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-all"></div>
-        </label>
+    <div className="grid md:grid-cols-2 grid-cols-2">
+        <div className="flex justify-between items-center py-3 last:border-none">
+            <span className="font-medium">{label}</span>
+            <label className="relative inline-flex items-center cursor-pointer text-[#252525]">
+                <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={checked}
+                    onChange={(e) => onChange && onChange(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-checked:bg-blue-600 rounded-full peer transition-all"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-all"></div>
+            </label>
+        </div>
     </div>
 );
 

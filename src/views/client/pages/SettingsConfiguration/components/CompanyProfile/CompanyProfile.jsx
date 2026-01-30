@@ -89,23 +89,23 @@ const CompanyProfile = () => {
             <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Company Name</label>
+                        <label className="block text-sm font-medium mb-1">Company Name</label>
                         <input
                             type="text"
                             value={companyProfileData?.company_name || ""}
                             placeholder="Enter Name"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_name: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium mb-1">Email</label>
                         <input
                             type="email"
                             value={companyProfileData?.company_email || ""}
                             placeholder="Enter Email"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_email: e.target.value })}
                         />
                     </div>
@@ -113,23 +113,23 @@ const CompanyProfile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Mobile Number</label>
+                        <label className="block text-sm font-medium mb-1">Mobile Number</label>
                         <input
                             type="text"
                             value={companyProfileData?.company_phone_no || ""}
                             placeholder="Enter Mobile Number"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_phone_no: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Business License</label>
+                        <label className="block text-sm font-medium mb-1">Business License</label>
                         <input
                             type="text"
                             value={companyProfileData?.company_business_license || ""}
                             placeholder="Enter Business License"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_business_license: e.target.value })}
                         />
                     </div>
@@ -137,18 +137,18 @@ const CompanyProfile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Business Address</label>
+                        <label className="block text-sm font-medium mb-1">Business Address</label>
                         <input
                             type="text"
                             value={companyProfileData?.company_business_address || ""}
                             placeholder="Enter Business Address"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_business_address: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Time Zone</label>
+                        <label className="block text-sm font-medium mb-1">Time Zone</label>
                         <select
                             value={companyProfileData?.company_timezone || ""}
                             onChange={(e) =>
@@ -157,7 +157,7 @@ const CompanyProfile = () => {
                                     company_timezone: e.target.value,
                                 })
                             }
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 py-3 border border-[#8D8D8D] rounded-lg w-full shadow-[-4px_4px_6px_0px_#0000001F] text-sm font-semibold disabled:bg-gray-50"
                         >
                             <option value="">Select Time Zone</option>
                             {timeZoneOptions.map((tz) => (
@@ -168,44 +168,44 @@ const CompanyProfile = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Support Contact Number</label>
+                        <label className="block text-sm font-medium mb-1">Support Contact Number</label>
                         <input
                             type="text"
                             value={companyProfileData?.support_contact_no || ""}
                             placeholder="Enter Support Contact Number"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_contact_no: e.target.value })}
                         />
                     </div>
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Support Emergency Number</label>
+                        <label className="block text-sm font-medium mb-1">Support Emergency Number</label>
                         <input
                             type="text"
                             value={companyProfileData?.support_emergency_no || ""}
                             placeholder="Enter Support Emergency Number"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_emergency_no: e.target.value })}
                         />
                     </div>
                     <div>
-                        <label className="block font-medium text-gray-700 mb-1">Support Rescue Number</label>
+                        <label className="block text-sm font-medium mb-1">Support Rescue Number</label>
                         <input
                             type="text"
                             value={companyProfileData?.support_rescue_number || ""}
                             placeholder="Enter Support Rescue Number"
-                            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-10 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                             onChange={(e) => setCompanyProfileData({ ...companyProfileData, support_rescue_number: e.target.value })}
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block font-medium text-gray-700 mb-1">Company Description</label>
+                    <label className="block text-sm font-medium mb-1">Company Description</label>
                     <textarea
-                        rows="4"
+                        rows="3"
                         value={companyProfileData?.company_description || ""}
                         placeholder="Enter Description"
-                        className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                         onChange={(e) => setCompanyProfileData({ ...companyProfileData, company_description: e.target.value })}
                     />
                 </div>
@@ -216,14 +216,14 @@ const CompanyProfile = () => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+                        className="px-4 py-2 bg-[#1F41BB] text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                     >
                         {isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
 
                     <button
                         type="button"
-                        className="border border-gray-400 px-6 py-2 rounded-md hover:bg-gray-50 transition"
+                        className="px-4 py-2 border border-[#1F41BB] rounded-lg text-[#1F41BB]"
                     >
                         Cancel
                     </button>

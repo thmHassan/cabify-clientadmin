@@ -7,20 +7,15 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
         <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
             <Formik
                 initialValues={{
-                    // Driver Information
                     name: document?.driver_detail?.name || "",
                     email: document?.driver_detail?.email || "",
                     phone: `${document?.driver_detail?.country_code || "+91"} ${document?.driver_detail?.phone_no || ""}`,
                     driverStatus: document?.driver_detail?.status || "",
-
-                    // Document Information
                     documentId: document?.document_id || "",
                     documentStatus: document?.status || "",
                     documentNumber: document?.has_number_field || "",
                     expiryDate: document?.has_expiry_date || "",
                     issueDate: document?.has_issue_date || "",
-
-                    // Vehicle Information
                     vehicleType: document?.driver_detail?.vehicle_type || "",
                     plateNumber: document?.driver_detail?.plate_no || "",
                     color: document?.driver_detail?.color || "",
@@ -44,9 +39,7 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                             </button>
                         </div>
 
-                        {/* Driver Information Section */}
                         <div className="mb-6">
-                            {/* <h3 className="font-semibold text-lg mb-4 text-[#252525]">Driver Information</h3> */}
                             <div className="flex flex-wrap gap-5 mb-4">
                                 <div className="w-[calc((100%-20px)/2)]">
                                     <FormLabel htmlFor="name">Name</FormLabel>
@@ -98,9 +91,7 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                             </div>
                         </div>
 
-                        {/* Document Information Section */}
                         <div className="mb-6">
-                            {/* <h3 className="font-semibold text-lg mb-4 text-[#252525]">Document Information</h3> */}
                             <div className="flex flex-wrap gap-5 mb-4">
                                 {/* <div className="w-[calc((100%-20px)/2)]">
                                     <FormLabel htmlFor="documentId">Document ID</FormLabel>
@@ -170,49 +161,8 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                             </div>
                         </div>
 
-                        {/* Document Images Section */}
-                        {(document?.front_photo || document?.back_photo || document?.profile_photo) && (
-                            <div className="mb-6">
-                                <h3 className="font-semibold text-lg mb-4 text-[#252525]">Document Images</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {document?.front_photo && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-2 font-medium">Front Photo</p>
-                                            <img
-                                                src={document.front_photo}
-                                                alt="Front"
-                                                className="w-full h-48 object-cover rounded-lg border"
-                                            />
-                                        </div>
-                                    )}
-                                    {document?.back_photo && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-2 font-medium">Back Photo</p>
-                                            <img
-                                                src={document.back_photo}
-                                                alt="Back"
-                                                className="w-full h-48 object-cover rounded-lg border"
-                                            />
-                                        </div>
-                                    )}
-                                    {document?.profile_photo && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-2 font-medium">Profile Photo</p>
-                                            <img
-                                                src={document.profile_photo}
-                                                alt="Profile"
-                                                className="w-full h-48 object-cover rounded-lg border"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Vehicle Information Section */}
                         {document?.driver_detail && (
                             <div className="mb-6">
-                                {/* <h3 className="font-semibold text-lg mb-4 text-[#252525]">Vehicle Information</h3> */}
                                 <div className="flex flex-wrap gap-5 mb-4">
                                     {/* <div className="w-[calc((100%-20px)/2)]">
                                         <FormLabel htmlFor="vehicleType">Vehicle Type</FormLabel>

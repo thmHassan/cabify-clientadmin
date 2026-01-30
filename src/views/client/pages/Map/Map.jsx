@@ -11,7 +11,7 @@ const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const MARKER_ICONS = {
   idle: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-  active: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+  busy: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
 };
 
 const loadGoogleMaps = () => {

@@ -3,7 +3,6 @@ import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle/PageSubTitle";
 import Button from "../../../../components/ui/Button/Button";
 import AddDispatcherIcon from "../../../../components/svg/AddDispatcherIcon";
-import DownloadIcon from "../../../../components/svg/DownloadIcon";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import AddDispatcherModal from "./components/AddDispatcherModal";

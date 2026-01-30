@@ -1,6 +1,5 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
-import React, { useEffect, useState } from "react";
-import * as Yup from "yup";
+import { useEffect, useState } from "react";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateDriveDocument, apiEditDriverDocument } from "../../../../../../services/DriversDocumentServices";

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { apiCollectAccount, apiGetAccountRideHistory } from "../../../../../../services/AccountService";
 import Button from "../../../../../../components/ui/Button/Button";
@@ -141,13 +141,6 @@ const AccountRideHistory = ({ account, handleClose }) => {
                     >
                         {collecting ? "Collecting..." : "Collect"}
                     </Button>
-                    <Button
-                        type="filledGray"
-                        onClick={handleClose}
-                        className="px-6 py-2 rounded-lg"
-                    >
-                        Close
-                    </Button>
                 </div>
             </div>
 
@@ -219,45 +212,44 @@ const AccountRideHistory = ({ account, handleClose }) => {
                                     </div>
 
                                     {/* Desktop Layout */}
-                                    <div className="hidden lg:flex items-center justify-between gap-4">
-                                        <div className="min-w-[120px]">
-                                            <p className="text-xs text-gray-500 mb-1">Booking ID</p>
-                                            <p className="font-semibold text-[#333333] text-sm">
+                                    <div className="hidden lg:flex items-center justify-between gap-4 overflow-x-auto">
+                                        <div className="inline-flex flex-col text-left whitespace-nowrap min-w-[120px]">
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {ride?.booking_id || "N/A"}
                                             </p>
                                         </div>
 
-                                        <div className="flex-1 min-w-[140px]">
-                                            <p className="text-xs text-gray-500 mb-1 text-center">Customer Name</p>
-                                            <p className="text-[#333333] text-center font-medium text-sm truncate px-2">
+                                        <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
+                                            <p className="text-xs text-center text-gray-500">Customer Name</p>
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {ride?.name || "-"}
                                             </p>
                                         </div>
 
-                                        <div className="flex-1 min-w-[200px]">
-                                            <p className="text-xs text-gray-500 mb-1 text-center">Route</p>
-                                            <p className="text-[#333333] text-center font-medium text-xs truncate px-2">
+                                        <div className="inline-flex flex-col px-2 py-2 min-w-[250px] rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
+                                            <p className="text-xs text-center text-gray-500">Route</p>
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {ride?.pickup_location?.substring(0, 15) || "-"}... to {ride?.destination_location?.substring(0, 15) || "-"}...
                                             </p>
                                         </div>
 
-                                        <div className="min-w-[140px]">
-                                            <p className="text-xs text-gray-500 mb-1 text-center">Time</p>
-                                            <p className="text-[#333333] text-center font-medium text-sm">
+                                        <div className="inline-flex flex-col px-2 py-2 min-w-[140px] rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
+                                            <p className="text-xs text-center text-gray-500">Time</p>
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {ride?.pickup_time || "-"}
                                             </p>
                                         </div>
 
-                                        <div className="min-w-[100px]">
-                                            <p className="text-xs text-gray-500 mb-1 text-center">Distance</p>
-                                            <p className="text-[#333333] text-center font-medium text-sm">
+                                        <div className="inline-flex flex-col px-2 py-2 min-w-[100px] rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
+                                            <p className="text-xs text-center text-gray-500">Distance</p>
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {formatDistance(ride?.distance || "0")}
                                             </p>
                                         </div>
 
-                                        <div className="min-w-[100px]">
-                                            <p className="text-xs text-gray-500 mb-1 text-center">Fare</p>
-                                            <p className="text-[#333333] text-center font-semibold text-sm">
+                                        <div className="inline-flex flex-col px-2 py-2 min-w-[100px] rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
+                                            <p className="text-xs text-center text-gray-500">Fare</p>
+                                            <p className="text-black text-center font-semibold text-sm">
                                                 {currencySymbol}{ride?.offered_amount || "0"}
                                             </p>
                                         </div>
@@ -281,6 +273,16 @@ const AccountRideHistory = ({ account, handleClose }) => {
                         )}
                     </>
                 )}
+            </div>
+
+            <div className="flex justify-end">
+                <Button
+                    type="filledGray"
+                    onClick={handleClose}
+                    className="px-6 py-2 rounded-lg"
+                >
+                    Close
+                </Button>
             </div>
         </div>
     );

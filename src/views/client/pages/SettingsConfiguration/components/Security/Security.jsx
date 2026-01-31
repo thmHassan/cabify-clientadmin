@@ -33,7 +33,7 @@ const Security = () => {
                 setCurrentPassword("");
                 setNewPassword("");
             } else {
-                toast.error(response?.data?.message || "Failed to update password");
+                // toast.error(response?.data?.message || "Failed to update password");
             }
         } catch (error) {
             const errorMsg =

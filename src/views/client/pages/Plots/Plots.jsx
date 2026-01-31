@@ -228,7 +228,6 @@ const Plots = () => {
       setLeafletReady(true);
       setMapError(false);
 
-      // Suppress React warnings about Leaflet's DOM attributes
       const originalError = console.error;
       console.error = (...args) => {
         if (
@@ -236,7 +235,7 @@ const Plots = () => {
           (args[0].includes('clip-path') ||
             args[0].includes('Received `true` for a non-boolean attribute'))
         ) {
-          return; // Suppress these specific warnings from Leaflet
+          return; 
         }
         originalError.apply(console, args);
       };
@@ -251,31 +250,25 @@ const Plots = () => {
   useEffect(() => {
     const tenant = getTenantData();
 
-    // Get API keys from environment
     const envGoogleKey = import.meta?.env?.VITE_GOOGLE_MAPS_API_KEY || "";
     const envBarikoiKey = import.meta?.env?.VITE_BARIKOI_API_KEY ||
       import.meta?.env?.VITE_BARIKOI_KEY || "";
 
-    // Resolve keys (tenant takes priority over env)
     const resolvedGoogleKey = tenant?.google_api_key || envGoogleKey || "";
     const resolvedBarikoiKey = tenant?.barikoi_api_key ||
       tenant?.barikoi_api_keys ||
       tenant?.barikoiApiKey ||
       envBarikoiKey || "";
 
-    // Get map provider preference
     const prefRaw = tenant?.maps_api || tenant?.map || tenant?.search_api || "";
     const preference = prefRaw?.toLowerCase?.() || "";
 
-    // Determine provider
-    let provider = "google"; // default
+    let provider = "google"; 
 
-    // If preference explicitly mentions barikoi
     if (preference.includes("barikoi") && !preference.includes("google")) {
       provider = "barikoi";
     }
 
-    // Fallback logic based on available keys
     if (provider === "google" && !resolvedGoogleKey) {
       if (resolvedBarikoiKey) {
         console.log('No Google API key available, using Barikoi');
@@ -371,11 +364,9 @@ const Plots = () => {
     return [];
   }, []);
 
-  // Helper function to check if coordinates are in expected region (India/South Asia)
   const isInExpectedRegion = useCallback((coords) => {
     if (!coords || coords.length === 0) return false;
 
-    // Calculate center of coordinates
     const center = coords.reduce(
       (acc, coord) => ({
         lat: acc.lat + coord.lat / coords.length,
@@ -384,8 +375,6 @@ const Plots = () => {
       { lat: 0, lng: 0 }
     );
 
-    // Check if center is roughly in India/South Asia region
-    // India bounds: lat 8-35, lng 68-97
     const isInIndia =
       center.lat >= 8 && center.lat <= 35 &&
       center.lng >= 68 && center.lng <= 97;
@@ -393,7 +382,6 @@ const Plots = () => {
     return isInIndia;
   }, []);
 
-  // Get filtered plots (only those in expected region)
   const getFilteredPlots = useCallback(() => {
     if (!plotsData || plotsData.length === 0) return [];
 
@@ -405,16 +393,7 @@ const Plots = () => {
 
   const generatePlotColor = (index) => {
     const colors = [
-      '#4285F4', // Blue
-      '#EA4335', // Red
-      '#FBBC04', // Yellow
-      '#34A853', // Green
-      '#9C27B0', // Purple
-      '#FF6D00', // Orange
-      '#00BCD4', // Cyan
-      '#E91E63', // Pink
-      '#795548', // Brown
-      '#607D8B', // Blue Grey
+      '#4285F4', 
     ];
     return colors[index % colors.length];
   };
@@ -422,22 +401,18 @@ const Plots = () => {
   const renderAllPolygons = useCallback(() => {
     if (!plotsData || plotsData.length === 0) return;
 
-    // Default center for Surat, India
     const defaultCenter = { lat: 21.1702, lng: 72.8311 };
 
-    // Get plots that are in the expected region
     const validPlots = getFilteredPlots();
 
     if (validPlots.length === 0) {
       console.warn('No plots found in expected region (India). Showing all plots.');
-      // If no valid plots in India, show all plots
       validPlots.push(...plotsData);
     }
 
     if (mapProvider === "google") {
       if (!mapsReady || !mapRef.current) return;
 
-      // Initialize map if not already done
       if (!googleMapRef.current) {
         googleMapRef.current = new window.google.maps.Map(mapRef.current, {
           center: defaultCenter,
@@ -445,7 +420,6 @@ const Plots = () => {
         });
       }
 
-      // Clear existing polygons
       googlePolygonsRef.current.forEach(polygon => {
         if (polygon) polygon.setMap(null);
       });
@@ -454,7 +428,6 @@ const Plots = () => {
       const bounds = new window.google.maps.LatLngBounds();
       let hasValidCoords = false;
 
-      // Draw all valid polygons
       validPlots.forEach((plot, index) => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
@@ -472,12 +445,10 @@ const Plots = () => {
             clickable: true,
           });
 
-          // Add click handler to select plot
           polygon.addListener('click', () => {
             setSelectedPlot(plot);
           });
 
-          // Add info window with plot name
           const infoWindow = new window.google.maps.InfoWindow({
             content: `<div style="padding: 8px; font-weight: 600; color: #333;">${plot.name}</div>`,
           });
@@ -498,20 +469,15 @@ const Plots = () => {
 
           googlePolygonsRef.current.push(polygon);
 
-          // Extend bounds
           coords.forEach(coord => bounds.extend(coord));
         }
       });
 
-      // Fit map to show all polygons
       if (hasValidCoords) {
         googleMapRef.current.fitBounds(bounds);
-
-        // Add some padding
         const padding = { top: 50, right: 50, bottom: 50, left: 50 };
         googleMapRef.current.fitBounds(bounds, padding);
 
-        // Ensure we don't zoom out too much or too close
         const listener = window.google.maps.event.addListenerOnce(googleMapRef.current, 'bounds_changed', () => {
           const zoom = googleMapRef.current.getZoom();
           if (zoom > 16) {
@@ -521,7 +487,6 @@ const Plots = () => {
           }
         });
       } else {
-        // No valid coordinates, center on default location
         googleMapRef.current.setCenter(defaultCenter);
         googleMapRef.current.setZoom(12);
       }
@@ -532,7 +497,6 @@ const Plots = () => {
     if (mapProvider === "barikoi") {
       if (!leafletReady || !mapRef.current) return;
 
-      // Initialize map if not already done
       if (!leafletMapRef.current) {
         leafletMapRef.current = window.L.map(mapRef.current).setView(
           [defaultCenter.lat, defaultCenter.lng],
@@ -561,7 +525,6 @@ const Plots = () => {
         tileLayer.addTo(leafletMapRef.current);
       }
 
-      // Clear existing polygons
       leafletPolygonsRef.current.forEach(polygon => {
         if (polygon && leafletMapRef.current) {
           leafletMapRef.current.removeLayer(polygon);
@@ -571,7 +534,6 @@ const Plots = () => {
 
       const allBounds = [];
 
-      // Draw all valid polygons
       validPlots.forEach((plot, index) => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
@@ -585,10 +547,8 @@ const Plots = () => {
             weight: 2,
           }).addTo(leafletMapRef.current);
 
-          // Add popup with plot name
           polygon.bindPopup(`<div style="padding: 8px; font-weight: 600; color: #333;">${plot.name}</div>`);
 
-          // Add click handler
           polygon.on('click', () => {
             setSelectedPlot(plot);
           });

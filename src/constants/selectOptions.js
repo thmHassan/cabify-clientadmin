@@ -1,5 +1,17 @@
 // Common select options for reuse across the application
 
+export const DISPATCH_STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+export const TICKET_STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "closed", label: "Closed" },
+  { value: "open", label: "Open" },
+];
+
 export const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
   { value: "active", label: "Active" },

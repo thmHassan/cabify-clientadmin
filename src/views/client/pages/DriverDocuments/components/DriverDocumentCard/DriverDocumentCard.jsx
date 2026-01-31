@@ -39,6 +39,7 @@ const DriverDocumentCard = ({ doc, onEdit, onDelete }) => {
                 <div className="flex flex-wrap gap-3 flex-1">
                     {doc.frontPhoto && <Chip label="Front Photo" />}
                     {doc.backPhoto && <Chip label="Back Photo" />}
+                    {doc.profilePhoto && <Chip label="Profile Photo" />}
                     {doc.issueDate && <Chip label="Issue Date" />}
                     {doc.expiryDate && <Chip label="Expiry Date" />}
                     {doc.numberField && <Chip label="Has Number" />}

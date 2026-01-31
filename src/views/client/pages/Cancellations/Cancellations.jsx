@@ -11,7 +11,6 @@ import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
 const Cancellations = () => {
   const [_searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("customer");
   const savedPagination = useAppSelector(
     (state) => state?.app?.app?.pagination?.companies
   );

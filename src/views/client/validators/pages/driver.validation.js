@@ -2,6 +2,7 @@ import * as Yup from "yup";
 
 export const DRIVER_DOCUMENT_VALIDATION_SCHEMA = Yup.object().shape({
   documentName: Yup.string().trim().required("Document name is required"),
+  profilePhoto: Yup.boolean().required("profile photo is required"),
   frontPhoto: Yup.boolean().optional(),
   backPhoto: Yup.boolean().optional(),
   issuePhoto: Yup.boolean().optional(),

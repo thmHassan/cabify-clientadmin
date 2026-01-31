@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-
 const LostFoundCard = ({ lostfound, onView, onStatusChange }) => {
     const statusBtnRef = useRef(null);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -54,7 +53,6 @@ const LostFoundCard = ({ lostfound, onView, onStatusChange }) => {
 
     const statusStyle = getStatusStyles(lostfound.status);
 
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -96,7 +94,7 @@ const LostFoundCard = ({ lostfound, onView, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[130px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Car Plate No</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm">{lostfound?.booking_details?.user_detail?.plate_no || "-"}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">{lostfound?.booking_details?.driver_detail?.plate_no || "-"}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[186px]">

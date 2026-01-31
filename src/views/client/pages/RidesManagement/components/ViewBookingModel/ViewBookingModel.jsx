@@ -95,8 +95,8 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                     hand_luggage: rideData?.hand_luggage || 0,
                     special_request: rideData?.special_request || "",
                     payment_reference: rideData?.payment_reference || "",
-                    quoted: false,
-                    payment_mode: "cash",
+                    // quoted: false,
+                    payment_method: rideData?.payment_method || "Cash",
                     booking_fee_charges: 0,
                     fares: parseFloat(rideData?.booking_amount) || 0,
                     return_fares: 0,
@@ -534,23 +534,21 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                                 <div className="flex gap-4 items-center">
 
                                                     <label className="flex items-center gap-2 text-sm">
-                                                        <input
+                                                        {/* <input
                                                             type="checkbox"
                                                             checked={values.quoted || false}
                                                             disabled
-                                                        />
+                                                        /> */}
                                                         Quoted
                                                     </label>
 
-                                                    <select
-                                                        value={values.payment_mode}
+                                                    <input
+                                                        value={values.payment_method}
                                                         className="border rounded px-2 py-1 w-48"
-                                                        disabled
+                                                        // disabled
                                                     >
-                                                        <option value="cash">Cash</option>
-                                                        <option value="card">Card</option>
-                                                        <option value="upi">UPI</option>
-                                                    </select>
+                                                       
+                                                    </input>
                                                 </div>
 
                                                 <div className="md:w-60">

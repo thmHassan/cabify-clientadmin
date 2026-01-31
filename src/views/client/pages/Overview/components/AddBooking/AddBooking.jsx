@@ -637,6 +637,7 @@ const AddBooking = ({ setIsOpen }) => {
             formData.append('payment_reference', values.payment_reference || '');
 
             formData.append('booking_system', values.booking_system || 'auto_dispatch');
+            formData.append('payment_method', values.payment_method || '')
 
             formData.append('parking_charge', values.parking_charges || '');
             formData.append('waiting_charge', values.waiting_charges || '');
@@ -1424,26 +1425,25 @@ const AddBooking = ({ setIsOpen }) => {
                                         <div className="flex gap-4 items-center">
 
                                             <label className="flex items-center gap-2 text-sm">
-                                                <input
-                                                    type="checkbox"
+                                                {/* <input
+                                                    type="text"
                                                     checked={values.quoted || false}
                                                     onChange={(e) =>
                                                         setFieldValue("quoted", e.target.checked)
                                                     }
-                                                />
+                                                /> */}
                                                 Quoted
                                             </label>
 
                                             <select
-                                                value={values.payment_mode || "cash"}
+                                                value={values.payment_method || "cash"}
                                                 onChange={(e) =>
-                                                    setFieldValue("payment_mode", e.target.value)
+                                                    setFieldValue("payment_method", e.target.value)
                                                 }
                                                 className="border rounded px-2 py-1 w-48"
                                             >
                                                 <option value="cash">Cash</option>
-                                                <option value="card">Card</option>
-                                                <option value="upi">UPI</option>
+                                                <option value="online">Online</option>
                                             </select>
                                         </div>
 

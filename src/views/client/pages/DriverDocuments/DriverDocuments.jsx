@@ -82,7 +82,7 @@ const DriverDocuments = () => {
           name: item.document_name,
           frontPhoto: item.front_photo === "yes",
           backPhoto: item.back_photo === "yes",
-          // profilePhoto: item.profile_photo === "yes",
+          profilePhoto: item.profile_photo === "yes",
           issueDate: item.has_issue_date === "yes",
           expiryDate: item.has_expiry_date === "yes",
           numberField: item.has_number_field === "yes",

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
-import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import { useAppSelector } from '../../../../store';
-import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectOptions';
+import { PAGE_SIZE_OPTIONS, TICKET_STATUS_OPTIONS } from '../../../../constants/selectOptions';
 import CardContainer from '../../../../components/shared/CardContainer';
 import SearchBar from '../../../../components/shared/SearchBar/SearchBar';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
@@ -22,7 +21,7 @@ const Tickets = () => {
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
-    STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
+    TICKET_STATUS_OPTIONS.find((o) => o.value === "all") ?? TICKET_STATUS_OPTIONS[0]
   );
 
   const savedPagination = useAppSelector(
@@ -45,6 +44,7 @@ const Tickets = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(_searchQuery);
+      setCurrentPage(1); 
     }, 500);
     return () => clearTimeout(timer);
   }, [_searchQuery]);
@@ -56,6 +56,11 @@ const Tickets = () => {
   const handleItemsPerPageChange = (newItemsPerPage) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (newStatus) => {
+    setSelectedStatus(newStatus);
+    setCurrentPage(1); 
   };
 
   // Fetch Ticket List
@@ -90,12 +95,16 @@ const Tickets = () => {
     fetchTickets();
   }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchTickets, refreshTrigger]);
 
+  const filteredTickets = _selectedStatus.value === "all"
+    ? ticketsData
+    : ticketsData.filter(ticket => ticket.status === _selectedStatus.value);
+
   const handleReplyClick = (ticket) => {
     setSelectedTicket(ticket);
     setIsTicketsModelOpen({ isOpen: true });
   };
 
-  // 🔥 STATUS CHANGE HANDLER HERE
+
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
       const formData = new FormData();
@@ -136,8 +145,9 @@ const Tickets = () => {
           <div className="hidden md:flex flex-row gap-5">
             <CustomSelect
               variant={2}
-              options={STATUS_OPTIONS}
+              options={TICKET_STATUS_OPTIONS}
               value={_selectedStatus}
+              onChange={handleStatusFilterChange}
               placeholder="All Status"
             />
           </div>
@@ -148,8 +158,8 @@ const Tickets = () => {
             <div className="flex justify-center py-8">
               <AppLogoLoader />
             </div>
-          ) : ticketsData.length > 0 ? (
-            ticketsData.map((ticket) => (
+          ) : filteredTickets.length > 0 ? (
+            filteredTickets.map((ticket) => (
               <TicketsCard
                 key={ticket.id}
                 tickets={ticket}
@@ -164,7 +174,7 @@ const Tickets = () => {
           )}
         </div>
 
-        {ticketsData.length > 0 && (
+        {filteredTickets.length > 0 && (
           <div className="mt-4 border-t border-[#E9E9E9] pt-4">
             <Pagination
               currentPage={currentPage}

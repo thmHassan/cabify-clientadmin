@@ -32,7 +32,6 @@ const DocumentRequest = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // Debounce search query
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchQuery(searchQuery);
@@ -69,7 +68,7 @@ const DocumentRequest = () => {
             setDocumentData([]);
         } finally {
             setTableLoading(false);
-            setIsInitialLoad(false); // 🔥 important
+            setIsInitialLoad(false); 
         }
     }, [currentPage, itemsPerPage, debouncedSearchQuery, selectedStatus]);
 

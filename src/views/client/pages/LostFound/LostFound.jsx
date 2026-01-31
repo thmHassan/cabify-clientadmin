@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import PageTitle from '../../../../components/ui/PageTitle/PageTitle';
 import PageSubTitle from '../../../../components/ui/PageSubTitle/PageSubTitle';
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from '../../../../constants/selectOptions';
@@ -9,12 +9,10 @@ import CustomSelect from '../../../../components/ui/CustomSelect';
 import LostFoundCard from './components/LostFoundCard/LostFoundCard';
 import Pagination from '../../../../components/ui/Pagination/Pagination';
 import { apiChangeLostFoundStatus, apiGetLostFoundList } from '../../../../services/LostFoundServices';
-import { useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
 import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
 const LostFound = () => {
-  const navigate = useNavigate()
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
@@ -126,15 +124,15 @@ const LostFound = () => {
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
-            <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+            {/* <div className=" md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
               <CustomSelect
                 variant={2}
                 options={STATUS_OPTIONS}
                 value={_selectedStatus}
-                // onChange={handleStatusChange}
+                onChange={handleStatusChange}
                 placeholder="All Status"
               />
-            </div>
+            </div> */}
           </div>
           <div className="flex flex-col gap-4 pt-4">
             {tableLoading ? (

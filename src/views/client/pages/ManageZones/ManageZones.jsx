@@ -27,7 +27,7 @@ const ManageZones = () => {
         }));
 
         setRows(formattedRows);
-        setBackupPlotData(list); // <-- IMPORTANT
+        setBackupPlotData(list); 
       }
     } catch (error) {
       console.error("Error fetching backup plot:", error);
@@ -112,7 +112,6 @@ const ManageZones = () => {
         <PageSubTitle title="Add, monitor and manage your company's dispatch team" />
       </div>
 
-      {/* TABLE */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table className="w-full border-collapse">
           <thead className="bg-[#E8F1FF]">

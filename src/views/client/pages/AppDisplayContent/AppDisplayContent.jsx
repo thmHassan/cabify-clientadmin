@@ -60,7 +60,6 @@ const AppDisplayContent = () => {
         try {
             setSubmitting(true);
             
-            // Get HTML content from editors
             const aboutUsHtml = document.getElementById('about-us-editor')?.innerHTML || '';
             const termsHtml = document.getElementById('terms-editor')?.innerHTML || '';
             const privacyHtml = document.getElementById('privacy-editor')?.innerHTML || '';
@@ -71,7 +70,6 @@ const AppDisplayContent = () => {
                 privacy_policy: privacyHtml
             });
             
-            // Create FormData object to send as multipart/form-data
             const formData = new FormData();
             formData.append('about_us', aboutUsHtml);
             formData.append('terms_conditions', termsHtml);
@@ -80,7 +78,6 @@ const AppDisplayContent = () => {
             const response = await apiSaveAppDisplayContent(formData);
             console.log('Save response:', response);
             
-            // Refresh data after save
             await getAppDisplayContent();
         } catch (error) {
             console.error("Save app content error:", error);
@@ -96,10 +93,8 @@ const AppDisplayContent = () => {
             
             editor.focus();
             
-            // Get the selection
             const selection = window.getSelection();
             if (!selection.rangeCount) {
-                // If no selection, create one at the end of the editor
                 const range = document.createRange();
                 range.selectNodeContents(editor);
                 range.collapse(false);
@@ -330,7 +325,6 @@ const AppDisplayContent = () => {
     };
 
     useEffect(() => {
-        // Set HTML content to editors when data is loaded
         if (appContentData.about_us) {
             const aboutEditor = document.getElementById('about-us-editor');
             if (aboutEditor) {

@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../../../components/routes/SocketProvider";
 import PageTitle from "../../../../components/ui/PageTitle/PageTitle";
 import PageSubTitle from "../../../../components/ui/PageSubTitle";
-import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import CardContainer from "../../../../components/shared/CardContainer";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import { MAP_STATUS_OPTIONS } from "../../../../constants/selectOptions";
@@ -36,7 +35,6 @@ const loadGoogleMaps = () => {
   });
 };
 
-// Smooth marker animation function
 const animateMarker = (marker, newPosition, duration = 1000) => {
   const startPosition = marker.getPosition();
   const startLat = startPosition.lat();
@@ -50,7 +48,6 @@ const animateMarker = (marker, newPosition, duration = 1000) => {
     const elapsed = Date.now() - startTime;
     const progress = Math.min(elapsed / duration, 1);
 
-    // Easing function for smooth animation (ease-in-out)
     const easeProgress = progress < 0.5
       ? 2 * progress * progress
       : 1 - Math.pow(-2 * progress + 2, 2) / 2;

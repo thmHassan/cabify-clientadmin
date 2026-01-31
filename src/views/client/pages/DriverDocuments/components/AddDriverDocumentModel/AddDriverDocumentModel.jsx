@@ -28,7 +28,7 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
             formDataObj.append("document_name", values.documentName || "");
             formDataObj.append("front_photo", values.frontPhoto ? "yes" : "no");
             formDataObj.append("back_photo", values.backPhoto ? "yes" : "no");
-            // formDataObj.append("profile_photo", values.issuePhoto ? "yes" : "no");
+            formDataObj.append("profile_photo", values.profilePhoto ? "yes" : "no");
             formDataObj.append("has_issue_date", values.issueDate ? "yes" : "no");
             formDataObj.append("has_expiry_date", values.expiryDate ? "yes" : "no");
             formDataObj.append("has_number_field", values.numberField ? "yes" : "no");
@@ -75,7 +75,7 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
                     issueDate: initialValue?.has_issue_date === 'yes' ? true : false,
                     expiryDate: initialValue?.has_expiry_date === 'yes' ? true : false,
                     numberField: initialValue?.has_number_field === 'yes' ? true : false,
-                    // issuePhoto: initialValue?.profile_photo === 'yes' ? true : false,
+                    profilePhoto: initialValue?.profile_photo === 'yes' ? true : false,
                     at_least_one: false,
                 }}
                 validationSchema={DRIVER_DOCUMENT_VALIDATION_SCHEMA}
@@ -111,6 +111,14 @@ const AddDriverDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreate
                                         />
                                     </div>
                                     <div className="flex flex-col gap-3 mb-8 ">
+                                         <label className="flex items-center gap-3 border border-[#D8D8D8] rounded-lg p-3 shadow-sm cursor-pointer">
+                                            <Field
+                                                type="checkbox"
+                                                name="profilePhoto"
+                                                className="w-5 h-5"
+                                            />
+                                            <span className="font-medium text-gray-700">Profile Photo</span>
+                                        </label>
                                         <label className="flex items-center gap-3 border border-[#D8D8D8] rounded-lg p-3 shadow-sm cursor-pointer">
                                             <Field
                                                 type="checkbox"

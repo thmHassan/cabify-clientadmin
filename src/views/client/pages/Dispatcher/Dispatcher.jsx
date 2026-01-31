@@ -11,7 +11,7 @@ import SnapshotCard from "../../../../components/shared/SnapshotCard/SnapshotCar
 import CardContainer from "../../../../components/shared/CardContainer/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import CustomSelect from "../../../../components/ui/CustomSelect/CustomSelect";
-import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
+import { PAGE_SIZE_OPTIONS, DISPATCH_STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { useAppSelector } from "../../../../store";
 import Tag from "../../../../components/ui/Tag";
@@ -33,7 +33,7 @@ const Dispatcher = () => {
   const [companyListDisplay, setCompanyListDisplay] = useState([]);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [_selectedStatus, setSelectedStatus] = useState(
-    STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
+    DISPATCH_STATUS_OPTIONS.find((o) => o.value === "all") ?? DISPATCH_STATUS_OPTIONS[0]
   );
   const savedPagination = useAppSelector(
     (state) => state?.app?.app?.pagination?.companies
@@ -62,7 +62,7 @@ const Dispatcher = () => {
       setDispatchCards(response?.data?.data ?? null);
     } catch (error) {
       console.log("err--", error);
-      setCompanyCards(null);
+      setDispatchCards(null);
     } finally {
       setDispatchLoading(false);
     }
@@ -70,7 +70,7 @@ const Dispatcher = () => {
 
   useEffect(() => {
     fetchDispatcherCards()
-  }, [])
+  }, [refreshTrigger])
 
   const fetchDispatcherList = async (
     page = 1,
@@ -122,9 +122,13 @@ const Dispatcher = () => {
     return () => clearTimeout(handler);
   }, [_searchQuery]);
 
+  const filteredDispatchers = _selectedStatus.value === "all"
+    ? dispatcherListRaw
+    : dispatcherListRaw.filter(d => d.status === _selectedStatus.value);
+
   const DASHBOARD_CARDS = [
     {
-      title: "Total Companies",
+      title: "Total Dispatchers",
       value: dispatchCards ? dispatchCards.totalDispatcher : "0",
       change: "+3 from last hour",
       icon: {
@@ -134,7 +138,7 @@ const Dispatcher = () => {
       color: "#534CB4",
     },
     {
-      title: "Active Companies",
+      title: "Active Dispatchers",
       value: dispatchCards ? dispatchCards.activeDispatcher : "0",
       change: "+3 from last hour",
       icon: {
@@ -144,8 +148,8 @@ const Dispatcher = () => {
       color: "#3E9972",
     },
     {
-      title: "Monthly Revenue",
-      value: dispatchCards ? `${dispatchCards.ridesDispatchToday}` : "$0",
+      title: "Rides Dispatched Today",
+      value: dispatchCards ? `${dispatchCards.ridesDispatchToday}` : "0",
       change: "+3 from last hour",
       icon: {
         component: CompaniesIcon,
@@ -188,8 +192,13 @@ const Dispatcher = () => {
     setCurrentPage(1);
   };
 
-  const handleDeleteClick = (company) => {
-    setDispatcherToDelete(company);
+  const handleStatusChange = (newStatus) => {
+    setSelectedStatus(newStatus);
+    setCurrentPage(1);
+  };
+
+  const handleDeleteClick = (dispatcher) => {
+    setDispatcherToDelete(dispatcher);
     setDeleteModalOpen(true);
   };
 
@@ -204,6 +213,7 @@ const Dispatcher = () => {
         setDeleteModalOpen(false);
         setDispatcherToDelete(null);
         setRefreshTrigger(prev => prev + 1);
+        await fetchDispatcherCards(); // Refresh cards after deletion
       } else {
         console.error("Failed to delete dispatcher");
       }
@@ -216,6 +226,7 @@ const Dispatcher = () => {
 
   const handleonDispatcherCreated = () => {
     setRefreshTrigger(prev => prev + 1);
+    fetchDispatcherCards();
   };
 
   return (
@@ -228,25 +239,6 @@ const Dispatcher = () => {
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8 flex gap-[15px]">
-          {/* <Button
-            type="bgOutlined"
-            btnSize="2xl"
-            onClick={() => {
-              lockBodyScroll();
-              setIsManualRequestModal({ isOpen: true, type: "new" });
-            }}
-            className="w-full sm:w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3 !bg-transparent"
-          >
-            <div className="flex gap-2 sm:gap-[15px] items-center justify-center whitespace-nowrap">
-              <span className="hidden sm:inline-block">
-                <DownloadIcon />
-              </span>
-              <span className="sm:hidden">
-                <DownloadIcon height={16} width={16} />
-              </span>
-              <span>Export Report</span>
-            </div>
-          </Button> */}
           <Button
             type="filled"
             btnSize="2xl"
@@ -294,12 +286,12 @@ const Dispatcher = () => {
                     className="w-full md:max-w-[400px] max-w-full"
                   />
                 </div>
-                <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+                <div className="md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
                   <CustomSelect
                     variant={2}
-                    options={STATUS_OPTIONS}
+                    options={DISPATCH_STATUS_OPTIONS}
                     value={_selectedStatus}
-                    // onChange={handleStatusChange}
+                    onChange={handleStatusChange}
                     placeholder="All Status"
                   />
                 </div>
@@ -309,16 +301,11 @@ const Dispatcher = () => {
                   <div className="flex justify-center py-10">
                     <AppLogoLoader />
                   </div>
-                ) : dispatcherListRaw.length > 0 ? (
-                  dispatcherListRaw.map((d) => (
-                    <div key={d.id} className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md  overflow-x-auto  "
+                ) : filteredDispatchers.length > 0 ? (
+                  filteredDispatchers.map((d) => (
+                    <div key={d.id} className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto"
                     >
                       <div className="flex items-center gap-3">
-                        {/* <img
-                          src={d.picture}
-                          className="w-14 h-14 rounded-md object-cover"
-                          alt=""
-                        /> */}
                         <div className="">
                           <p className="font-semibold text-xl">{d.name}</p>
                           <p className="text-[10px]">{d.email}</p>
@@ -364,8 +351,8 @@ const Dispatcher = () => {
                   </p>
                 )}
               </div>
-              {Array.isArray(dispatcherListRaw) &&
-                dispatcherListRaw.length > 0 ? (
+              {Array.isArray(filteredDispatchers) &&
+                filteredDispatchers.length > 0 ? (
                 <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
                   <Pagination
                     currentPage={currentPage}
@@ -402,7 +389,7 @@ const Dispatcher = () => {
       </Modal>
       <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-3">Delete Driver Document?</h2>
+          <h2 className="text-xl font-semibold mb-3">Delete Dispatcher?</h2>
           <p className="text-gray-600 mb-6">
             Are you sure you want to delete {dispatcherToDelete?.name}?
           </p>

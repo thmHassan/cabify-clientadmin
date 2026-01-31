@@ -9,7 +9,7 @@ const RidesManagementCard = ({ ride, onView }) => {
     const statusColors = {
         pending: "bg-[#F5C60B] text-white",
         cancelled: "bg-red-500 text-white",
-        // completed: "bg-green-500 text-white",
+        completed: "bg-green-500 text-white",
         // arrived: "bg-blue-500 text-white",
         ongoing: "bg-[#10B981] text-white",
         default: "bg-[#EFEFEF] text-gray-600"

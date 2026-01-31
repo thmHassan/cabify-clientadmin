@@ -13,6 +13,7 @@ import JobsOfferedIcon from '../../../../components/svg/JobsOfferedIcon';
 import JobsAcceptedIcon from '../../../../components/svg/JobsAcceptedIcon';
 import { apiGetSubCompany } from '../../../../services/SubCompanyServices';
 import { apiGetRevenueCard, apiGetRevenueHistory } from '../../../../services/RevenueStatementsService';
+import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
 const RevenueStatements = () => {
   const [selectedCompany, setSelectedCompany] = useState();
@@ -236,7 +237,6 @@ const RevenueStatements = () => {
 
       <div>
         <h1 className='text-lg font-semibold pb-2'>Financial Summary</h1>
-        <Loading loading={cardLoading} type="cover">
           <div className="grid grid-cols-1 sm:grid-cols-2 1.5xl:grid-cols-3 gap-4 sm:gap-5">
             {DASHBOARD_CARDS.map((card, index) => (
               <SnapshotCard
@@ -251,27 +251,28 @@ const RevenueStatements = () => {
               />
             ))}
           </div>
-        </Loading>
       </div>
 
       <div>
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5] mt-6">
-          <Loading loading={tableLoading} type="cover">
-            <div className="flex flex-col gap-4 pt-4">
-              {rideHistory.length > 0 ? (
-                rideHistory.map((revenue) => (
-                  <RevenueStatementsCard
-                    key={revenue.id}
-                    revenue={revenue}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No ride history available
-                </div>
-              )}
-            </div>
-          </Loading>
+          <div className="flex flex-col gap-4 pt-4">
+            {tableLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <AppLogoLoader />
+              </div>
+            ) : rideHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No ride history available
+              </div>
+            ) : (
+              rideHistory.map((revenue) => (
+                <RevenueStatementsCard
+                  key={revenue.id}
+                  revenue={revenue}
+                />
+              ))
+            )}
+          </div>
           {Array.isArray(rideHistory) && rideHistory.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination

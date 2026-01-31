@@ -205,6 +205,67 @@ const Overview = () => {
 
   const tenantData = resolveTenantData();
 
+  // const checkDispatchSystem = async () => {
+  //   try {
+  //     setIsLoadingDispatchSystem(true);
+  //     const response = await apiGetDispatchSystem()
+
+  //     let data = response?.data?.data || response?.data || response;
+
+  //     if (!Array.isArray(data)) {
+  //       console.warn("⚠️ Response data is not an array:", typeof data, data);
+
+  //       if (data && typeof data === 'object') {
+  //         const possibleArrayKeys = ['items', 'results', 'dispatches', 'systems', 'list'];
+  //         for (const key of possibleArrayKeys) {
+  //           if (Array.isArray(data[key])) {
+  //             data = data[key];
+  //             break;
+  //           }
+  //         }
+  //       }
+
+  //       if (!Array.isArray(data)) {
+  //         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+  //           data = [data];
+  //         } else {
+  //           console.warn("❌ Could not convert data to array, disabling button");
+  //           setIsAddBookingDisabled(false);
+  //           return;
+  //         }
+  //       }
+  //     }
+
+
+  //     const hasBiddingEnabled = data.some((item) => {
+  //       const isBidding = item.dispatch_system === "bidding";
+  //       const isPriority5 = item.priority === "5" || item.priority === 5;
+  //       const isEnabled = item.status === "enable" || item.status === "enabled" || item.status === 1 || item.status === true;
+
+  //       if (isBidding && isPriority5 && isEnabled) {
+  //         // console.log("✅ Found matching bidding entry:", item);
+  //       }
+
+  //       return isBidding && isPriority5 && isEnabled;
+  //     });
+
+  //     // console.log("🎯 Has Bidding Enabled:", hasBiddingEnabled);
+  //     setIsAddBookingDisabled(hasBiddingEnabled);
+
+  //   } catch (error) {
+  //     console.error("❌ Error fetching dispatch system:", error);
+  //     console.error("Error details:", {
+  //       message: error.message,
+  //       response: error.response,
+  //       data: error.response?.data
+  //     });
+
+  //     // On error, keep button enabled (fail open)
+  //     setIsAddBookingDisabled(false);
+  //   } finally {
+  //     setIsLoadingDispatchSystem(false);
+  //   }
+  // };
   const checkDispatchSystem = async () => {
     try {
       setIsLoadingDispatchSystem(true);
@@ -230,27 +291,18 @@ const Overview = () => {
             data = [data];
           } else {
             console.warn("❌ Could not convert data to array, disabling button");
-            setIsAddBookingDisabled(false);
+            setIsAddBookingDisabled(true); 
             return;
           }
         }
       }
 
-
-      const hasBiddingEnabled = data.some((item) => {
-        const isBidding = item.dispatch_system === "bidding";
-        const isPriority5 = item.priority === "5" || item.priority === 5;
+      const hasAnyEnabledSystem = data.some((item) => {
         const isEnabled = item.status === "enable" || item.status === "enabled" || item.status === 1 || item.status === true;
-
-        if (isBidding && isPriority5 && isEnabled) {
-          // console.log("✅ Found matching bidding entry:", item);
-        }
-
-        return isBidding && isPriority5 && isEnabled;
+        return isEnabled;
       });
 
-      // console.log("🎯 Has Bidding Enabled:", hasBiddingEnabled);
-      setIsAddBookingDisabled(hasBiddingEnabled);
+      setIsAddBookingDisabled(!hasAnyEnabledSystem);
 
     } catch (error) {
       console.error("❌ Error fetching dispatch system:", error);
@@ -260,8 +312,7 @@ const Overview = () => {
         data: error.response?.data
       });
 
-      // On error, keep button enabled (fail open)
-      setIsAddBookingDisabled(false);
+      setIsAddBookingDisabled(true);
     } finally {
       setIsLoadingDispatchSystem(false);
     }
@@ -434,9 +485,9 @@ const Overview = () => {
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
           <div className="flex justify-between items-center mb-[34px]">
             <CardSubtitle type={1} subtitle="System Alerts" />
-            <Button className="border border-[#1F41BB] rounded-lg pt-[11px] pb-2.5 px-[25px] text-[#1F41BB] font-semibold">
+            {/* <Button className="border border-[#1F41BB] rounded-lg pt-[11px] pb-2.5 px-[25px] text-[#1F41BB] font-semibold">
               <span>Mark as Read</span>
-            </Button>
+            </Button> */}
           </div>
 
           {isLoadingAlerts ? (

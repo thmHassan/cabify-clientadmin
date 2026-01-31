@@ -68,6 +68,10 @@ const Dispatcher = () => {
     }
   };
 
+  useEffect(() => {
+    fetchDispatcherCards()
+  }, [])
+
   const fetchDispatcherList = async (
     page = 1,
     perPage = itemsPerPage,

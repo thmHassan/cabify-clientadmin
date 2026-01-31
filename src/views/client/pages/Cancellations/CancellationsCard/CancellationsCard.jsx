@@ -94,7 +94,7 @@ const CancellationsCard = ({ cancellations }) => {
         <div className="w-[100px]">
           <p className="text-xs text-center text-[#6C6C6C]">Amount</p>
           <p className="text-[#333333] text-center font-semibold text-sm">
-            {currencySymbol} {formatAmount(cancellations.booking_amount)}
+            {currencySymbol} {formatAmount(cancellations.booking_amount || "0")}
           </p>
         </div>
       </div>

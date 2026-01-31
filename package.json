@@ -15,7 +15,6 @@
     "axios": "^1.11.0",
     "bkoi-gl": "^3.0.0",
     "classnames": "^2.5.1",
-    "date-fns": "^4.1.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.21",
     "laravel-echo": "^2.2.7",

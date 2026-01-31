@@ -76,11 +76,6 @@ const UserPageContainer = ({ children }) => {
       return [newNotification, ...prev];
     });
     
-    setUnreadCount((prev) => {
-      console.log("✅ Incrementing unread count from", prev, "to", prev + 1);
-      return prev + 1;
-    });
-    
     if (Notification.permission === "granted") {
       new Notification("New Reminder", {
         body: data.description || data.message || "You have a new reminder",
@@ -177,10 +172,9 @@ const UserPageContainer = ({ children }) => {
 
   const handleNotificationClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
-    if (!isNotificationOpen && unreadCount > 0) {
-      // Mark all as read when opening
+    // Mark all as read when opening the dropdown
+    if (!isNotificationOpen) {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
     }
   };
 
@@ -188,6 +182,11 @@ const UserPageContainer = ({ children }) => {
     setNotifications([]);
     setUnreadCount(0);
   };
+
+  useEffect(() => {
+    const actualUnreadCount = notifications.filter(n => !n.read).length;
+    setUnreadCount(actualUnreadCount);
+  }, [notifications]);
 
   const handleDeleteNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -386,9 +385,8 @@ const UserPageContainer = ({ children }) => {
                 <DrawerIcon width={24} height={24} fill="#000000" />
               </span>
             </button>
+             {renderBookingSystemUI()}
           </div>
-
-          {renderBookingSystemUI()}
 
           <div className="flex gap-1.5 sm:gap-3 lg:gap-5 items-center flex-shrink-0">
             {/* Notification Bell with Dropdown */}

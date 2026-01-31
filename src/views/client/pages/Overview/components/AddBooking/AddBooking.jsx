@@ -1399,7 +1399,7 @@ const AddBooking = ({ setIsOpen }) => {
                                 </div>
 
                                 <div className="bg-blue-50 p-4 rounded-lg space-y-4 mt-7">
-                                    <div className="flex md:justify-between max-sm:flex-col md:items-center">
+                                    <div className="flex justify-between max-sm:flex-col items-center">
                                         <h3 className="font-semibold text-xl">Charges</h3>
                                         <div className="flex justify-end gap-2 mt-4">
                                             <Button

@@ -8,6 +8,7 @@ import Button from "../../../../components/ui/Button/Button";
 import { apiGetAllVehicleType } from "../../../../services/VehicleTypeServices";
 import { apiSendNotifiction } from "../../../../services/GeneralNotificationServices";
 import { NOTIFICATION_VALIDATION_SCHEMA } from "../../validators/pages/generalNotification.validation";
+import toast from "react-hot-toast";
 
 const userOptions = [
   { value: "all_drivers", label: "All Drivers" },
@@ -87,7 +88,9 @@ const GeneralNotification = () => {
               if (response?.data?.success === 1) {
                 resetForm();
               }
+              toast.success("Notification send successfully")
             } catch (error) {
+              toast.error("Notification send failed:", error)
               console.error("Notification send failed:", error);
             } finally {
               setSending(false);

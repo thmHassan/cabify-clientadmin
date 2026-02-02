@@ -11,7 +11,7 @@ const initSocket = () => {
   const token = getDecryptedToken();
 
   console.log("tenantId:", tenantId);
-  console.log("companyId:", companyId);
+  console.log("companyId:", tenantId);
   console.log("token===", token);
 
   if (!tenantId) {
@@ -27,7 +27,7 @@ const initSocket = () => {
     reconnectionDelay: 2000,
     query: {
       role: "client",
-      client_id: companyId,
+      client_id: tenantId,
       database: tenantId,
     },
     extraHeaders: {

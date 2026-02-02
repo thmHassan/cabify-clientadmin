@@ -196,6 +196,8 @@ const Map = () => {
       const longitude = data.longitude;
       const driving_status = data.driving_status || "idle";
       const name = data.name || data.driver_name || `Driver ${driver_id}`;
+      const phoneNo = data?.phone_no || "";
+      const vehiclePlateNo = data?.plate_no || "";
 
       // Check if latitude and longitude exist and are valid numbers
       if (latitude == null || longitude == null || isNaN(latitude) || isNaN(longitude)) {
@@ -245,9 +247,10 @@ const Map = () => {
         // Update info window content
         if (marker.infoWindow) {
           marker.infoWindow.setContent(`
-            <div style="padding: 5px;">
-              <strong>Name: ${name}</strong><br/>
-             
+             <div style="padding: 5px;">
+              <strong>${name}</strong><br/>
+              Phone: ${phoneNo}<br/>
+              Vehicle: ${vehiclePlateNo}<br/>
             </div>
           `);
         }
@@ -266,8 +269,10 @@ const Map = () => {
         // Add info window
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="padding: 5px;">
-              <strong>Name: ${name}</strong><br/>
+             <div style="padding: 5px;">
+              <strong>${name}</strong><br/>
+              Phone: ${phoneNo}<br/>
+              Vehicle: ${vehiclePlateNo}<br/>
             </div>
           `,
         });

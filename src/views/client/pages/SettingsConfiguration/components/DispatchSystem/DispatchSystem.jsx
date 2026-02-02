@@ -127,19 +127,25 @@ const DispatchSystem = () => {
 
     useEffect(() => {
         const newSystemStatus = {};
-        
+
         dispatchData.forEach((p) => {
-            const hasAnyEnabled = p.followUps.some((f) => {
-                if (checkedState[f.key]) return true;
-                if (f.children) {
-                    return f.children.some((c) => checkedState[c.key]);
-                }
-                return false;
-            });
-            
-            newSystemStatus[p.systemKey] = hasAnyEnabled;
+            // For manual_dispatch_only, check if the main checkbox (p4_manual) is enabled
+            if (p.systemKey === "manual_dispatch_only") {
+                newSystemStatus[p.systemKey] = !!checkedState["p4_manual"];
+            } else {
+                // For other systems, check if any follow-up is enabled
+                const hasAnyEnabled = p.followUps.some((f) => {
+                    if (checkedState[f.key]) return true;
+                    if (f.children) {
+                        return f.children.some((c) => checkedState[c.key]);
+                    }
+                    return false;
+                });
+
+                newSystemStatus[p.systemKey] = hasAnyEnabled;
+            }
         });
-        
+
         setSystemStatus(newSystemStatus);
     }, [checkedState]);
 
@@ -162,9 +168,10 @@ const DispatchSystem = () => {
                                 initialPriorities[p.systemKey] = parseInt(item.priority);
                             }
 
+                            // Special handling for manual_dispatch_only
                             if (item.steps === null && p.systemKey === "manual_dispatch_only") {
                                 p.followUps.forEach((f) => {
-                                    if (!f.stepKey) {
+                                    if (!f.stepKey || f.stepKey === "manual_dispatch_only") {
                                         initial[f.key] = item.status === "enable";
                                     }
                                 });
@@ -345,7 +352,7 @@ const DispatchSystem = () => {
                                             ...prev,
                                             [p.systemKey]: isChecked,
                                         }));
-                                        
+
                                         if (!isChecked) {
                                             const newState = { ...checkedState };
                                             p.followUps.forEach((f) => {

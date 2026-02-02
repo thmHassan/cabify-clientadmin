@@ -20,7 +20,7 @@ const Users = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState({
     type: "new",
     isOpen: false,
-  });
+  });s
   const [_searchQuery, setSearchQuery] = useState("");
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]

@@ -291,7 +291,7 @@ const Overview = () => {
             data = [data];
           } else {
             console.warn("❌ Could not convert data to array, disabling button");
-            setIsAddBookingDisabled(true); 
+            setIsAddBookingDisabled(true);
             return;
           }
         }

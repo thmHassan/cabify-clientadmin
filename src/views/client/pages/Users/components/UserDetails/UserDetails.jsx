@@ -34,7 +34,7 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
     };
     return (
         <div
-            className="bg-white rounded-[15px] p-4 gap-2 flex items-center hover:shadow-md overflow-x-auto"
+            className="bg-white rounded-[15px] p-4 gap-2 flex justify-between items-center hover:shadow-md overflow-x-auto"
         >
             <div className="flex items-center gap-3">
                 {/* Avatar */}

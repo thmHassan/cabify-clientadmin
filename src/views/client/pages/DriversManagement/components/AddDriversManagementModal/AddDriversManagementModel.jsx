@@ -55,6 +55,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
 
       formDataObj.append("name", values.name || "");
       formDataObj.append("email", values.email || "");
+      formDataObj.append("country_code", values.country_code || "");
       formDataObj.append("phone_no", values.phone_no || "");
       if (values.password) {
         formDataObj.append("password", values.password);
@@ -113,6 +114,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
           name: initialValue?.name || "",
           email: initialValue?.email || "",
           phone_no: initialValue?.phone_no || "",
+          country_code: initialValue?.country_code || "",
           password: "",
           address: initialValue?.address || "",
           driver_license: initialValue?.driver_license || "",
@@ -174,6 +176,37 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                 </div>
                 <div className="w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="phone_no">Phone Number</FormLabel>
+
+                  <div className="flex items-center border border-[#8D8D8D] rounded-lg overflow-hidden shadow-[-4px_4px_6px_0px_#0000001F] sm:h-16 h-14">
+
+                    {/* Country Code */}
+                    <Field
+                      as="select"
+                      name="country_code"
+                      className="h-full px-3 sm:px-4 bg-gray-100 border-r border-[#8D8D8D] outline-none font-semibold"
+                    >
+                      <option value="+91">+91</option>
+                      <option value="+92">+92</option>
+                      <option value="+1">+1</option>
+                      <option value="+44">+44</option>
+                      <option value="+971">+971</option>
+                    </Field>
+
+                    {/* Phone Number */}
+                    <Field
+                      type="text"
+                      name="phone_no"
+                      placeholder="Enter phone number"
+                      className="flex-1 sm:px-5 px-4 h-full outline-none placeholder:text-[#6C6C6C] font-semibold"
+                    />
+
+                  </div>
+
+                  <ErrorMessage name="country_code" component="div" className="text-red-500 text-sm mt-1" />
+                  <ErrorMessage name="phone_no" component="div" className="text-red-500 text-sm mt-1" />
+                </div>
+                {/* <div className="w-[calc((100%-20px)/2)]">
+                  <FormLabel htmlFor="phone_no">Phone Number</FormLabel>
                   <div className="sm:h-16 h-14">
                     <Field
                       type="text"
@@ -187,7 +220,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
-                </div>
+                </div> */}
                 <div className="w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="password">Password</FormLabel>
                   <div className="sm:h-16 h-14">

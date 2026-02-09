@@ -13,11 +13,13 @@ import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import DriverManagementCard from "./components/DriversManagementCard";
 import { apiDeleteDriverManagement, apiGetDriverManagement } from "../../../../services/DriverManagementService";
+import { apiGetSubCompany } from "../../../../services/SubCompanyServices";
 import { useNavigate } from "react-router-dom";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
+import CustomSelect from "../../../../components/ui/CustomSelect/CustomSelect";
 
 const DriversManagement = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [isDriversManagementModalOpen, setIsDriversManagementModalOpen] = useState({
     type: "new",
     isOpen: false,
@@ -47,6 +49,15 @@ const DriversManagement = () => {
   const [driverToDelete, setDriverToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Sub-company filter states
+  const [subCompanyList, setSubCompanyList] = useState([]);
+  const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
+  const [selectedSubCompany, setSelectedSubCompany] = useState({
+    label: "All Sub Companies",
+    value: "all",
+  });
+
+  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -54,6 +65,33 @@ const DriversManagement = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Fetch sub-companies on mount
+  useEffect(() => {
+    const fetchSubCompanies = async () => {
+      setLoadingSubCompanies(true);
+      try {
+        const response = await apiGetSubCompany({ page: 1, perPage: 100 });
+        if (response?.data?.success === 1) {
+          const companies = response?.data?.list?.data || [];
+          const options = [
+            { label: "All Sub Companies", value: "all" },
+            ...companies.map((company) => ({
+              label: company.name,
+              value: company.id.toString(),
+            })),
+          ];
+          setSubCompanyList(options);
+        }
+      } catch (error) {
+        console.error("Error fetching sub-companies:", error);
+      } finally {
+        setLoadingSubCompanies(false);
+      }
+    };
+    fetchSubCompanies();
+  }, []);
+
+  // Fetch drivers with all filters
   const fetchDrivers = useCallback(async () => {
     setTableLoading(true);
     try {
@@ -62,8 +100,14 @@ const DriversManagement = () => {
         perPage: itemsPerPage,
         status: activeTab,
       };
+
       if (debouncedSearchQuery?.trim()) {
         params.search = debouncedSearchQuery.trim();
+      }
+
+      // Add sub-company filter
+      if (selectedSubCompany?.value && selectedSubCompany.value !== "all") {
+        params.sub_company = selectedSubCompany.value;
       }
 
       const response = await apiGetDriverManagement(params);
@@ -79,16 +123,16 @@ const DriversManagement = () => {
       setDriversData([]);
     } finally {
       setTableLoading(false);
-      setIsInitialLoad(false); // 🔥 mark initial load done
+      setIsInitialLoad(false);
     }
-  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab, selectedSubCompany]);
 
   useEffect(() => {
     fetchDrivers();
-  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab, fetchDrivers, refreshTrigger]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, activeTab, selectedSubCompany, fetchDrivers, refreshTrigger]);
 
   const handleOnDriverCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handlePageChange = (pageNumber) => {
@@ -98,6 +142,11 @@ const DriversManagement = () => {
   const handleItemsPerPageChange = (newItemsPerPage) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
+  };
+
+  const handleSubCompanyChange = (selected) => {
+    setSelectedSubCompany(selected);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleDeleteClick = (driver) => {
@@ -115,7 +164,7 @@ const DriversManagement = () => {
       if (response?.data?.success === 1 || response?.status === 200) {
         setDeleteModalOpen(false);
         setDriverToDelete(null);
-        setRefreshTrigger(prev => prev + 1);
+        setRefreshTrigger((prev) => prev + 1);
       } else {
         console.error("Failed to delete driver");
       }
@@ -127,7 +176,7 @@ const DriversManagement = () => {
   };
 
   const handleDriverStatusChange = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -161,11 +210,13 @@ const DriversManagement = () => {
           </Button>
         </div>
       </div>
+
       <div className="bg-[#006FFF1A] p-1 rounded-lg mb-6 inline-flex gap-1">
         <Button
           type="filled"
           btnSize="2xl"
-          className={`${activeTab === "accepted" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
+          className={`${activeTab === "accepted" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"
+            }`}
           onClick={() => setActiveTab("accepted")}
         >
           Accepted
@@ -173,7 +224,8 @@ const DriversManagement = () => {
         <Button
           type="filled"
           btnSize="2xl"
-          className={`${activeTab === "pending" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
+          className={`${activeTab === "pending" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"
+            }`}
           onClick={() => setActiveTab("pending")}
         >
           Pending
@@ -181,20 +233,14 @@ const DriversManagement = () => {
         <Button
           type="filled"
           btnSize="2xl"
-          className={`${activeTab === "rejected" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
+          className={`${activeTab === "rejected" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"
+            }`}
           onClick={() => setActiveTab("rejected")}
         >
           Rejected
         </Button>
-        {/* <Button
-          type="filled"
-          btnSize="2xl"
-          className={`${activeTab === "cashCollection" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"}`}
-          onClick={() => setActiveTab("cashCollection")}
-        >
-          Cash Collection
-        </Button> */}
       </div>
+
       <div>
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
@@ -205,16 +251,18 @@ const DriversManagement = () => {
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
-            {/* <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="hidden md:flex flex-row gap-3 sm:gap-5 w-full sm:w-auto">
               <CustomSelect
                 variant={2}
-                options={STATUS_OPTIONS}
-                value={_selectedStatus}
-                // onChange={handleStatusChange}
-                placeholder="All Status"
+                options={subCompanyList}
+                value={selectedSubCompany}
+                onChange={handleSubCompanyChange}
+                placeholder="All Sub Companies"
+                disabled={loadingSubCompanies}
               />
-            </div> */}
+            </div>
           </div>
+
           <div className="flex flex-col gap-4 pt-4">
             {tableLoading ? (
               <div className="flex items-center justify-center py-10">
@@ -224,7 +272,7 @@ const DriversManagement = () => {
               <div className="text-center py-10 text-gray-500">No drivers found</div>
             ) : (
               <div className="flex flex-col gap-4 pt-4">
-                {driversData.map(driver => (
+                {driversData.map((driver) => (
                   <DriverManagementCard
                     key={driver.id}
                     driver={driver}
@@ -235,10 +283,9 @@ const DriversManagement = () => {
                 ))}
               </div>
             )}
-
           </div>
-          {Array.isArray(driversData) &&
-            driversData.length > 0 ? (
+
+          {Array.isArray(driversData) && driversData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
                 currentPage={currentPage}
@@ -253,16 +300,19 @@ const DriversManagement = () => {
           ) : null}
         </CardContainer>
       </div>
-      <Modal
-        isOpen={isDriversManagementModalOpen.isOpen}
-        className="p-4 sm:p-6 lg:p-10"
-      >
+
+      <Modal isOpen={isDriversManagementModalOpen.isOpen} className="p-4 sm:p-6 lg:p-10">
         <AddDriversManagementModal
-          initialValue={isDriversManagementModalOpen.type === "edit" ? isDriversManagementModalOpen.data : {}}
+          initialValue={
+            isDriversManagementModalOpen.type === "edit"
+              ? isDriversManagementModalOpen.data
+              : {}
+          }
           setIsOpen={setIsDriversManagementModalOpen}
           onDriverCreated={handleOnDriverCreated}
         />
       </Modal>
+
       <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-3">Delete Driver?</h2>

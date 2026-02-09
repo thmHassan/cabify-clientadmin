@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { apiGetThirdPartyInformation, apiSaveThirdPartyInformation } from "../../../../../../services/SettingsConfigurationServices";
 import toast from 'react-hot-toast';
 
@@ -20,6 +21,9 @@ const Integrations = () => {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+
+    const tenantDataFromStorage = getTenantData();
+    const showMapIntegrations = tenantDataFromStorage?.map !== "disable";
 
     const fetchThirdPartyInformation = useCallback(async () => {
         setTableLoading(true);
@@ -109,37 +113,41 @@ const Integrations = () => {
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-gray-800">Google Maps</h3>
-                                <div className="mt-2">
-                                    <InputBox
-                                        label="API Key"
-                                        placeholder="Enter Google Maps API Key"
-                                        value={thirdPartyData.google_api_keys}
-                                        onChange={(e) => setThirdPartyData({ ...thirdPartyData, google_api_keys: e.target.value })}
-                                    />
+                    {showMapIntegrations && (
+                        <>
+                            <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-800">Google Maps</h3>
+                                        <div className="mt-2">
+                                            <InputBox
+                                                label="API Key"
+                                                placeholder="Enter Google Maps API Key"
+                                                value={thirdPartyData.google_api_keys}
+                                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, google_api_keys: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-gray-800">Barikoi</h3>
-                                <div className="mt-2">
-                                    <InputBox
-                                        label="API Key"
-                                        placeholder="Enter Barikoi API Key"
-                                        value={thirdPartyData.barikoi_api_keys}
-                                        onChange={(e) => setThirdPartyData({ ...thirdPartyData, barikoi_api_keys: e.target.value })}
-                                    />
+                            <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-800">Barikoi</h3>
+                                        <div className="mt-2">
+                                            <InputBox
+                                                label="API Key"
+                                                placeholder="Enter Barikoi API Key"
+                                                value={thirdPartyData.barikoi_api_keys}
+                                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, barikoi_api_keys: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm border p-4 space-y-6 mt-4">

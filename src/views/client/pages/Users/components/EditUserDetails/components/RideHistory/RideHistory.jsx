@@ -42,6 +42,7 @@ const RideHistory = ({ user }) => {
     const statusColors = {
         pending: "bg-[#F5C60B] text-white",
         cancelled: "bg-[#E24B4B] text-white",
+        completed: "bg-[#10B981] text-white",
         ongoing: "bg-[#10B981] text-white",
     };
 

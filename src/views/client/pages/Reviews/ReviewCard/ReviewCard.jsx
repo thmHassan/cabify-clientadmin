@@ -1,6 +1,22 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const ReviewCard = ({ rating }) => {
+    const navigate = useNavigate();
+
+    const handleUserClick = () => {
+        const userId = rating?.booking_detail?.user_detail?.id;
+        if (userId) {
+            navigate(`/users/${userId}`);
+        }
+    };
+
+    const handleDriverClick = () => {
+        const driverId = rating?.booking_detail?.driver_detail?.id;
+        if (driverId) {
+            navigate(`/drivers/${driverId}`);
+        }
+    };
 
     return (
         <div
@@ -13,15 +29,28 @@ const ReviewCard = ({ rating }) => {
                 </div>
             </div>
             <div className="flex items-center justify-center gap-3">
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[165px]">
+                <div
+                    onClick={handleUserClick}
+                    className={`inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[165px] ${rating?.booking_detail?.user_detail?.id ? 'cursor-pointer hover:bg-[#E0E0E0] transition-colors' : ''
+                        }`}
+                >
                     <p className="text-xs text-center text-[#6C6C6C]">User Name</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm line-clamp-1">{rating?.booking_detail?.user_detail?.name || "-"}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm line-clamp-1">
+                        {rating?.booking_detail?.user_detail?.name || "-"}
+                    </p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[165px]">
+                <div
+                    onClick={handleDriverClick}
+                    className={`inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[165px] ${rating?.booking_detail?.driver_detail?.id ? 'cursor-pointer hover:bg-[#E0E0E0] transition-colors' : ''
+                        }`}
+                >
                     <p className="text-xs text-center text-[#6C6C6C]">Driver Name</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm line-clamp-1">{rating?.booking_detail?.driver_detail?.name || "-"}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm line-clamp-1">
+                        {rating?.booking_detail?.driver_detail?.name || "-"}
+                    </p>
                 </div>
+
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[133px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Driver Rating</p>
                     <p className="text-[#333333] text-center font-semibold text-sm line-clamp-1">{rating.rating || "0"}</p>

@@ -235,7 +235,7 @@ const Plots = () => {
           (args[0].includes('clip-path') ||
             args[0].includes('Received `true` for a non-boolean attribute'))
         ) {
-          return; 
+          return;
         }
         originalError.apply(console, args);
       };
@@ -263,7 +263,7 @@ const Plots = () => {
     const prefRaw = tenant?.maps_api || tenant?.map || tenant?.search_api || "";
     const preference = prefRaw?.toLowerCase?.() || "";
 
-    let provider = "google"; 
+    let provider = "google";
 
     if (preference.includes("barikoi") && !preference.includes("google")) {
       provider = "barikoi";
@@ -393,7 +393,7 @@ const Plots = () => {
 
   const generatePlotColor = (index) => {
     const colors = [
-      '#4285F4', 
+      '#4285F4',
     ];
     return colors[index % colors.length];
   };
@@ -736,7 +736,7 @@ const Plots = () => {
       </div>
       <Modal
         isOpen={isPlotsModelOpen.isOpen}
-        className="p-4 sm:p-6 lg:p-10"
+        className="p-4 sm:p-6 lg:p-10 w-full max-w-2xl"
       >
         <AddPlotsModel
           initialValue={isPlotsModelOpen.type === "edit" ? {

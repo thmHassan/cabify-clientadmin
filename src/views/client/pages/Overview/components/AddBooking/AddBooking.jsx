@@ -415,7 +415,7 @@ const AddBooking = ({ setIsOpen }) => {
         }
     };
 
-    const handleCalculateFares = async (values) => {
+    const handleCalculateFares = async (values, setFieldValue) => {
         setFareLoading(true);
         setFareError(null);
 
@@ -485,6 +485,12 @@ const AddBooking = ({ setIsOpen }) => {
             if (response?.data?.success === 1) {
                 setFareData(response.data);
                 setFareCalculated(true);
+
+                if (response.data.distance) {
+                    const distanceInKm = (response.data.distance / 1000).toFixed(2);
+                    setFieldValue('distance', distanceInKm);
+                }
+
                 toast.success("Fare calculated successfully");
                 console.log("Fare calculation successful:", response.data);
             } else {
@@ -790,6 +796,7 @@ const AddBooking = ({ setIsOpen }) => {
                     congestion_toll: 0,
                     ac_waiting_charges: 0,
                     total_charges: 0,
+                    distance: "",
                 }}
                 onSubmit={handleCreateBooking}
             >
@@ -1004,7 +1011,7 @@ const AddBooking = ({ setIsOpen }) => {
                                                                 onChange={(e) => setFieldValue("booking_type", e.target.value)}
                                                             >
 
-                                                                <option value="outstation">Outstation</option>
+                                                                <option value="outstation">Select Type</option>
                                                                 <option value="local">Local</option>
                                                             </select>
                                                         </div>
@@ -1374,7 +1381,7 @@ const AddBooking = ({ setIsOpen }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="h-full">
+                                    {/* <div className="h-full">
                                         <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4">
                                             <Maps
                                                 mapsApi={mapsApi}
@@ -1395,6 +1402,57 @@ const AddBooking = ({ setIsOpen }) => {
                                                 }).filter(Boolean)}
                                             />
                                         </div>
+                                        <div className="mt-4">
+                                            <label className="text-sm font-semibold text-left md:w-16 w-16">
+                                                Distance
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Distance will be shown here"
+                                                readOnly
+                                                value={values.distance ? `${values.distance} km` : ""}
+                                                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                            />
+                                        </div>
+                                    </div> */}
+                                    <div className="h-full">
+                                        <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4">
+                                            <Maps
+                                                mapsApi={mapsApi}
+                                                pickupCoords={values.pickup_latitude && values.pickup_longitude ? {
+                                                    lat: parseFloat(values.pickup_latitude),
+                                                    lng: parseFloat(values.pickup_longitude)
+                                                } : null}
+                                                destinationCoords={values.destination_latitude && values.destination_longitude ? {
+                                                    lat: parseFloat(values.destination_latitude),
+                                                    lng: parseFloat(values.destination_longitude)
+                                                } : null}
+                                                viaCoords={(values.via_latitude || []).map((lat, index) => {
+                                                    const lng = values.via_longitude?.[index];
+                                                    return lat && lng ? {
+                                                        lat: parseFloat(lat),
+                                                        lng: parseFloat(lng)
+                                                    } : null;
+                                                }).filter(Boolean)}
+                                                setFieldValue={setFieldValue}
+                                                fetchPlotName={fetchPlotName}
+                                                setPickupPlotData={setPickupPlotData}
+                                                setDestinationPlotData={setDestinationPlotData}
+                                                SEARCH_API={SEARCH_API}
+                                            />
+                                        </div>
+                                        <div className="mt-4">
+                                            <label className="text-sm font-semibold text-left md:w-16 w-16">
+                                                Distance
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Distance will be shown here"
+                                                readOnly
+                                                value={values.distance ? `${values.distance} km` : ""}
+                                                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1406,7 +1464,7 @@ const AddBooking = ({ setIsOpen }) => {
                                                 btnSize="md"
                                                 type="filled"
                                                 className="px-4 py-3 text-xs text-white rounded"
-                                                onClick={() => handleCalculateFares(values)}
+                                                onClick={() => handleCalculateFares(values, setFieldValue)} 
                                                 disabled={fareLoading}
                                             >
                                                 {fareLoading ? "Calculating..." : "Calculate Fares"}
@@ -1436,14 +1494,15 @@ const AddBooking = ({ setIsOpen }) => {
                                             </label>
 
                                             <select
-                                                value={values.payment_method || "cash"}
+                                                value={values.payment_method}
                                                 onChange={(e) =>
                                                     setFieldValue("payment_method", e.target.value)
                                                 }
                                                 className="border rounded px-2 py-1 w-48"
                                             >
+                                                <option value="">Select Method</option>
                                                 <option value="cash">Cash</option>
-                                                <option value="online">Online</option>
+                                                <option value="online">Card</option>
                                             </select>
                                         </div>
 

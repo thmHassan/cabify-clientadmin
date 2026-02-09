@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import useAuth from "../../../utils/hooks/useAuth";
 import SettingIcon from "../../svg/SettingIcon";
 import NotificationIcon from "../../svg/NotificationIcon";
@@ -19,6 +19,7 @@ import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
 import { getTenantData } from "../../../utils/functions/tokenEncryption";
+import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus} from "../../routes/SocketProvider";
 
@@ -42,6 +43,12 @@ const UserPageContainer = ({ children }) => {
   const location = useLocation();
   const socket = useSocket();
   const isConnected = useSocketStatus();
+
+  // Filter navigation elements based on tenant feature flags
+  const filteredNavElements = useMemo(
+    () => filterNavByTenantFeatures(NAV_ELEMENTS, tenantData),
+    [tenantData]
+  );
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
@@ -336,7 +343,7 @@ const UserPageContainer = ({ children }) => {
           </button>
         </div>
         <div className="flex flex-col gap-[30px]">
-          {NAV_ELEMENTS.map(({ title, routes }, index) => (
+          {filteredNavElements.map(({ title, routes }, index) => (
             <div key={index}>
               <div className={`${isSidebarOpen ? "block" : "hidden"} text-[#7A7A7A] px-6 lg:px-8 text-sm leading-[19px] font-semibold mb-[18px]`}>
                 {title}

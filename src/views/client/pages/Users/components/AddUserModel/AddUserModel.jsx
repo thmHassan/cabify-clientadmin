@@ -19,6 +19,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
             const formData = new FormData();
             formData.append("name", values.name || "");
             formData.append("email", values.email || "");
+            formData.append("country_code", values.countryCode || "");
             formData.append("phone_no", values.phoneNumber || "");
             formData.append("password", values.password || "");
             formData.append("address", values.address || "");
@@ -68,6 +69,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                 initialValues={{
                     name: initialValue.name || '',
                     email: initialValue.email || '',
+                    countryCode: initialValue.countryCode || '',
                     phoneNumber: initialValue.phoneNumber || '',
                     password: initialValue.password || '',
                     address: initialValue.address || '',
@@ -118,6 +120,48 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                 </div>
                                 <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
                             </div>
+                            <div className="w-[calc((100%-20px)/2)]">
+                                <FormLabel htmlFor="phoneNumber">Phone Number</FormLabel>
+
+                                <div className="flex items-center border border-[#8D8D8D] rounded-lg shadow-[-4px_4px_6px_0px_#0000001F] overflow-hidden sm:h-16 h-14">
+
+                                    {/* Country Code */}
+                                    <Field
+                                        as="select"
+                                        name="countryCode"
+                                        className="h-full px-3 sm:px-4 bg-gray-100 border-r border-[#8D8D8D] outline-none text-sm sm:text-base font-semibold"
+                                    >
+                                        <option value="+91">+91</option>
+                                        <option value="+1">+1</option>
+                                        <option value="+44">+44</option>
+                                        <option value="+971">+971</option>
+                                    </Field>
+
+                                    {/* Phone Number */}
+                                    <Field
+                                        type="text"
+                                        name="phoneNumber"
+                                        className="flex-1 h-full sm:px-5 px-4 outline-none placeholder:text-[#6C6C6C] sm:text-base text-sm font-semibold"
+                                        placeholder="Enter phone number"
+                                    />
+                                </div>
+
+                                <ErrorMessage name="countryCode" component="div" className="text-red-500 text-sm mt-1" />
+                                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm mt-1" />
+                            </div>
+
+                            {/* <div className="w-[calc((100%-20px)/2)]">
+                                <FormLabel htmlFor="countryCode">Country Code</FormLabel>
+                                <div className="sm:h-16 h-14">
+                                    <Field
+                                        type="text"
+                                        name="countryCode"
+                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F]"
+                                        placeholder="+91"
+                                    />
+                                </div>
+                                <ErrorMessage name="countryCode" component="div" className="text-red-500 text-sm mt-1" />
+                            </div>
 
                             <div className="w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="phone-number">Phone Number</FormLabel>
@@ -130,7 +174,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                     />
                                 </div>
                                 <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm mt-1" />
-                            </div>
+                            </div> */}
 
                             <div className="w-full sm:w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="password">Password</FormLabel>

@@ -35,6 +35,7 @@ const EditUserDetails = () => {
         name: "",
         email: "",
         phone_no: "",
+        country_code: "",
         password: "",
         address: "",
         city: "",
@@ -80,6 +81,7 @@ const EditUserDetails = () => {
                     name: userData.name || "",
                     email: userData.email || "",
                     phone_no: userData.phone_no || "",
+                    country_code: userData.country_code || "+91",
                     address: userData.address || "",
                     city: userData.city || "",
                     status: userData.status || "",
@@ -140,6 +142,7 @@ const EditUserDetails = () => {
             editData.append("id", id);
             editData.append("name", formData.name || "");
             editData.append("email", formData.email || "");
+            editData.append("country_code", formData.country_code || "");
             editData.append("phone_no", formData.phone_no || "");
             editData.append("address", formData.address || "");
             editData.append("city", formData.city || "");
@@ -305,6 +308,36 @@ const EditUserDetails = () => {
 
                                     <div className="flex flex-col gap-1">
                                         <label className="text-sm font-medium text-gray-700">Phone Number</label>
+
+                                        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:border-blue-600">
+
+                                            {/* Country Code */}
+                                            <select
+                                                name="country_code"
+                                                value={formData.country_code}
+                                                onChange={handleInputChange}
+                                                className="px-3 py-3 bg-gray-100 border-r border-gray-300 outline-none font-semibold"
+                                            >
+                                                <option value="+91">+91</option>
+                                                <option value="+1">+1</option>
+                                                <option value="+44">+44</option>
+                                                <option value="+971">+971</option>
+                                            </select>
+
+                                            {/* Phone Number */}
+                                            <input
+                                                type="text"
+                                                name="phone_no"
+                                                value={formData.phone_no}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter phone number"
+                                                className="flex-1 px-4 py-3 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* <div className="flex flex-col gap-1">
+                                        <label className="text-sm font-medium text-gray-700">Phone Number</label>
                                         <input
                                             type="text"
                                             name="phone_no"
@@ -313,7 +346,7 @@ const EditUserDetails = () => {
                                             placeholder="Enter Phone Number"
                                             className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600"
                                         />
-                                    </div>
+                                    </div> */}
                                     <div className="flex flex-col gap-1">
                                         <label className="text-sm font-medium text-gray-700">Password</label>
                                         <input

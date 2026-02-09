@@ -90,6 +90,7 @@ const DriverDetails = () => {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
+        country_code: "",
         phone_no: "",
         address: "",
         driver_license: "",
@@ -162,6 +163,11 @@ const DriverDetails = () => {
                     name: data.name || "",
                     email: data.email || "",
                     phone_no: data.phone_no || "",
+                    country_code:
+                        data.country_code && data.country_code.startsWith("+")
+                            ? data.country_code
+                            : "+91",
+
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
@@ -174,13 +180,16 @@ const DriverDetails = () => {
                     color: data.color || "",
                     capacity: data.capacity || "",
                     plate_no: data.plate_no || "",
-                    vehicle_registration_date: data.vehicle_registration_date ? data.vehicle_registration_date.split('T')[0] : "",
+                    vehicle_registration_date: data.vehicle_registration_date
+                        ? data.vehicle_registration_date.split('T')[0]
+                        : "",
                     bank_name: data.bank_name || "",
                     bank_account_number: data.bank_account_number || "",
                     account_holder_name: data.account_holder_name || "",
                     bank_phone_no: data.bank_phone_no || "",
                     iban_no: data.iban_no || "",
                 });
+
                 if (data.profile_image) {
                     setProfileImage(data.profile_image);
                 }
@@ -405,6 +414,7 @@ const DriverDetails = () => {
             formDataObj.append('id', driverId);
             formDataObj.append('name', formData.name || '');
             formDataObj.append('email', formData.email || '');
+            formDataObj.append('country_code', formData.country_code || '+91');
             formDataObj.append('phone_no', formData.phone_no || '');
             formDataObj.append('address', formData.address || '');
             formDataObj.append('driver_license', formData.driver_license || '');
@@ -578,14 +588,33 @@ const DriverDetails = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Phone Number
                             </label>
-                            <input
-                                type="text"
-                                value={formData.phone_no}
-                                onChange={(e) => handleInputChange('phone_no', e.target.value)}
-                                placeholder="Enter Phone Number"
-                                className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                            />
+
+                            <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-blue-600">
+
+                                {/* Country Code */}
+                                <select
+                                    value={formData.country_code}
+                                    onChange={(e) => handleInputChange('country_code', e.target.value)}
+                                    className="px-3 bg-gray-100 border-r border-gray-300 outline-none font-semibold"
+                                >
+                                    <option value="+91">+91</option>
+                                    <option value="+92">+92</option>
+                                    <option value="+1">+1</option>
+                                    <option value="+44">+44</option>
+                                    <option value="+971">+971</option>
+                                </select>
+
+                                {/* Phone */}
+                                <input
+                                    type="text"
+                                    value={formData.phone_no}
+                                    onChange={(e) => handleInputChange('phone_no', e.target.value)}
+                                    placeholder="Enter Phone Number"
+                                    className="flex-1 h-11 px-4 text-sm focus:outline-none"
+                                />
+                            </div>
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Assigned Vehicle
@@ -836,9 +865,9 @@ const DriverDetails = () => {
                             type="filledGreen"
                             onClick={handleApproveInOffice}
                             className="bg-[#10B981] hover:bg-[#10B981] text-white py-1.5 px-4 rounded-md text-sm"
-                            // disabled={isApproving}
+                        // disabled={isApproving}
                         >
-                          Approve in office
+                            Approve in office
                         </Button>
                     )}
 

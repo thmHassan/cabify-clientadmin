@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetInvoiceHistory, apiGetStripeInformation, apiSaveStripeInformation, apiGetPlanDetails } from "../../../../../../services/SettingsConfigurationServices";
 import toast from 'react-hot-toast';
+import Button from "../../../../../../components/ui/Button/Button";
 
 const Billing = () => {
     const [invoices, setInvoices] = useState([]);
@@ -269,27 +270,28 @@ const Billing = () => {
                         />
                     </div>
 
-                    {/* <div className="flex justify-start gap-3 pt-4 mt-6">
-                        <button
-                            type="submit"
+                    <div className="flex justify-end gap-3 pt-4 mt-6">
+                        <Button
+                            type="filled"
+                            onClick={handleStripeSubmit}
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            className="px-3 py-3 rounded-md"
                         >
                             {isSubmitting ? "Saving..." : "Save Changes"}
-                        </button>
+                        </Button>
+
                         <button
                             type="button"
-                            className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100"
+                            className="px-4 py-2 border border-[#1F41BB] rounded-lg text-[#1F41BB]"
                         >
                             Cancel
                         </button>
-                    </div> */}
+                    </div>
                 </div>
             </form>
         </div>
     );
 }
-
 
 const Feature = ({ label }) => (
     <div className="flex items-center gap-2">

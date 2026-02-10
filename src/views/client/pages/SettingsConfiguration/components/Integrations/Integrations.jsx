@@ -131,7 +131,7 @@ const Integrations = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
+                            {/* <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1">
                                         <h3 className="font-semibold text-gray-800">Barikoi</h3>
@@ -145,7 +145,7 @@ const Integrations = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
                         </>
                     )}
                 </div>
@@ -257,7 +257,7 @@ const Integrations = () => {
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                    <div className="flex justify-start gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-4">
                         <button
                             type="submit"
                             disabled={isSubmitting}
@@ -280,17 +280,6 @@ const Integrations = () => {
 
 
 const InputBox = ({ label, placeholder, type = "text", value, onChange, disabled = false }) => (
-    // <div className="flex flex-col gap-1">
-    //     <label className="text-sm text-gray-600">{label}</label>
-    //     <input
-    //         type={type}
-    //         placeholder={placeholder}
-    //         value={value || ""}
-    //         onChange={onChange}
-    //         disabled={disabled}
-    //         className="border rounded-lg px-3 py-2 focus:ring focus:ring-blue-100 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-    //     />
-    // </div>
     <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
         <div className="">

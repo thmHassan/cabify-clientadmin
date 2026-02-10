@@ -136,7 +136,7 @@ const UserPageContainer = ({ children }) => {
       const data = response?.data || response;
       
       if (data && (data.success === 1 || data.success === true)) {
-        setBookingSystem(data.company_booking_system);
+        setBookingSystem(data.company_admin_dispatch_sytem);
       } else {
         console.error("API response did not indicate success:", data);
       }
@@ -157,7 +157,7 @@ const UserPageContainer = ({ children }) => {
       console.log("Switching from", bookingSystem, "to", newSystem);
       
       const formData = new FormData();
-      formData.append("company_booking_system", newSystem);
+      formData.append("company_admin_dispatch_sytem", newSystem);
       
       const response = await apiUpdateBookingSystem(formData);
       console.log("Update Full Response:", response);

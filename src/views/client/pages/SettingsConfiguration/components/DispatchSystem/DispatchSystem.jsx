@@ -153,7 +153,7 @@ const DispatchSystem = () => {
         try {
             const bookingRes = await apiGetBookingSystem();
             if (bookingRes?.data?.success === 1) {
-                setBookingSystem(bookingRes.data.company_booking_system);
+                setBookingSystem(bookingRes.data.company_admin_dispatch_sytem);
             }
 
             const dispatchRes = await apiGetDispatchSystem();
@@ -201,7 +201,7 @@ const DispatchSystem = () => {
                 });
 
                 const filteredData = dispatchData.filter((d) =>
-                    bookingRes.data.company_booking_system === "both" ? true : d.type === bookingRes.data.company_booking_system
+                    bookingRes.data.company_admin_dispatch_sytem === "both" ? true : d.type === bookingRes.data.company_admin_dispatch_sytem
                 );
 
                 filteredData.forEach((p, index) => {

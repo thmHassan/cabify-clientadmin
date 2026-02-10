@@ -212,7 +212,7 @@ const CompanyProfile = () => {
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                <div className="flex space-x-4 pt-4">
+                <div className="flex justify-end space-x-4 pt-4">
                     <button
                         type="submit"
                         disabled={isSubmitting}

@@ -391,11 +391,9 @@ const Plots = () => {
     });
   }, [plotsData, parseCoordinates, isInExpectedRegion]);
 
-  const generatePlotColor = (index) => {
-    const colors = [
-      '#4285F4',
-    ];
-    return colors[index % colors.length];
+  const generatePlotColor = (index, plot) => {
+    if (selectedPlot?.id === plot?.id) return '#EF4444'; // Selected = Red
+    return '#4285F4'; // Others = Blue
   };
 
   const renderAllPolygons = useCallback(() => {
@@ -432,7 +430,7 @@ const Plots = () => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
           hasValidCoords = true;
-          const color = generatePlotColor(index);
+          const color = generatePlotColor(index, plot);
 
           const polygon = new window.google.maps.Polygon({
             paths: coords,
@@ -538,7 +536,7 @@ const Plots = () => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
           const latLngs = coords.map(c => [c.lat, c.lng]);
-          const color = generatePlotColor(index);
+          const color = generatePlotColor(index, plot);
 
           const polygon = window.L.polygon(latLngs, {
             color: color,

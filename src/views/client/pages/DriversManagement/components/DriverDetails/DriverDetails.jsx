@@ -18,7 +18,7 @@ import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
 
-const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name }) => {
+const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name, disabled = false }) => {
     return (
         <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">
@@ -30,7 +30,8 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
                     value={value}
                     onChange={onChange}
                     name={name}
-                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600"
+                    disabled={disabled}
+                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
                 >
                     <option value="">{placeholder}</option>
                     {options.map((opt, index) => (
@@ -45,7 +46,8 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
                     value={value}
                     onChange={onChange}
                     name={name}
-                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600"
+                    disabled={disabled}
+                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
                 />
             ) : (
                 <input
@@ -54,7 +56,8 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
                     onChange={onChange}
                     name={name}
                     placeholder={placeholder}
-                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600"
+                    disabled={disabled}
+                    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
                 />
             )}
         </div>
@@ -122,6 +125,42 @@ const DriverDetails = () => {
     const [subCompanyList, setSubCompanyList] = useState([]);
     const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
 
+    // vehicle_change_request > 0 હોય તો change_ values show કરવી, નહીં તો original values
+    const getVehicleFormData = (data) => {
+        const hasChangeRequest = Number(data?.vehicle_change_request) > 0;
+
+        return {
+            vehicle_name: hasChangeRequest
+                ? (data?.change_vehicle_name || data?.vehicle_name || "")
+                : (data?.vehicle_name || ""),
+            vehicle_type: hasChangeRequest
+                ? (data?.change_vehicle_type ? data.change_vehicle_type.toString() : (data?.vehicle_type ? data.vehicle_type.toString() : ""))
+                : (data?.vehicle_type ? data.vehicle_type.toString() : ""),
+            vehicle_service: hasChangeRequest
+                ? (data?.change_vehicle_service || data?.vehicle_service || "")
+                : (data?.vehicle_service || ""),
+            seats: hasChangeRequest
+                ? (data?.change_seats ? data.change_seats.toString() : (data?.seats ? data.seats.toString() : ""))
+                : (data?.seats ? data.seats.toString() : ""),
+            color: hasChangeRequest
+                ? (data?.change_color || data?.color || "")
+                : (data?.color || ""),
+            capacity: hasChangeRequest
+                ? (data?.change_capacity || data?.capacity || "")
+                : (data?.capacity || ""),
+            plate_no: hasChangeRequest
+                ? (data?.change_plate_no || data?.plate_no || "")
+                : (data?.plate_no || ""),
+            vehicle_registration_date: hasChangeRequest
+                ? (data?.change_vehicle_registration_date
+                    ? data.change_vehicle_registration_date.split('T')[0]
+                    : (data?.vehicle_registration_date ? data.vehicle_registration_date.split('T')[0] : ""))
+                : (data?.vehicle_registration_date
+                    ? data.vehicle_registration_date.split('T')[0]
+                    : ""),
+        };
+    };
+
     useEffect(() => {
         const fetchSubCompanies = async () => {
             setLoadingSubCompanies(true);
@@ -159,6 +198,10 @@ const DriverDetails = () => {
             if (response?.data?.success === 1 || response?.status === 200) {
                 const data = response?.data?.driver || response?.data?.data || response?.data || {};
                 setDriverData(data);
+
+                // vehicle fields: change_request > 0 હોય તો change_ values, નહીં તો original
+                const vehicleData = getVehicleFormData(data);
+
                 setFormData({
                     name: data.name || "",
                     email: data.email || "",
@@ -167,22 +210,23 @@ const DriverDetails = () => {
                         data.country_code && data.country_code.startsWith("+")
                             ? data.country_code
                             : "+91",
-
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
                     joined_date: data.joined_date ? data.joined_date.split('T')[0] : "",
                     sub_company: data.sub_company ? data.sub_company.toString() : "",
-                    vehicle_name: data.vehicle_name || "",
-                    vehicle_type: data.vehicle_type || "",
-                    vehicle_service: data.vehicle_service || "",
-                    seats: data.seats || "",
-                    color: data.color || "",
-                    capacity: data.capacity || "",
-                    plate_no: data.plate_no || "",
-                    vehicle_registration_date: data.vehicle_registration_date
-                        ? data.vehicle_registration_date.split('T')[0]
-                        : "",
+
+                    // Vehicle fields (change_request logic applied)
+                    vehicle_name: vehicleData.vehicle_name,
+                    vehicle_type: vehicleData.vehicle_type,
+                    vehicle_service: vehicleData.vehicle_service,
+                    seats: vehicleData.seats,
+                    color: vehicleData.color,
+                    capacity: vehicleData.capacity,
+                    plate_no: vehicleData.plate_no,
+                    vehicle_registration_date: vehicleData.vehicle_registration_date,
+
+                    // Bank fields
                     bank_name: data.bank_name || "",
                     bank_account_number: data.bank_account_number || "",
                     account_holder_name: data.account_holder_name || "",
@@ -457,8 +501,6 @@ const DriverDetails = () => {
 
             if (response?.status === 200 && Array.isArray(response?.data?.rideHistory)) {
                 setRideHistory(response?.data.rideHistory);
-                // setTotalItems(response.data.total || response.data.data.length);
-                // setTotalPages(response.data.last_page || 1);
             } else {
                 setRideHistory([]);
             }
@@ -507,6 +549,8 @@ const DriverDetails = () => {
         }
     };
 
+    const hasVehicleChangeRequest = Number(driverData?.vehicle_change_request) > 0;
+
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
             <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
@@ -550,10 +594,10 @@ const DriverDetails = () => {
                             Send Notification
                         </Button>
                     </div>
-
                 </div>
             </div>
 
+            {/* Driver Details */}
             <div>
                 <CardContainer className="p-5 mt-4">
                     <h2 className="text-base font-semibold text-gray-800 mb-6">
@@ -561,9 +605,7 @@ const DriverDetails = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Name
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                             <input
                                 type="text"
                                 value={formData.name}
@@ -573,9 +615,7 @@ const DriverDetails = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Email
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                             <input
                                 type="email"
                                 value={formData.email}
@@ -585,13 +625,8 @@ const DriverDetails = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Phone Number
-                            </label>
-
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                             <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-blue-600">
-
-                                {/* Country Code */}
                                 <select
                                     value={formData.country_code}
                                     onChange={(e) => handleInputChange('country_code', e.target.value)}
@@ -603,8 +638,6 @@ const DriverDetails = () => {
                                     <option value="+44">+44</option>
                                     <option value="+971">+971</option>
                                 </select>
-
-                                {/* Phone */}
                                 <input
                                     type="text"
                                     value={formData.phone_no}
@@ -614,11 +647,8 @@ const DriverDetails = () => {
                                 />
                             </div>
                         </div>
-
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Assigned Vehicle
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Vehicle</label>
                             <input
                                 type="text"
                                 value={formData.assigned_vehicle}
@@ -628,9 +658,7 @@ const DriverDetails = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Joined Date
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
                             <input
                                 type="date"
                                 value={formData.joined_date}
@@ -639,9 +667,7 @@ const DriverDetails = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Wallet Balance
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Balance</label>
                             <input
                                 type="text"
                                 value={driverData?.wallet_balance ? `${driverData.wallet_balance}` : "$0.00"}
@@ -651,9 +677,7 @@ const DriverDetails = () => {
                         </div>
                         <div className="flex flex-col gap-8">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Sub Company
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Sub Company</label>
                                 <select
                                     value={formData.sub_company}
                                     onChange={(e) => handleInputChange("sub_company", e.target.value)}
@@ -663,7 +687,6 @@ const DriverDetails = () => {
                                     <option value="">
                                         {loadingSubCompanies ? "Loading..." : "Select Sub Company"}
                                     </option>
-
                                     {subCompanyList.map((company) => (
                                         <option key={company.value} value={company.value}>
                                             {company.label}
@@ -680,7 +703,8 @@ const DriverDetails = () => {
                                 onClick={() => {
                                     lockBodyScroll();
                                     setIsAddWalletBalanceModalOpen(true);
-                                }}                            >
+                                }}
+                            >
                                 <span>Add Wallet Balance</span>
                             </Button>
                         </div>
@@ -700,7 +724,7 @@ const DriverDetails = () => {
                             type="filled"
                             className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={isSaving} a
                         >
                             {isSaving ? "Saving..." : "Save"}
                         </Button>
@@ -708,11 +732,21 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
+            {/* Vehicle Information */}
             <div>
                 <CardContainer className="p-5 mt-6">
-                    <h2 className="text-[22px] font-semibold mb-4">
-                        Vehicle Information
-                    </h2>
+                    <div className="flex items-center gap-3 mb-4">
+                        <h2 className="text-[22px] font-semibold">
+                            Vehicle Information
+                        </h2>
+                        {/* Change request badge */}
+                        {/* {hasVehicleChangeRequest && (
+                            <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full border border-amber-300">
+                                ⚠ Change Request Pending
+                            </span>
+                        )} */}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField
                             label="Vehicle Name"
@@ -721,7 +755,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('vehicle_name', e.target.value)}
                             name="vehicle_name"
                         />
-
                         <FormField
                             label="Vehicle Type"
                             type="select"
@@ -731,17 +764,15 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('vehicle_type', e.target.value)}
                             name="vehicle_type"
                         />
-
                         <FormField
                             label="Vehicle Service"
                             type="select"
                             placeholder="Select Vehicle Service"
-                            options={["Taxi", "Rental", "Delivery"]}
+                            options={["local", "Taxi", "Rental", "Delivery"]}
                             value={formData.vehicle_service}
                             onChange={(e) => handleInputChange('vehicle_service', e.target.value)}
                             name="vehicle_service"
                         />
-
                         <FormField
                             label="Seats"
                             type="select"
@@ -751,7 +782,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('seats', e.target.value)}
                             name="seats"
                         />
-
                         <FormField
                             label="Color"
                             type="select"
@@ -761,7 +791,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('color', e.target.value)}
                             name="color"
                         />
-
                         <FormField
                             label="Capacity"
                             placeholder="Enter Capacity"
@@ -769,7 +798,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('capacity', e.target.value)}
                             name="capacity"
                         />
-
                         <FormField
                             label="Plate Number"
                             placeholder="Enter Plate Number"
@@ -777,7 +805,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('plate_no', e.target.value)}
                             name="plate_no"
                         />
-
                         <FormField
                             label="Vehicle Registration Date"
                             type="date"
@@ -785,9 +812,10 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange('vehicle_registration_date', e.target.value)}
                             name="vehicle_registration_date"
                         />
-
                     </div>
-                    {Number(driverData?.vehicle_change_request) > 0 && (
+
+                    {/* Approve/Reject buttons - only when change request exists */}
+                    {hasVehicleChangeRequest && (
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                             <Button
                                 btnSize="md"
@@ -797,7 +825,6 @@ const DriverDetails = () => {
                             >
                                 <span>Reject</span>
                             </Button>
-
                             <Button
                                 btnSize="md"
                                 type="filledGreen"
@@ -811,11 +838,11 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
+            {/* Bank Information */}
             <div className="p-5 mt-6 bg-[#EEF3FF] rounded-xl">
                 <h2 className="text-[22px] font-semibold mb-4">
                     Bank Information
                 </h2>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                         label="Bank Name"
@@ -855,6 +882,7 @@ const DriverDetails = () => {
                 </div>
             </div>
 
+            {/* Document Information */}
             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
                 <div className="flex gap-4 items-center mb-4 flex-wrap">
                     <h2 className="text-[22px] font-semibold">
@@ -865,12 +893,10 @@ const DriverDetails = () => {
                             type="filledGreen"
                             onClick={handleApproveInOffice}
                             className="bg-[#10B981] hover:bg-[#10B981] text-white py-1.5 px-4 rounded-md text-sm"
-                        // disabled={isApproving}
                         >
                             Approve in office
                         </Button>
                     )}
-
                     {Number(driverData?.document_approved_office) === 1 && (
                         <span className="bg-[#10B981] text-white text-sm px-3 py-1 rounded-full flex items-center gap-1">
                             <svg
@@ -904,17 +930,6 @@ const DriverDetails = () => {
                         >
                             Reject All
                         </Button>
-                        {/* <Button
-                            btnSize="md"
-                            type="filled"
-                            className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
-                            onClick={() => {
-                                lockBodyScroll();
-                                setIsAddDocumentModalOpen(true);
-                            }}
-                        >
-                            Add Document
-                        </Button> */}
                     </div>
                 </div>
 
@@ -930,7 +945,6 @@ const DriverDetails = () => {
                                 className="flex justify-between items-center bg-white p-4 rounded-lg mb-3"
                             >
                                 <span className="font-medium">{doc.displayName}</span>
-
                                 <div className="flex items-center gap-3">
                                     <select
                                         value={doc.status || "pending"}
@@ -949,14 +963,6 @@ const DriverDetails = () => {
                                     >
                                         View
                                     </Button>
-                                    {/* <Button
-                                        className="py-1.5 px-4 rounded-sm leading-[25px] border border-blue-600 text-blue-600 hover:bg-blue-50"
-                                        onClick={() => {
-                                            console.log("Edit document:", doc);
-                                        }}
-                                    >
-                                        Edit
-                                    </Button> */}
                                     <Button
                                         className="py-1.5 px-4 rounded-[8px] leading-[25px] border-[1px] border-[#FF4747] text-[#FF4747]"
                                         onClick={() => handleDeleteDocument(doc.id)}
@@ -970,6 +976,7 @@ const DriverDetails = () => {
                 </Loading>
             </div>
 
+            {/* Revenue */}
             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
                 <div className="flex">
                     <p className="font-semibold">Revenue</p>
@@ -979,6 +986,7 @@ const DriverDetails = () => {
                 </div>
             </div>
 
+            {/* Ride History */}
             <div>
                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5] mt-5">
                     <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
@@ -1009,10 +1017,8 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
-            <Modal
-                isOpen={isAddWalletBalanceModalOpen}
-                className="p-4 sm:p-6 lg:p-10"
-            >
+            {/* Modals */}
+            <Modal isOpen={isAddWalletBalanceModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <AddWalletBalanceModel
                     driverId={driverId}
                     setIsOpen={setIsAddWalletBalanceModalOpen}
@@ -1022,10 +1028,7 @@ const DriverDetails = () => {
                 />
             </Modal>
 
-            <Modal
-                isOpen={isAddDocumentModalOpen}
-                className="p-4 sm:p-6 lg:p-10"
-            >
+            <Modal isOpen={isAddDocumentModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <AddDocumentModel
                     initialValue={selectedDocument}
                     setIsOpen={(value) => {
@@ -1036,20 +1039,14 @@ const DriverDetails = () => {
                 />
             </Modal>
 
-            <Modal
-                isOpen={isSendNotificationModalOpen}
-                className="p-4 sm:p-6 lg:p-10"
-            >
+            <Modal isOpen={isSendNotificationModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <SendNotifictionModel
                     driverId={driverId}
                     setIsOpen={setIsSendNotificationModalOpen}
                 />
             </Modal>
 
-            <Modal
-                isOpen={isRejectModalOpen}
-                className="p-4 sm:p-6 lg:p-10"
-            >
+            <Modal isOpen={isRejectModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <RejectModel
                     driverId={driverId}
                     setIsOpen={setIsRejectModalOpen}
@@ -1058,7 +1055,6 @@ const DriverDetails = () => {
                     }}
                 />
             </Modal>
-
         </div>
     );
 };

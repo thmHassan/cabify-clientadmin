@@ -330,7 +330,7 @@ const Commission = ({ isSidebarOpen }) => {
                                 </div>
                             </label>
                         </div>
-                        <div className="flex justify-end">
+                        {/* <div className="flex justify-end">
                             <Button
                                 type="filled"
                                 onClick={handleSaveCommission}
@@ -339,7 +339,7 @@ const Commission = ({ isSidebarOpen }) => {
                             >
                                 {isSubmitting ? "Saving..." : "Save Packages (Top Up)"}
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 </CardContainer>
 
@@ -384,7 +384,7 @@ const Commission = ({ isSidebarOpen }) => {
                                 disabled={isSubmitting}
                                 className="px-3 py-3 rounded-md"
                             >
-                                {isSubmitting ? "Saving..." : "Save Commission Settings"}
+                                {isSubmitting ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
                     </div>

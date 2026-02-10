@@ -14,6 +14,8 @@ const AccountRideHistory = ({ account, handleClose }) => {
     const [collecting, setCollecting] = useState(false);
     const [distanceUnit, setDistanceUnit] = useState("Miles");
     const [currencySymbol, setCurrencySymbol] = useState("₹");
+    const [totalAmount, setTotalAmount] = useState(0);
+
 
     const currencySymbols = {
         INR: "₹",
@@ -62,13 +64,16 @@ const AccountRideHistory = ({ account, handleClose }) => {
 
             if (response?.data?.success === 1) {
                 setRideHistory(response?.data?.data || []);
+                setTotalAmount(response?.data?.totalAmount || 0);
             } else {
                 setRideHistory([]);
+                setTotalAmount(0);
                 toast.error("Failed to fetch ride history");
             }
         } catch (error) {
             console.error("Error fetching ride history:", error);
             setRideHistory([]);
+            setTotalAmount(0);
             toast.error("Error fetching ride history");
         } finally {
             setLoading(false);
@@ -114,10 +119,6 @@ const AccountRideHistory = ({ account, handleClose }) => {
         setCurrentPage(1);
     };
 
-    const calculateTotalAmount = () => {
-        return rideHistory.reduce((sum, ride) => sum + parseFloat(ride.offered_amount || 0), 0).toFixed(2);
-    };
-
     return (
         <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto">
             {/* Header */}
@@ -130,7 +131,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Total Amount:</span>
                         <span className="text-lg font-semibold text-[#252525]">
-                            {currencySymbol}{calculateTotalAmount()}
+                            {currencySymbol}{Number(totalAmount).toFixed(2)}
                         </span>
                     </div>
                     <Button

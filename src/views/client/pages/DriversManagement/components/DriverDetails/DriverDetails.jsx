@@ -17,6 +17,7 @@ import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices"
 import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name, disabled = false }) => {
     return (
@@ -66,6 +67,10 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
 
 const DriverDetails = () => {
     const { id: driverId } = useParams();
+
+    const tenantData = getTenantData();
+    const isPushNotificationEnabled = tenantData?.push_notification === "enable" || tenantData?.push_notification === "yes";
+
     const [isAddWalletBalanceModalOpen, setIsAddWalletBalanceModalOpen] = useState(false);
     const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false);
     const [isSendNotificationModalOpen, setIsSendNotificationModalOpen] = useState(false);
@@ -582,17 +587,20 @@ const DriverDetails = () => {
                             </Button>
                         )}
 
-                        <Button
-                            type="filled"
-                            btnSize="2xl"
-                            onClick={() => {
-                                lockBodyScroll();
-                                setIsSendNotificationModalOpen(true);
-                            }}
-                            className="w-full sm:w-auto !py-3.5"
-                        >
-                            Send Notification
-                        </Button>
+                        {/* Show Send Notification button only if push_notification is enabled */}
+                        {isPushNotificationEnabled && (
+                            <Button
+                                type="filled"
+                                btnSize="2xl"
+                                onClick={() => {
+                                    lockBodyScroll();
+                                    setIsSendNotificationModalOpen(true);
+                                }}
+                                className="w-full sm:w-auto !py-3.5"
+                            >
+                                Send Notification
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -724,7 +732,7 @@ const DriverDetails = () => {
                             type="filled"
                             className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                             onClick={handleSave}
-                            disabled={isSaving} a
+                            disabled={isSaving}
                         >
                             {isSaving ? "Saving..." : "Save"}
                         </Button>
@@ -739,12 +747,6 @@ const DriverDetails = () => {
                         <h2 className="text-[22px] font-semibold">
                             Vehicle Information
                         </h2>
-                        {/* Change request badge */}
-                        {/* {hasVehicleChangeRequest && (
-                            <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full border border-amber-300">
-                                ⚠ Change Request Pending
-                            </span>
-                        )} */}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1039,12 +1041,15 @@ const DriverDetails = () => {
                 />
             </Modal>
 
-            <Modal isOpen={isSendNotificationModalOpen} className="p-4 sm:p-6 lg:p-10">
-                <SendNotifictionModel
-                    driverId={driverId}
-                    setIsOpen={setIsSendNotificationModalOpen}
-                />
-            </Modal>
+            {/* Only render Send Notification modal if push notification is enabled */}
+            {isPushNotificationEnabled && (
+                <Modal isOpen={isSendNotificationModalOpen} className="p-4 sm:p-6 lg:p-10">
+                    <SendNotifictionModel
+                        driverId={driverId}
+                        setIsOpen={setIsSendNotificationModalOpen}
+                    />
+                </Modal>
+            )}
 
             <Modal isOpen={isRejectModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <RejectModel

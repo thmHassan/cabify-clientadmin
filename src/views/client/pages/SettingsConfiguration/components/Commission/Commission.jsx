@@ -225,7 +225,6 @@ const Commission = ({ isSidebarOpen }) => {
                                         <div className="mt-3">
                                             <input
                                                 type="number"
-                                                step="0.01"
                                                 placeholder="Amount"
                                                 value={commissionForm.package_amount}
                                                 onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
@@ -275,16 +274,16 @@ const Commission = ({ isSidebarOpen }) => {
                                                 placeholder="Days"
                                                 value={commissionForm.package_days}
                                                 onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
                                                 disabled={commissionForm.package_type !== "commission_without_topup"}
                                             />
                                             <input
                                                 type="number"
                                                 step="0.01"
-                                                placeholder="%"
+                                                placeholder="0%"
                                                 value={commissionForm.package_percentage}
                                                 onChange={(e) => handleCommissionFormChange("package_percentage", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
                                                 disabled={commissionForm.package_type !== "commission_without_topup"}
                                             />
                                         </div>
@@ -313,7 +312,7 @@ const Commission = ({ isSidebarOpen }) => {
                                                 placeholder="Days"
                                                 value={commissionForm.package_days}
                                                 onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
                                                 disabled={commissionForm.package_type !== "packages_post_paid"}
                                             />
                                             <input
@@ -322,7 +321,7 @@ const Commission = ({ isSidebarOpen }) => {
                                                 placeholder="Amount"
                                                 value={commissionForm.package_amount}
                                                 onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[80px]"
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
                                                 disabled={commissionForm.package_type !== "packages_post_paid"}
                                             />
                                         </div>

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import CardContainer from "../../../../../../components/shared/CardContainer";
 import Loading from "../../../../../../components/shared/Loading/Loading";
-import SearchBar from "../../../../../../components/shared/SearchBar/SearchBar";
 import Button from "../../../../../../components/ui/Button/Button";
 import PageTitle from "../../../../../../components/ui/PageTitle/PageTitle";
 import { lockBodyScroll, unlockBodyScroll } from "../../../../../../utils/functions/common.function";
@@ -15,10 +14,14 @@ import { apiGetUserById, apiEditUser, apiGetRideHistory, apiEditUserStatus } fro
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import SendNotifictionModel from "./components/SendNotifictionModel";
 import toast from "react-hot-toast";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const EditUserDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
+    const tenantData = getTenantData();
+    const isPushNotificationEnabled = tenantData?.push_notification === "enable" || tenantData?.push_notification === "yes";
 
     const [isSendNotificationModalOpen, setIsSendNotificationModalOpen] = useState({
         type: "new",
@@ -247,17 +250,20 @@ const EditUserDetails = () => {
                                 </Button>
                             )}
 
-                            <Button
-                                type="filled"
-                                btnSize="2xl"
-                                onClick={() => {
-                                    lockBodyScroll();
-                                    setIsSendNotificationModalOpen({ isOpen: true, type: "new" });
-                                }}
-                                className="w-full sm:w-auto !py-3.5"
-                            >
-                                Send Notification
-                            </Button>
+                            {/* Show Send Notification button only if push_notification is enabled */}
+                            {isPushNotificationEnabled && (
+                                <Button
+                                    type="filled"
+                                    btnSize="2xl"
+                                    onClick={() => {
+                                        lockBodyScroll();
+                                        setIsSendNotificationModalOpen({ isOpen: true, type: "new" });
+                                    }}
+                                    className="w-full sm:w-auto !py-3.5"
+                                >
+                                    Send Notification
+                                </Button>
+                            )}
                         </div>
 
                     </div>
@@ -336,17 +342,6 @@ const EditUserDetails = () => {
                                         </div>
                                     </div>
 
-                                    {/* <div className="flex flex-col gap-1">
-                                        <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                                        <input
-                                            type="text"
-                                            name="phone_no"
-                                            value={formData.phone_no}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter Phone Number"
-                                            className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600"
-                                        />
-                                    </div> */}
                                     <div className="flex flex-col gap-1">
                                         <label className="text-sm font-medium text-gray-700">Password</label>
                                         <input
@@ -439,15 +434,19 @@ const EditUserDetails = () => {
                         )}
                     </CardContainer>
                 </div>
-                <Modal
-                    isOpen={isSendNotificationModalOpen.isOpen}
-                    className="p-4 sm:p-6 lg:p-10"
-                >
-                    <SendNotifictionModel
-                        setIsOpen={setIsSendNotificationModalOpen}
-                        userId={id}
-                    />
-                </Modal>
+
+                {/* Only render modal if push notification is enabled */}
+                {isPushNotificationEnabled && (
+                    <Modal
+                        isOpen={isSendNotificationModalOpen.isOpen}
+                        className="p-4 sm:p-6 lg:p-10"
+                    >
+                        <SendNotifictionModel
+                            setIsOpen={setIsSendNotificationModalOpen}
+                            userId={id}
+                        />
+                    </Modal>
+                )}
 
             </div>
         </div>

@@ -30,8 +30,6 @@ const Dispatcher = () => {
   const [isLogModalOpen, setIsLogModalOpen] = useState({ type: "new", isOpen: false, });
   const [tableLoading, setTableLoading] = useState(false);
   const [_searchQuery, setSearchQuery] = useState("");
-  const [companyListDisplay, setCompanyListDisplay] = useState([]);
-  const [openMenuId, setOpenMenuId] = useState(null);
   const [_selectedStatus, setSelectedStatus] = useState(
     DISPATCH_STATUS_OPTIONS.find((o) => o.value === "all") ?? DISPATCH_STATUS_OPTIONS[0]
   );
@@ -117,7 +115,7 @@ const Dispatcher = () => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(_searchQuery);
       setCurrentPage(1);
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(handler);
   }, [_searchQuery]);
@@ -174,7 +172,7 @@ const Dispatcher = () => {
           isOpen: true,
           dispatcher,
         });
-        lockBodyScroll();
+        // lockBodyScroll();
       },
     },
     {

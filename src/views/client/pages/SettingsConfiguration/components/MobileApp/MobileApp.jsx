@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 
 const Toggle = ({ label, checked, onChange }) => (
     <div className="flex items-center justify-between py-2">
-        <span className="text-sm text-gray-700">{label}</span>
-        <label className="relative inline-flex items-center cursor-pointer">
+        <span className="text-[#252525] text-[15px] font-medium">{label}</span>
+        <label className="relative inline-flex items-center cursor-pointer text-[#252525] text-[18px]">
             <input
                 type="checkbox"
                 className="sr-only peer"

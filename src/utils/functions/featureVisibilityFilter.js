@@ -1,4 +1,3 @@
-
 export const ROUTE_FEATURE_MAP = {
     "accounts": "accounts",
     "map": "map",
@@ -8,6 +7,7 @@ export const ROUTE_FEATURE_MAP = {
     "dispatcher": "dispatcher",
     "sub-company": "sub_company",
     "revenue-statements": "revenue_statements",
+    "general-notification": "push_notification", 
 };
 
 /**

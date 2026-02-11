@@ -1267,7 +1267,20 @@ const AddBooking = ({ setIsOpen }) => {
                                                                         <select
                                                                             name="driver"
                                                                             value={values.driver || ""}
-                                                                            onChange={(e) => setFieldValue("driver", e.target.value)}
+                                                                            onChange={(e) => {
+                                                                                const selectedDriver = e.target.value;
+                                                                                setFieldValue("driver", selectedDriver);
+
+                                                                                if (selectedDriver) {
+                                                                                    setFieldValue("auto_dispatch", false);
+                                                                                    setFieldValue("bidding", false);
+                                                                                    setFieldValue("booking_system", "manual_dispatch");
+                                                                                } else {
+                                                                                    setFieldValue("auto_dispatch", true);
+                                                                                    setFieldValue("bidding", false);
+                                                                                    setFieldValue("booking_system", "auto_dispatch");
+                                                                                }
+                                                                            }}
                                                                             disabled={loadingSubCompanies}
                                                                             className={`border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50`}
                                                                             required={shouldDisableDispatchOptions(values)}
@@ -1287,11 +1300,14 @@ const AddBooking = ({ setIsOpen }) => {
 
                                                         <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
                                                             <div className="flex flex-col gap-3">
-                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) || !!values.driver
+                                                                    ? 'opacity-50 cursor-not-allowed'
+                                                                    : ''
+                                                                    }`}>
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={values.auto_dispatch}
-                                                                        disabled={shouldDisableDispatchOptions(values)}
+                                                                        disabled={shouldDisableDispatchOptions(values) || !!values.driver}
                                                                         onChange={(e) => {
                                                                             setFieldValue("auto_dispatch", e.target.checked);
                                                                             if (e.target.checked) {
@@ -1302,11 +1318,14 @@ const AddBooking = ({ setIsOpen }) => {
                                                                     Auto Dispatch
                                                                 </label>
 
-                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                <label className={`flex items-center gap-2 ${shouldDisableDispatchOptions(values) || !!values.driver
+                                                                    ? 'opacity-50 cursor-not-allowed'
+                                                                    : ''
+                                                                    }`}>
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={values.bidding}
-                                                                        disabled={shouldDisableDispatchOptions(values)}
+                                                                        disabled={shouldDisableDispatchOptions(values) || !!values.driver}
                                                                         onChange={(e) => {
                                                                             setFieldValue("bidding", e.target.checked);
                                                                             if (e.target.checked) {
@@ -1318,7 +1337,6 @@ const AddBooking = ({ setIsOpen }) => {
                                                                 </label>
                                                             </div>
                                                         </div>
-
                                                     </div>
 
                                                     <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
@@ -1381,40 +1399,6 @@ const AddBooking = ({ setIsOpen }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* <div className="h-full">
-                                        <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4">
-                                            <Maps
-                                                mapsApi={mapsApi}
-                                                pickupCoords={values.pickup_latitude && values.pickup_longitude ? {
-                                                    lat: parseFloat(values.pickup_latitude),
-                                                    lng: parseFloat(values.pickup_longitude)
-                                                } : null}
-                                                destinationCoords={values.destination_latitude && values.destination_longitude ? {
-                                                    lat: parseFloat(values.destination_latitude),
-                                                    lng: parseFloat(values.destination_longitude)
-                                                } : null}
-                                                viaCoords={(values.via_latitude || []).map((lat, index) => {
-                                                    const lng = values.via_longitude?.[index];
-                                                    return lat && lng ? {
-                                                        lat: parseFloat(lat),
-                                                        lng: parseFloat(lng)
-                                                    } : null;
-                                                }).filter(Boolean)}
-                                            />
-                                        </div>
-                                        <div className="mt-4">
-                                            <label className="text-sm font-semibold text-left md:w-16 w-16">
-                                                Distance
-                                            </label>
-                                            <input
-                                                type="text"
-                                                placeholder="Distance will be shown here"
-                                                readOnly
-                                                value={values.distance ? `${values.distance} km` : ""}
-                                                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
-                                            />
-                                        </div>
-                                    </div> */}
                                     <div className="h-full">
                                         <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4">
                                             <Maps
@@ -1464,7 +1448,7 @@ const AddBooking = ({ setIsOpen }) => {
                                                 btnSize="md"
                                                 type="filled"
                                                 className="px-4 py-3 text-xs text-white rounded"
-                                                onClick={() => handleCalculateFares(values, setFieldValue)} 
+                                                onClick={() => handleCalculateFares(values, setFieldValue)}
                                                 disabled={fareLoading}
                                             >
                                                 {fareLoading ? "Calculating..." : "Calculate Fares"}

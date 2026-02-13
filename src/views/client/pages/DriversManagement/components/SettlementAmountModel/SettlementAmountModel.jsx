@@ -4,6 +4,8 @@ import { apiCollectDriverCommission, apiGetDriverCommissionEntries } from "../..
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
 import Button from "../../../../../../components/ui/Button/Button";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import Pagination from "../../../../../../components/ui/Pagination/Pagination";
+import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
 
 const SettlementAmountModel = ({ onClose, driver }) => {
     const [loading, setLoading] = useState(true);
@@ -12,6 +14,7 @@ const SettlementAmountModel = ({ onClose, driver }) => {
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [currentPage, setCurrentPage] = useState(1);
     const LIMIT = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(LIMIT);
 
     const currencySymbols = {
         INR: "₹", USD: "$", EUR: "€", GBP: "£",
@@ -29,11 +32,11 @@ const SettlementAmountModel = ({ onClose, driver }) => {
         if (driver?.id) fetchCommissionEntries(1);
     }, [driver?.id]);
 
-    const fetchCommissionEntries = async (page = 1) => {
+    const fetchCommissionEntries = async (page = 1, limit = itemsPerPage) => {
         if (!driver?.id) return;
         setLoading(true);
         try {
-            const response = await apiGetDriverCommissionEntries(driver.id, page, LIMIT);
+            const response = await apiGetDriverCommissionEntries(driver.id, page, limit);
             if (response?.data?.success === 1) {
                 setCommissionData(response.data.data);
                 setCurrentPage(page);
@@ -73,8 +76,13 @@ const SettlementAmountModel = ({ onClose, driver }) => {
         }
     };
 
-    const handlePageChange = (newPage) => {
-        fetchCommissionEntries(newPage);
+    const handlePageChange = (page) => {
+        fetchCommissionEntries(page, itemsPerPage);
+    };
+
+    const handleItemsPerPageChange = (limit) => {
+        setItemsPerPage(limit);
+        fetchCommissionEntries(1, limit);
     };
 
     const formatDate = (dateString) => {
@@ -87,8 +95,6 @@ const SettlementAmountModel = ({ onClose, driver }) => {
             return "Invalid Date";
         }
     };
-
-    const pagination = commissionData?.pagination;
 
     return (
         <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto">
@@ -211,38 +217,22 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                             })}
                         </div>
 
-                        {pagination && pagination.total_pages > 1 && (
-                            <div className="flex items-center justify-between py-3 border-t border-gray-100">
-                                <p className="text-xs text-gray-500">
-                                    Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} entries
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={!pagination.hasPrev || loading}
-                                        className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 transition-colors"
-                                    >
-                                        ← Prev
-                                    </button>
-                                    <span className="text-sm text-gray-600 font-medium">
-                                        {pagination.page} / {pagination.total_pages}
-                                    </span>
-                                    <button
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={!pagination.hasNext || loading}
-                                        className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 transition-colors"
-                                    >
-                                        Next →
-                                    </button>
-                                </div>
+                        {commissionData?.pagination?.total > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                                <Pagination
+                                    currentPage={commissionData.pagination.page}
+                                    totalPages={commissionData.pagination.total_pages}
+                                    itemsPerPage={commissionData.pagination.limit}
+                                    onPageChange={handlePageChange}
+                                    onItemsPerPageChange={handleItemsPerPageChange}
+                                    itemsPerPageOptions={PAGE_SIZE_OPTIONS}
+                                />
                             </div>
                         )}
                     </>
                 )}
-
             </div>
 
-            {/* Footer */}
             <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
                 <Button type="filledGray" onClick={onClose} className="px-6 py-2 rounded-lg">
                     Close

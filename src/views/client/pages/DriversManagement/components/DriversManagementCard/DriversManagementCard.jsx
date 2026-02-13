@@ -6,12 +6,14 @@ import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { apieditDriverStatus } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-
+import SettlementAmountModel from "../SettlementAmountModel";
+import Modal from "../../../../../../components/shared/Modal/Modal";
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [status, setStatus] = useState(driver?.status || "pending");
     const [loading, setLoading] = useState(false);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
+    const [isSettlementOpen, setIsSettlementOpen] = useState(false);
 
     const currencySymbols = {
         INR: "₹",
@@ -151,12 +153,26 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     </div>
                 </UserDropdown>
 
+                <div>
+                    <Button
+                        type="filled"
+                        className="py-2 px-2 rounded-md w-full sm:w-auto"
+                        onClick={() => setIsSettlementOpen(true)}
+                    >
+                        Settlement Amount
+                    </Button>
+                </div>
+
                 <UserDropdown options={actionOptions} itemData={driver}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
                         <ThreeDotsIcon />
                     </Button>
                 </UserDropdown>
             </div>
+
+            <Modal isOpen={isSettlementOpen} onClose={() => setIsSettlementOpen(false)}>
+                <SettlementAmountModel driver={driver} onClose={() => setIsSettlementOpen(false)} />
+            </Modal>
         </div>
     );
 };

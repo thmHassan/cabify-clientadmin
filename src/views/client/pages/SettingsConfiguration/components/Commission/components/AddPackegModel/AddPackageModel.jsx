@@ -124,12 +124,12 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
                                 </div>
 
                                 <div className="w-full mb-4">
-                                    <FormLabel htmlFor="packageType">Package Type</FormLabel>
+                                    <FormLabel htmlFor="packageType">Package Duration</FormLabel>
                                     <Field
-                                        type="text"
+                                        type="number"
                                         name="packageType"
                                         className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                        placeholder="Enter Package Type"
+                                        placeholder="Enter Package Duration"
                                     />
                                     <ErrorMessage
                                         name="packageType"
@@ -139,7 +139,7 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
                                 </div>
 
                                 <div className="w-full mb-4">
-                                    <FormLabel htmlFor="packageDuration">Package Duration</FormLabel>
+                                    <FormLabel htmlFor="packageDuration">Duration Type</FormLabel>
                                     <FormSelection
                                         label="Select Duration Type"
                                         name="packageDuration"

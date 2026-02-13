@@ -3,6 +3,7 @@ import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
 import { ADD_WALLET_BALANCE, APPROVE_VEHICLE, CHANGE_DRIVER_DOCUMENT_STATUS, CREATE_DRIVER, DELETE_DRIVER, DELETE_DRIVER_DOCUMENT, DELETE_DRIVERS_DOCUMENT, DRIVER_DOCUMENT_LIST, DRIVER_RIDE_HISTORY, EDIT_DRIVER, GET_BY_ID_DRIVER_DOCUMENT, GET_DRIVER_BY_ID, GET_DRIVERS_MANAGEMENT, POST_EDIT_DRIVER_STATUS, REJECT_VAHICLE, SEND_DRIVER_NOTIFICATION } from "../constants/api.route.constant";
+import socketApi from "./SocketApiService";
 
 export async function apiCreateDriveManagement(data) {
     const isFormData = data instanceof FormData;
@@ -47,7 +48,6 @@ export async function apiGetDriverManagement(params) {
     }
 }
 
-
 export async function apiGetDriverManagementById(params) {
     return ApiService.fetchData({
         url: GET_DRIVER_BY_ID,
@@ -82,7 +82,7 @@ export async function apieditDriverStatus(params) {
     return ApiService.fetchData({
         url: POST_EDIT_DRIVER_STATUS,
         method: METHOD_GET,
-        params: params, 
+        params: params,
     });
 }
 
@@ -109,7 +109,7 @@ export async function apiGetDriverDocumentById(params) {
 
 export async function apiChangeDriverDocument(data) {
     const isFormData = data instanceof FormData;
-    
+
     try {
         return ApiService.fetchData({
             url: CHANGE_DRIVER_DOCUMENT_STATUS,
@@ -183,5 +183,15 @@ export async function apiSendDriverNotifiction(data) {
                 'Content-Type': 'multipart/form-data',
             },
         }),
+    });
+}
+
+export async function apiGetDriverCommissionEntries(driver_id) {
+    return socketApi.get(`/driver/commission-entries?driver_id=${driver_id}`);
+}
+
+export async function apiCollectDriverCommission(driver_id) {
+    return socketApi.post('/driver/collect-commission', {
+        driver_id: driver_id
     });
 }

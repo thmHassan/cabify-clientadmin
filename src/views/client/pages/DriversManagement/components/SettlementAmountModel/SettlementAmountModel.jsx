@@ -92,7 +92,6 @@ const SettlementAmountModel = ({ onClose, driver }) => {
 
     return (
         <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-200">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-[#252525]">
@@ -100,14 +99,14 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Commission Settlement</p>
                 </div>
-                {commissionData && (
+                {/* {commissionData && (
                     <div className="flex flex-col items-end">
                         <p className="text-xs text-gray-500">Wallet Balance</p>
                         <p className="text-lg font-bold text-green-600">
                             {currencySymbol} {commissionData.driver_wallet_balance}
                         </p>
                     </div>
-                )}
+                )} */}
             </div>
 
             <div className="p-4 sm:p-6">
@@ -123,7 +122,6 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                     <>
                         <div className="space-y-3 mb-4">
                             {commissionData.commission_entries.map((entry, index) => {
-
                                 const isPending = true;
 
                                 return (
@@ -131,9 +129,10 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                                         key={index}
                                         className="bg-white border border-[#E9E9E9] rounded-xl p-4 hover:shadow-md transition-shadow duration-200"
                                     >
-                                        {/* Mobile Layout */}
+
                                         <div className="block lg:hidden space-y-3">
                                             <div className="flex justify-between items-start">
+
                                                 <div className="text-right">
                                                     <p className="text-xs text-gray-500 mb-1">Amount Due</p>
                                                     <p className="font-semibold text-red-600">{currencySymbol}{entry.amount}</p>
@@ -144,6 +143,7 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                                                     <p className="text-xs text-gray-500 mb-1">Cycle Period</p>
                                                     <p className="text-sm font-medium text-[#333333]">{entry.days_in_cycle} days</p>
                                                 </div>
+
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 mb-1">Date Range</p>
@@ -158,6 +158,7 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                                                 </div>
                                             )}
                                             <div className="flex justify-end pt-2 border-t border-gray-100">
+
                                                 <Button
                                                     type="filled"
                                                     onClick={() => handleCollectCommission(entry)}
@@ -169,21 +170,19 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                                             </div>
                                         </div>
 
-                                        {/* Desktop Layout */}
+
                                         <div className="hidden lg:flex items-center justify-between gap-4 overflow-x-auto">
 
                                             <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[120px]">
                                                 <p className="text-xs text-gray-500">Cycle Period</p>
                                                 <p className="text-black font-semibold text-sm">{entry.days_in_cycle} days</p>
                                             </div>
-
                                             <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[230px]">
                                                 <p className="text-xs text-gray-500">Date Range</p>
                                                 <p className="text-black font-semibold text-sm">
                                                     {formatDate(entry.cycle_start_date)} → {formatDate(entry.cycle_end_date)}
                                                 </p>
                                             </div>
-
                                             {commissionData.package_type === 'commission_without_topup' && entry.total_rides_amount && (
                                                 <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[130px]">
                                                     <p className="text-xs text-gray-500">Rides Amount</p>
@@ -240,7 +239,6 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                         )}
                     </>
                 )}
-
 
             </div>
 

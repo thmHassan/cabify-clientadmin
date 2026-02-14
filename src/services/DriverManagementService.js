@@ -2,7 +2,7 @@ import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
-import { ADD_WALLET_BALANCE, APPROVE_VEHICLE, CHANGE_DRIVER_DOCUMENT_STATUS, CREATE_DRIVER, DELETE_DRIVER, DELETE_DRIVER_DOCUMENT, DELETE_DRIVERS_DOCUMENT, DRIVER_DOCUMENT_LIST, DRIVER_RIDE_HISTORY, EDIT_DRIVER, GET_BY_ID_DRIVER_DOCUMENT, GET_DRIVER_BY_ID, GET_DRIVERS_MANAGEMENT, POST_EDIT_DRIVER_STATUS, REJECT_VAHICLE, SEND_DRIVER_NOTIFICATION } from "../constants/api.route.constant";
+import { ADD_WALLET_BALANCE, APPROVE_VEHICLE, CHANGE_DRIVER_DOCUMENT_STATUS, CREATE_DRIVER, DELETE_DRIVER, DELETE_DRIVER_DOCUMENT, DELETE_DRIVERS_DOCUMENT, DRIVER_DOCUMENT_LIST, DRIVER_RIDE_HISTORY, EDIT_DRIVER, GET_BY_ID_DRIVER_DOCUMENT, GET_DRIVER_BY_ID, GET_DRIVER_REVENUE, GET_DRIVERS_MANAGEMENT, POST_EDIT_DRIVER_STATUS, REJECT_VAHICLE, SEND_DRIVER_NOTIFICATION } from "../constants/api.route.constant";
 import socketApi from "./SocketApiService";
 
 export async function apiCreateDriveManagement(data) {
@@ -81,6 +81,14 @@ export async function apiDeleteDriverManagement(id) {
 export async function apieditDriverStatus(params) {
     return ApiService.fetchData({
         url: POST_EDIT_DRIVER_STATUS,
+        method: METHOD_GET,
+        params: params,
+    });
+}
+
+export async function apiGetDriverRevenue(params) {
+    return ApiService.fetchData({
+        url: GET_DRIVER_REVENUE,
         method: METHOD_GET,
         params: params,
     });

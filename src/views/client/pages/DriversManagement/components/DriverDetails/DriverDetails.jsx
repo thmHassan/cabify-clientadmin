@@ -12,7 +12,7 @@ import Loading from "../../../../../../components/shared/Loading/Loading";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
 import { useAppSelector } from "../../../../../../store";
-import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocumentList, apiChangeDriverDocument, apiDeleteDriverDocument, apiApproveVehicle, apiGetDriverRideHistory, apiRejectVehicle, apiGetDriverDocumentById, apieditDriverStatus } from "../../../../../../services/DriverManagementService";
+import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocumentList, apiChangeDriverDocument, apiDeleteDriverDocument, apiApproveVehicle, apiGetDriverRideHistory, apiRejectVehicle, apiGetDriverDocumentById, apieditDriverStatus, apiGetDriverRevenue } from "../../../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
@@ -95,6 +95,12 @@ const DriverDetails = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [rideHistory, setRideHistory] = useState([]);
 
+    const [revenueData, setRevenueData] = useState({
+        totalEarnings: "0.00",
+        totalCompletedRides: 0,
+        loading: false
+    });
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -165,6 +171,42 @@ const DriverDetails = () => {
                     : ""),
         };
     };
+
+    const loadDriverRevenue = useCallback(async () => {
+        if (!driverId) return;
+
+        setRevenueData(prev => ({ ...prev, loading: true }));
+        try {
+            const response = await apiGetDriverRevenue({ driver_id: driverId });
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                setRevenueData({
+                    totalEarnings: response?.data?.total_earnings || "0.00",
+                    totalCompletedRides: response?.data?.total_completed_rides || 0,
+                    loading: false
+                });
+            } else {
+                setRevenueData({
+                    totalEarnings: "0.00",
+                    totalCompletedRides: 0,
+                    loading: false
+                });
+            }
+        } catch (error) {
+            console.error("Error loading driver revenue:", error);
+            setRevenueData({
+                totalEarnings: "0.00",
+                totalCompletedRides: 0,
+                loading: false
+            });
+        }
+    }, [driverId]);
+
+    useEffect(() => {
+        if (driverId) {
+            loadDriverRevenue();
+        }
+    }, [driverId, loadDriverRevenue]);
 
     useEffect(() => {
         const fetchSubCompanies = async () => {
@@ -980,11 +1022,19 @@ const DriverDetails = () => {
 
             {/* Revenue */}
             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
-                <div className="flex">
+                <div className="flex justify-between items-center">
                     <p className="font-semibold">Revenue</p>
+                    {revenueData.loading && (
+                        <span className="text-sm text-gray-500">Loading...</span>
+                    )}
                 </div>
-                <div>
-                    <p className="font-semibold text-2xl pt-2 pl-2">$465.32</p>
+                <div className="mt-2">
+                    <p className="font-semibold text-2xl pt-2 pl-2">
+                        ${revenueData.totalEarnings}
+                    </p>
+                    <p className="text-sm text-gray-600 pt-1 pl-2">
+                        Total Completed Rides: {revenueData.totalCompletedRides}
+                    </p>
                 </div>
             </div>
 

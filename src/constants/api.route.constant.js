@@ -38,6 +38,7 @@ export const CREATE_DRIVER = "/company/create-driver";
 export const EDIT_DRIVER = "/company/edit-driver";
 export const DELETE_DRIVER = "/company/delete-driver";
 export const POST_EDIT_DRIVER_STATUS = "/company/change-driver-status";
+export const GET_DRIVER_REVENUE = "/company/driver/total-earnings"
 export const ADD_WALLET_BALANCE = "/company/add-wallet-balance"
 export const DRIVER_DOCUMENT_LIST = "/company/driver-document-list"
 export const GET_BY_ID_DRIVER_DOCUMENT = "/company/driver-document"

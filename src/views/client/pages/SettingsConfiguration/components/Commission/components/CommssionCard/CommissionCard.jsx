@@ -1,9 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import UserDropdown from "../../../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../../../components/svg/ThreeDotsIcon";
+import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
 
 const CommissionCard = ({ commission, onEdit, onDelete }) => {
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
+
+    const currencySymbols = {
+        INR: "₹",
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        AUD: "A$",
+        CAD: "C$",
+        AED: "د.إ",
+    };
+
+    useEffect(() => {
+        const tenant = getTenantData();
+
+        if (tenant?.currency) {
+            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+        }
+    }, []);
+
     const actionOptions = [
         {
             label: "Edit",
@@ -25,18 +46,18 @@ const CommissionCard = ({ commission, onEdit, onDelete }) => {
 
             <div className="flex items-center justify-center gap-3">
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-[#6C6C6C]">Package Type</p>
+                    <p className="text-xs text-center text-[#6C6C6C]">Duration</p>
                     <p className="text-[#333333] text-center font-semibold text-sm">{commission.package_type}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-[#6C6C6C]">Duration</p>
+                    <p className="text-xs text-center text-[#6C6C6C]">Duration Type</p>
                     <p className="text-[#333333] text-center font-semibold text-sm">{commission.package_duration}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-[#6C6C6C]">Price</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm">${commission.package_price}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm"> {currencySymbol} {commission.package_price}</p>
                 </div>
 
                 <UserDropdown options={actionOptions} itemData={commission}>

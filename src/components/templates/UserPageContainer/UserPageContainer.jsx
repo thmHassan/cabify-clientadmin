@@ -18,7 +18,7 @@ import DrawerIcon from "../../svg/DrawerIcon";
 import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
-import { getTenantData } from "../../../utils/functions/tokenEncryption";
+import { getTenantData, getTenantId } from "../../../utils/functions/tokenEncryption";
 import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus} from "../../routes/SocketProvider";
@@ -49,6 +49,7 @@ const UserPageContainer = ({ children }) => {
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
   const tenantData = getTenantData();
+  const tenantId = getTenantId(); // <-- Tenant ID from localStorage
   const navigate = useNavigate();
   const location = useLocation();
   const socket = useSocket();
@@ -403,7 +404,11 @@ const UserPageContainer = ({ children }) => {
             ? "lg:ml-0 lg:w-[calc(100%-315px)]" 
             : "lg:ml-0 lg:w-[calc(100%-64px)]"
           }`}>
+
+          {/* ===================== LEFT SIDE ===================== */}
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 pr-2 sm:pr-5">
+
+            {/* Hamburger button (mobile only) */}
             <button
               type="button"
               className="lg:hidden w-10 h-10 sm:w-[54px] sm:h-[54px] grid place-items-center bg-[#ffffff] rounded-lg mr-0.5 hover:bg-[#ffffff] flex-shrink-0"
@@ -417,9 +422,20 @@ const UserPageContainer = ({ children }) => {
                 <DrawerIcon width={24} height={24} fill="#000000" />
               </span>
             </button>
-             {renderBookingSystemUI()}
+
+            {/* Tenant ID Badge */}
+            {tenantId && (
+              <div className="hidden sm:flex items-center gap-1.5 bg-white rounded-md px-3 py-1.5 border border-gray-200 shadow-sm">
+                <span className="text-xs text-gray-400 font-medium">Company ID:</span>
+                <span className="text-xs text-gray-800 font-semibold tracking-wide">{tenantId}</span>
+              </div>
+            )}
+
+            {/* Booking System Toggle */}
+            {renderBookingSystemUI()}
           </div>
 
+          {/* ===================== RIGHT SIDE ===================== */}
           <div className="flex gap-1.5 sm:gap-3 lg:gap-5 items-center flex-shrink-0">
             {/* Notification Bell with Dropdown */}
             <div className="relative" ref={notificationRef}>

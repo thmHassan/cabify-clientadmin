@@ -2,8 +2,12 @@ import React from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const UserDetails = ({ user, onEdit, onDelete }) => {
+    const tenantData = getTenantData();
+    const timeZone = tenantData?.time_zone || "UTC";
+
     const actionOptions = [
         {
             label: "Edit",
@@ -21,10 +25,13 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
         const date = new Date(dateString);
 
         return date.toLocaleString("en-GB", {
+            timeZone: timeZone,
             weekday: "short",
             day: "2-digit",
             month: "short",
             year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
         }).replace(",", "");
     };
 

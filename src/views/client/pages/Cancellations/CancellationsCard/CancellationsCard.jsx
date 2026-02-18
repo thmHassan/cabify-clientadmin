@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { getTenantData } from "../../../../../utils/functions/tokenEncryption";
+import { time } from "framer-motion";
 
 const CancellationsCard = ({ cancellations }) => {
+  const tenant = getTenantData();
+  const timeZone = tenant?.time_zone || "UTC";
+
   const currencySymbols = {
     INR: "₹",
     USD: "$",
@@ -39,13 +43,14 @@ const CancellationsCard = ({ cancellations }) => {
     const date = new Date(dateString);
 
     return date.toLocaleString("en-GB", {
+      timeZone: timeZone,
       weekday: "short",
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).replace(",", "")
+    }).replace(",", "");
   };
 
   return (

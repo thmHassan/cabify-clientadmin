@@ -21,27 +21,28 @@ import { PlainSwitch } from "../../ui/Switch/Switch ";
 import { getTenantData, getTenantId } from "../../../utils/functions/tokenEncryption";
 import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
-import { useSocket, useSocketStatus} from "../../routes/SocketProvider";
+import { useSocket, useSocketStatus } from "../../routes/SocketProvider";
 
 const UserPageContainer = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [bookingSystem, setBookingSystem] = useState(null);
+  const [activeSystem, setActiveSystem] = useState("auto_dispatch"); 
   const [isLoadingBookingSystem, setIsLoadingBookingSystem] = useState(true);
   const [isSwitchingSystem, setIsSwitchingSystem] = useState(false);
 
   // Load notifications from localStorage on initial render
   const [notifications, setNotifications] = useState(() => {
     try {
-      const saved = localStorage.getItem('notifications');
+      const saved = localStorage.getItem("notifications");
       return saved ? JSON.parse(saved) : [];
     } catch (error) {
-      console.error('Error loading notifications from localStorage:', error);
+      console.error("Error loading notifications from localStorage:", error);
       return [];
     }
   });
-  
+
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef(null);
@@ -49,7 +50,7 @@ const UserPageContainer = ({ children }) => {
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
   const tenantData = getTenantData();
-  const tenantId = getTenantId(); // <-- Tenant ID from localStorage
+  const tenantId = getTenantId();
   const navigate = useNavigate();
   const location = useLocation();
   const socket = useSocket();
@@ -64,16 +65,19 @@ const UserPageContainer = ({ children }) => {
   // Save notifications to localStorage whenever they change
   useEffect(() => {
     try {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+      localStorage.setItem("notifications", JSON.stringify(notifications));
     } catch (error) {
-      console.error('Error saving notifications to localStorage:', error);
+      console.error("Error saving notifications to localStorage:", error);
     }
   }, [notifications]);
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setIsNotificationOpen(false);
       }
     };
@@ -96,22 +100,22 @@ const UserPageContainer = ({ children }) => {
       console.log("📢 RECEIVED send-reminder event:", data);
       console.log("📢 Data type:", typeof data);
       console.log("📢 Data keys:", Object.keys(data));
-      
+
       setNotifications((prev) => {
         const newNotification = {
           id: Date.now(),
           ...data,
-          timestamp: new Date().toISOString(), // Store as ISO string for localStorage compatibility
-          read: false
+          timestamp: new Date().toISOString(),
+          read: false,
         };
         console.log("✅ Adding notification:", newNotification);
         return [newNotification, ...prev];
       });
-      
+
       if (Notification.permission === "granted") {
         new Notification("New Reminder", {
           body: data.description || data.message || "You have a new reminder",
-          icon: "/notification-icon.png"
+          icon: "/notification-icon.png",
         });
       }
     };
@@ -125,7 +129,6 @@ const UserPageContainer = ({ children }) => {
       console.log("❌ Socket disconnected");
     };
 
-    // Register listeners
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("send-reminder", handleSendReminder);
@@ -156,11 +159,19 @@ const UserPageContainer = ({ children }) => {
     try {
       setIsLoadingBookingSystem(true);
       const response = await apiGetBookingSystem();
-      
+
       const data = response?.data || response;
-      
+
       if (data && (data.success === 1 || data.success === true)) {
-        setBookingSystem(data.company_admin_dispatch_sytem);
+        const system = data.company_admin_dispatch_sytem;
+        setBookingSystem(system);
+
+        // ✅ Set activeSystem based on fetched value
+        if (system === "both") {
+          setActiveSystem("auto_dispatch"); // default to auto_dispatch when both
+        } else {
+          setActiveSystem(system);
+        }
       } else {
         console.error("API response did not indicate success:", data);
       }
@@ -171,26 +182,30 @@ const UserPageContainer = ({ children }) => {
     }
   };
 
+  // ✅ FIXED: Toggle uses activeSystem, keeps bookingSystem as "both"
   const handleBookingSystemToggle = async () => {
     if (isSwitchingSystem) return;
 
     try {
       setIsSwitchingSystem(true);
-      
-      const newSystem = bookingSystem === "auto_dispatch" ? "bidding" : "auto_dispatch";
-      console.log("Switching from", bookingSystem, "to", newSystem);
-      
+
+      // Toggle between auto_dispatch and bidding based on activeSystem
+      const newSystem =
+        activeSystem === "auto_dispatch" ? "bidding" : "auto_dispatch";
+      console.log("Switching activeSystem from", activeSystem, "to", newSystem);
+
       const formData = new FormData();
       formData.append("company_admin_dispatch_sytem", newSystem);
-      
+
       const response = await apiUpdateBookingSystem(formData);
       console.log("Update Full Response:", response);
-      
+
       const data = response?.data || response;
       console.log("Update extracted data:", data);
-      
+
       if (data && (data.success === 1 || data.success === true)) {
-        setBookingSystem(newSystem);
+        // ✅ Only update activeSystem — bookingSystem stays "both"
+        setActiveSystem(newSystem);
       } else {
         console.error("Update failed:", data);
       }
@@ -203,7 +218,6 @@ const UserPageContainer = ({ children }) => {
 
   const handleNotificationClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
-    // Mark all as read when opening the dropdown
     if (!isNotificationOpen) {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     }
@@ -212,12 +226,11 @@ const UserPageContainer = ({ children }) => {
   const handleClearAll = () => {
     setNotifications([]);
     setUnreadCount(0);
-    // Also clear from localStorage
-    localStorage.removeItem('notifications');
+    localStorage.removeItem("notifications");
   };
 
   useEffect(() => {
-    const actualUnreadCount = notifications.filter(n => !n.read).length;
+    const actualUnreadCount = notifications.filter((n) => !n.read).length;
     setUnreadCount(actualUnreadCount);
   }, [notifications]);
 
@@ -230,13 +243,13 @@ const UserPageContainer = ({ children }) => {
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
-    
+
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
   };
@@ -278,6 +291,7 @@ const UserPageContainer = ({ children }) => {
       );
     }
 
+    // ✅ FIXED: "both" case uses activeSystem for toggle position
     if (bookingSystem === "both") {
       return (
         <div className="flex gap-2.5 items-center">
@@ -291,12 +305,16 @@ const UserPageContainer = ({ children }) => {
               onClick={handleBookingSystemToggle}
               disabled={isSwitchingSystem}
               className={`w-12 h-6 rounded-full transition-colors ${
-                bookingSystem === "bidding" ? "bg-blue-500" : "bg-gray-300"
-              } ${isSwitchingSystem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                activeSystem === "bidding" ? "bg-blue-500" : "bg-gray-300"
+              } ${
+                isSwitchingSystem
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
+              }`}
             >
               <div
                 className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                  bookingSystem === "bidding" ? "translate-x-6" : "translate-x-1"
+                  activeSystem === "bidding" ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -336,7 +354,9 @@ const UserPageContainer = ({ children }) => {
 
     return (
       <div className="flex gap-2.5 items-center">
-        <span className="text-sm text-gray-500">System: {bookingSystem || "Not Set"}</span>
+        <span className="text-sm text-gray-500">
+          System: {bookingSystem || "Not Set"}
+        </span>
       </div>
     );
   };
@@ -355,28 +375,42 @@ const UserPageContainer = ({ children }) => {
           lg:translate-x-0
         `}
       >
-        <div className={`${isSidebarOpen ? "mb-10" : "mb-0"} px-6 lg:px-8 flex items-center justify-center relative`}>
+        <div
+          className={`${
+            isSidebarOpen ? "mb-10" : "mb-0"
+          } px-6 lg:px-8 flex items-center justify-center relative`}
+        >
           <AppLogoIcon height={95} width={95} />
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="absolute top-4 right-[13px] w-8 h-8 flex items-center justify-center transition lg:block md:hidden"
           >
             {isSidebarOpen ? (
-              <CloseIcon width={18} height={18} fill="#3D3D3D" /> 
+              <CloseIcon width={18} height={18} fill="#3D3D3D" />
             ) : (
-              <DrawerIcon width={30} height={30} fill="#000000" /> 
+              <DrawerIcon width={30} height={30} fill="#000000" />
             )}
           </button>
         </div>
         <div className="flex flex-col gap-[30px]">
           {filteredNavElements.map(({ title, routes }, index) => (
             <div key={index}>
-              <div className={`${isSidebarOpen ? "block" : "hidden"} text-[#7A7A7A] px-6 lg:px-8 text-sm leading-[19px] font-semibold mb-[18px]`}>
+              <div
+                className={`${
+                  isSidebarOpen ? "block" : "hidden"
+                } text-[#7A7A7A] px-6 lg:px-8 text-sm leading-[19px] font-semibold mb-[18px]`}
+              >
                 {title}
               </div>
               <div className="flex flex-col sm:gap-5 gap-4">
                 {routes.map((navItem, iIndex) => {
-                  return <NavElement key={iIndex} navItem={navItem} isSidebarOpen={isSidebarOpen}/>;
+                  return (
+                    <NavElement
+                      key={iIndex}
+                      navItem={navItem}
+                      isSidebarOpen={isSidebarOpen}
+                    />
+                  );
                 })}
               </div>
             </div>
@@ -394,20 +428,22 @@ const UserPageContainer = ({ children }) => {
 
       <div
         className={`w-full transition-all duration-300 ease-in-out
-          ${isSidebarOpen 
-            ? "lg:ml-[19.7rem] lg:w-[calc(100%-325px)]" 
-            : "lg:ml-16 lg:w-[calc(100%-64px)]"
+          ${
+            isSidebarOpen
+              ? "lg:ml-[19.7rem] lg:w-[calc(100%-325px)]"
+              : "lg:ml-16 lg:w-[calc(100%-64px)]"
           }
         `}
       >
-        <div className={`h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full z-50 ${isSidebarOpen 
-            ? "lg:ml-0 lg:w-[calc(100%-315px)]" 
-            : "lg:ml-0 lg:w-[calc(100%-64px)]"
-          }`}>
-
+        <div
+          className={`h-16 sm:h-[85px] bg-[#F5F5F5] px-2 sm:px-3 lg:pl-[15px] lg:pr-[25px] py-2 sm:pt-4 sm:pb-[15px] flex items-center justify-between fixed w-full z-50 ${
+            isSidebarOpen
+              ? "lg:ml-0 lg:w-[calc(100%-315px)]"
+              : "lg:ml-0 lg:w-[calc(100%-64px)]"
+          }`}
+        >
           {/* ===================== LEFT SIDE ===================== */}
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 pr-2 sm:pr-5">
-
             {/* Hamburger button (mobile only) */}
             <button
               type="button"
@@ -426,8 +462,12 @@ const UserPageContainer = ({ children }) => {
             {/* Tenant ID Badge */}
             {tenantId && (
               <div className="hidden sm:flex items-center gap-1.5 bg-white rounded-md px-3 py-1.5 border border-gray-200 shadow-sm">
-                <span className="text-xs text-gray-400 font-medium">Company ID:</span>
-                <span className="text-xs text-gray-800 font-semibold tracking-wide">{tenantId}</span>
+                <span className="text-xs text-gray-400 font-medium">
+                  Company ID:
+                </span>
+                <span className="text-xs text-gray-800 font-semibold tracking-wide">
+                  {tenantId}
+                </span>
               </div>
             )}
 
@@ -452,7 +492,7 @@ const UserPageContainer = ({ children }) => {
                 </div>
                 {unreadCount > 0 && (
                   <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </div>
                 )}
               </button>
@@ -462,7 +502,9 @@ const UserPageContainer = ({ children }) => {
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-[100] max-h-[500px] overflow-hidden flex flex-col">
                   {/* Header */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Notifications
+                    </h3>
                     {notifications.length > 0 && (
                       <button
                         onClick={handleClearAll}
@@ -497,7 +539,7 @@ const UserPageContainer = ({ children }) => {
                         <div
                           key={notification.id}
                           className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                            !notification.read ? 'bg-blue-50' : ''
+                            !notification.read ? "bg-blue-50" : ""
                           }`}
                         >
                           <div className="flex justify-between items-start gap-3">
@@ -523,7 +565,9 @@ const UserPageContainer = ({ children }) => {
                               </div>
                             </div>
                             <button
-                              onClick={() => handleDeleteNotification(notification.id)}
+                              onClick={() =>
+                                handleDeleteNotification(notification.id)
+                              }
                               className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                             >
                               <svg
@@ -581,7 +625,9 @@ const UserPageContainer = ({ children }) => {
                   />
                 </div>
                 <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] truncate capitalize">
-                  <span>{tenantData?.company_name || user?.name || "Admin"}</span>
+                  <span>
+                    {tenantData?.company_name || user?.name || "Admin"}
+                  </span>
                 </div>
               </div>
             </UserDropdown>

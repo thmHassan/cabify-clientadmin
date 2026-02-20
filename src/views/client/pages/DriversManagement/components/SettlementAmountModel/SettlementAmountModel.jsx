@@ -44,10 +44,10 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                 toast.error(response?.data?.message || "Failed to fetch commission data", { duration: 4000 });
             }
         } catch (error) {
-            toast.error(
-                error?.response?.data?.message || error?.message || "Failed to fetch commission entries",
-                { duration: 4000 }
-            );
+            // toast.error(
+            //     error?.response?.data?.message || error?.message || "Failed to fetch commission entries",
+            //     { duration: 4000 }
+            // );
         } finally {
             setLoading(false);
         }
@@ -96,6 +96,11 @@ const SettlementAmountModel = ({ onClose, driver }) => {
         }
     };
 
+    // Filter entries where amount > 0
+    const validEntries = commissionData?.commission_entries?.filter(
+        entry => parseFloat(entry.amount) > 0
+    ) || [];
+
     return (
         <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-200">
@@ -105,14 +110,6 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Commission Settlement</p>
                 </div>
-                {/* {commissionData && (
-                    <div className="flex flex-col items-end">
-                        <p className="text-xs text-gray-500">Wallet Balance</p>
-                        <p className="text-lg font-bold text-green-600">
-                            {currencySymbol} {commissionData.driver_wallet_balance}
-                        </p>
-                    </div>
-                )} */}
             </div>
 
             <div className="p-4 sm:p-6">
@@ -120,101 +117,94 @@ const SettlementAmountModel = ({ onClose, driver }) => {
                     <div className="flex justify-center items-center py-12">
                         <AppLogoLoader />
                     </div>
-                ) : !commissionData?.commission_entries?.length ? (
+                ) : validEntries.length === 0 ? (
                     <div className="text-center py-12">
                         <p className="text-gray-500 font-medium text-lg">No commission entries available</p>
+                        <p className="text-gray-400 text-sm mt-2">
+                            Commission will appear here once the driver completes rides.
+                        </p>
                     </div>
                 ) : (
                     <>
                         <div className="space-y-3 mb-4">
-                            {commissionData.commission_entries.map((entry, index) => {
-                                const isPending = true;
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="bg-white border border-[#E9E9E9] rounded-xl p-4 hover:shadow-md transition-shadow duration-200"
-                                    >
-
-                                        <div className="block lg:hidden space-y-3">
-                                            <div className="flex justify-between items-start">
-
-                                                <div className="text-right">
-                                                    <p className="text-xs text-gray-500 mb-1">Amount Due</p>
-                                                    <p className="font-semibold text-red-600">{currencySymbol}{entry.amount}</p>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <p className="text-xs text-gray-500 mb-1">Cycle Period</p>
-                                                    <p className="text-sm font-medium text-[#333333]">{entry.days_in_cycle} days</p>
-                                                </div>
-
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-1">Date Range</p>
-                                                <p className="text-sm font-medium text-[#333333]">
-                                                    {formatDate(entry.cycle_start_date)} → {formatDate(entry.cycle_end_date)}
-                                                </p>
-                                            </div>
-                                            {commissionData.package_type === 'commission_without_topup' && entry.total_rides_amount && (
-                                                <div>
-                                                    <p className="text-xs text-gray-500 mb-1">Rides Amount</p>
-                                                    <p className="text-sm font-medium text-[#333333]">{currencySymbol}{entry.total_rides_amount}</p>
-                                                </div>
-                                            )}
-                                            <div className="flex justify-end pt-2 border-t border-gray-100">
-
-                                                <Button
-                                                    type="filled"
-                                                    onClick={() => handleCollectCommission(entry)}
-                                                    disabled={collecting || loading}
-                                                    className="px-4 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-                                                >
-                                                    {collecting ? "Collecting..." : "Collect"}
-                                                </Button>
+                            {validEntries.map((entry, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-white border border-[#E9E9E9] rounded-xl p-4 hover:shadow-md transition-shadow duration-200"
+                                >
+                                    {/* Mobile View */}
+                                    <div className="block lg:hidden space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-500 mb-1">Amount Due</p>
+                                                <p className="font-semibold text-red-600">{currencySymbol}{entry.amount}</p>
                                             </div>
                                         </div>
-
-
-                                        <div className="hidden lg:flex items-center justify-between gap-4 overflow-x-auto">
-
-                                            <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[120px]">
-                                                <p className="text-xs text-gray-500">Cycle Period</p>
-                                                <p className="text-black font-semibold text-sm">{entry.days_in_cycle} days</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Cycle Period</p>
+                                                <p className="text-sm font-medium text-[#333333]">{entry.days_in_cycle} days</p>
                                             </div>
-                                            <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[230px]">
-                                                <p className="text-xs text-gray-500">Date Range</p>
-                                                <p className="text-black font-semibold text-sm">
-                                                    {formatDate(entry.cycle_start_date)} → {formatDate(entry.cycle_end_date)}
-                                                </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">Date Range</p>
+                                            <p className="text-sm font-medium text-[#333333]">
+                                                {formatDate(entry.cycle_start_date)} → {formatDate(entry.cycle_end_date)}
+                                            </p>
+                                        </div>
+                                        {commissionData.package_type === 'commission_without_topup' && entry.total_rides_amount && (
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Rides Amount</p>
+                                                <p className="text-sm font-medium text-[#333333]">{currencySymbol}{entry.total_rides_amount}</p>
                                             </div>
-                                            {commissionData.package_type === 'commission_without_topup' && entry.total_rides_amount && (
-                                                <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[130px]">
-                                                    <p className="text-xs text-gray-500">Rides Amount</p>
-                                                    <p className="text-black font-semibold text-sm">{currencySymbol}{entry.total_rides_amount}</p>
-                                                </div>
-                                            )}
-
-                                            <div className="inline-flex flex-col px-2 py-2 rounded-full bg-red-50 text-center whitespace-nowrap min-w-[120px]">
-                                                <p className="text-xs text-gray-500">Amount Due</p>
-                                                <p className="text-red-600 font-bold text-sm">{currencySymbol}{entry.amount}</p>
-                                            </div>
-
-                                            <div className="whitespace-nowrap">
-                                                <Button
-                                                    type="filled"
-                                                    onClick={() => handleCollectCommission(entry)}
-                                                    disabled={collecting || loading}
-                                                    className="px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                                                >
-                                                    {collecting ? "Collecting..." : "Collect"}
-                                                </Button>
-                                            </div>
+                                        )}
+                                        <div className="flex justify-end pt-2 border-t border-gray-100">
+                                            <Button
+                                                type="filled"
+                                                onClick={() => handleCollectCommission(entry)}
+                                                disabled={collecting || loading}
+                                                className="px-4 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                                            >
+                                                {collecting ? "Collecting..." : "Collect"}
+                                            </Button>
                                         </div>
                                     </div>
-                                );
-                            })}
+
+                                    {/* Desktop View */}
+                                    <div className="hidden lg:flex items-center justify-between gap-4 overflow-x-auto">
+                                        <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[120px]">
+                                            <p className="text-xs text-gray-500">Cycle Period</p>
+                                            <p className="text-black font-semibold text-sm">{entry.days_in_cycle} days</p>
+                                        </div>
+                                        <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[230px]">
+                                            <p className="text-xs text-gray-500">Date Range</p>
+                                            <p className="text-black font-semibold text-sm">
+                                                {formatDate(entry.cycle_start_date)} → {formatDate(entry.cycle_end_date)}
+                                            </p>
+                                        </div>
+                                        {commissionData.package_type === 'commission_without_topup' && entry.total_rides_amount && (
+                                            <div className="inline-flex flex-col px-2 py-2 rounded-full bg-gray-100 text-center whitespace-nowrap min-w-[130px]">
+                                                <p className="text-xs text-gray-500">Rides Amount</p>
+                                                <p className="text-black font-semibold text-sm">{currencySymbol}{entry.total_rides_amount}</p>
+                                            </div>
+                                        )}
+                                        <div className="inline-flex flex-col px-2 py-2 rounded-full bg-red-50 text-center whitespace-nowrap min-w-[120px]">
+                                            <p className="text-xs text-gray-500">Amount Due</p>
+                                            <p className="text-red-600 font-bold text-sm">{currencySymbol}{entry.amount}</p>
+                                        </div>
+                                        <div className="whitespace-nowrap">
+                                            <Button
+                                                type="filled"
+                                                onClick={() => handleCollectCommission(entry)}
+                                                disabled={collecting || loading}
+                                                className="px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                                            >
+                                                {collecting ? "Collecting..." : "Collect"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
                         {commissionData?.pagination?.total > 0 && (

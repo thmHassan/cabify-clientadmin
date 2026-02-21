@@ -103,7 +103,8 @@ const dispatchData = [
 const DispatchSystem = () => {
     const [checkedState, setCheckedState] = useState({});
     const [systemStatus, setSystemStatus] = useState({});
-    const [bookingSystem, setBookingSystem] = useState(null);
+    const [bookingSystem, setBookingSystem] = useState(null);           // company_booking_system
+    const [adminDispatchSystem, setAdminDispatchSystem] = useState(null); // company_admin_dispatch_sytem
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [priorities, setPriorities] = useState({});
@@ -129,11 +130,9 @@ const DispatchSystem = () => {
         const newSystemStatus = {};
 
         dispatchData.forEach((p) => {
-            // For manual_dispatch_only, check if the main checkbox (p4_manual) is enabled
             if (p.systemKey === "manual_dispatch_only") {
                 newSystemStatus[p.systemKey] = !!checkedState["p4_manual"];
             } else {
-                // For other systems, check if any follow-up is enabled
                 const hasAnyEnabled = p.followUps.some((f) => {
                     if (checkedState[f.key]) return true;
                     if (f.children) {
@@ -141,7 +140,6 @@ const DispatchSystem = () => {
                     }
                     return false;
                 });
-
                 newSystemStatus[p.systemKey] = hasAnyEnabled;
             }
         });
@@ -152,8 +150,15 @@ const DispatchSystem = () => {
     const fetchData = async () => {
         try {
             const bookingRes = await apiGetBookingSystem();
+            let companyBookingSystem = null;
+            let companyAdminDispatchSystem = null;
+
             if (bookingRes?.data?.success === 1) {
-                setBookingSystem(bookingRes.data.company_admin_dispatch_sytem);
+                companyBookingSystem = bookingRes.data.company_booking_system;
+                companyAdminDispatchSystem = bookingRes.data.company_admin_dispatch_sytem;
+
+                setBookingSystem(companyBookingSystem);
+                setAdminDispatchSystem(companyAdminDispatchSystem);
             }
 
             const dispatchRes = await apiGetDispatchSystem();
@@ -168,7 +173,6 @@ const DispatchSystem = () => {
                                 initialPriorities[p.systemKey] = parseInt(item.priority);
                             }
 
-                            // Special handling for manual_dispatch_only
                             if (item.steps === null && p.systemKey === "manual_dispatch_only") {
                                 p.followUps.forEach((f) => {
                                     if (!f.stepKey || f.stepKey === "manual_dispatch_only") {
@@ -200,9 +204,14 @@ const DispatchSystem = () => {
                     });
                 });
 
-                const filteredData = dispatchData.filter((d) =>
-                    bookingRes.data.company_admin_dispatch_sytem === "both" ? true : d.type === bookingRes.data.company_admin_dispatch_sytem
-                );
+                // ✅ Use same filter logic as render for priority initialization
+                const filterType = companyAdminDispatchSystem === "both"
+                    ? companyBookingSystem  // when both → use company_booking_system
+                    : companyAdminDispatchSystem; // otherwise → use company_admin_dispatch_sytem directly
+
+                const filteredData = filterType === "both"
+                    ? dispatchData
+                    : dispatchData.filter((d) => d.type === filterType);
 
                 filteredData.forEach((p, index) => {
                     if (!initialPriorities[p.systemKey]) {
@@ -219,6 +228,25 @@ const DispatchSystem = () => {
             setLoading(false);
         }
     };
+
+    // ✅ KEY FILTER LOGIC:
+    // - company_admin_dispatch_sytem === "both" → show based on company_booking_system
+    // - company_admin_dispatch_sytem === "auto_dispatch" or "bidding" → show based on company_admin_dispatch_sytem only
+    const getFilteredDispatchData = () => {
+        if (!adminDispatchSystem) return [];
+
+        if (adminDispatchSystem === "both") {
+            // When "both", use company_booking_system to decide which type to show
+            if (!bookingSystem || bookingSystem === "both") return dispatchData;
+            return dispatchData.filter((d) => d.type === bookingSystem);
+        }
+
+        // When admin system is specifically "auto_dispatch" or "bidding"
+        // → ignore company_booking_system, filter by adminDispatchSystem directly
+        return dispatchData.filter((d) => d.type === adminDispatchSystem);
+    };
+
+    const filteredDispatchData = getFilteredDispatchData();
 
     const toggle = (key) =>
         setCheckedState((p) => ({ ...p, [key]: !p[key] }));
@@ -246,7 +274,7 @@ const DispatchSystem = () => {
     const handlePriorityChange = (systemKey, newPriority) => {
         setPriorities((prev) => ({
             ...prev,
-            [systemKey]: parseInt(newPriority)
+            [systemKey]: parseInt(newPriority),
         }));
     };
 
@@ -331,9 +359,13 @@ const DispatchSystem = () => {
         }
     };
 
-    const filteredDispatchData = dispatchData.filter((d) =>
-        bookingSystem === "both" ? true : d.type === bookingSystem
-    );
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-10">
+                <span className="text-gray-500 text-sm">Loading...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -413,7 +445,7 @@ const DispatchSystem = () => {
                                         </label>
 
                                         {f.children && checkedState[f.key] && (
-                                            <div className="ml-6 mt-1 space-y-2 mt-3">
+                                            <div className="ml-6 mt-3 space-y-2">
                                                 {f.children.map((c) => (
                                                     <label key={c.key} className="flex gap-2 text-sm">
                                                         <input
@@ -436,13 +468,9 @@ const DispatchSystem = () => {
             ))}
 
             <div className="flex justify-end pt-4 gap-2">
-                <Button
-                    type="filledGray"
-                    btnSize="md"
-                >
+                <Button type="filledGray" btnSize="md">
                     Cancel
                 </Button>
-
                 <Button
                     type="filled"
                     btnSize="md"
@@ -495,7 +523,7 @@ const DispatchSystem = () => {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Enter your password"
                                 onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
+                                    if (e.key === "Enter") {
                                         handlePasswordSubmit();
                                     }
                                 }}
@@ -525,7 +553,6 @@ const DispatchSystem = () => {
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

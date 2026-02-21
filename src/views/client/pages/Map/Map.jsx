@@ -10,8 +10,8 @@ import RedCarIcon from "../../../../components/svg/RedCarIcon";
 import GreenCarIcon from "../../../../components/svg/GreenCarIcon";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 
-const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const BARIKOI_KEY = import.meta.env.VITE_BARIKOI_API_KEY;
+const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
+const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
 
 const svgToDataUrl = (SvgComponent, width = 40, height = 40) => {
   const svgString = renderToString(
@@ -56,28 +56,52 @@ const loadGoogleMaps = () => {
 
 const loadBarikoiMaps = () => {
   return new Promise((resolve, reject) => {
-    if (window.maplibregl) return resolve();
+    // If already fully loaded
+    if (window.maplibregl && window.maplibregl.Map) {
+      return resolve();
+    }
 
+    const existingScript = document.getElementById("maplibre-script");
+
+    if (existingScript) {
+      // Wait until it's actually ready
+      existingScript.onload = () => {
+        if (window.maplibregl && window.maplibregl.Map) {
+          resolve();
+        } else {
+          reject(new Error("MapLibre failed to initialize"));
+        }
+      };
+      return;
+    }
+
+    // Add CSS if not added
     if (!document.getElementById("maplibre-css")) {
       const link = document.createElement("link");
       link.id = "maplibre-css";
       link.rel = "stylesheet";
-      link.href = "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css";
+      link.href =
+        "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css";
       document.head.appendChild(link);
     }
 
-    if (!document.getElementById("maplibre-script")) {
-      const script = document.createElement("script");
-      script.id = "maplibre-script";
-      script.src =
-        "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js";
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    } else {
-      resolve();
-    }
+    const script = document.createElement("script");
+    script.id = "maplibre-script";
+    script.src =
+      "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js";
+    script.async = true;
+
+    script.onload = () => {
+      if (window.maplibregl && window.maplibregl.Map) {
+        resolve();
+      } else {
+        reject(new Error("MapLibre loaded but Map is undefined"));
+      }
+    };
+
+    script.onerror = reject;
+
+    document.head.appendChild(script);
   });
 };
 
@@ -405,8 +429,12 @@ const BarikoiMapView = ({
         mapInstance.current = new window.maplibregl.Map({
           container: mapRef.current,
           style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${BARIKOI_KEY}`,
-          center: [72.5714, 23.0225],
-          zoom: 13,
+          // center: [72.5714, 23.0225],
+          // zoom: 13,
+        });
+
+        mapInstance.current.on("load", () => {
+          mapInstance.current.resize();
         });
 
         mapInstance.current.addControl(

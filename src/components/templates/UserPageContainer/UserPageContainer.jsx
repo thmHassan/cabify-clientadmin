@@ -155,32 +155,33 @@ const UserPageContainer = ({ children }) => {
     fetchBookingSystem();
   }, []);
 
-  const fetchBookingSystem = async () => {
-    try {
-      setIsLoadingBookingSystem(true);
-      const response = await apiGetBookingSystem();
+const fetchBookingSystem = async () => {
+  try {
+    setIsLoadingBookingSystem(true);
+    const response = await apiGetBookingSystem();
+    const data = response?.data || response;
 
-      const data = response?.data || response;
+    if (data && (data.success === 1 || data.success === true)) {
+      const adminSystem = data.company_admin_dispatch_sytem; // "both", "auto_dispatch", "bidding"
+      const activeBookingSystem = data.company_booking_system;  // "bidding" or "auto_dispatch"
 
-      if (data && (data.success === 1 || data.success === true)) {
-        const system = data.company_admin_dispatch_sytem;
-        setBookingSystem(system);
+      setBookingSystem(adminSystem);
 
-        // ✅ Set activeSystem based on fetched value
-        if (system === "both") {
-          setActiveSystem("auto_dispatch"); // default to auto_dispatch when both
-        } else {
-          setActiveSystem(system);
-        }
+      // ✅ If "both", set activeSystem from company_booking_system (actual active one)
+      if (adminSystem === "both") {
+        setActiveSystem(activeBookingSystem || "auto_dispatch");
       } else {
-        console.error("API response did not indicate success:", data);
+        setActiveSystem(adminSystem);
       }
-    } catch (error) {
-      console.error("Error fetching booking system:", error);
-    } finally {
-      setIsLoadingBookingSystem(false);
+    } else {
+      console.error("API response did not indicate success:", data);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching booking system:", error);
+  } finally {
+    setIsLoadingBookingSystem(false);
+  }
+};
 
   // ✅ FIXED: Toggle uses activeSystem, keeps bookingSystem as "both"
   const handleBookingSystemToggle = async () => {
@@ -195,7 +196,7 @@ const UserPageContainer = ({ children }) => {
       console.log("Switching activeSystem from", activeSystem, "to", newSystem);
 
       const formData = new FormData();
-      formData.append("company_admin_dispatch_sytem", newSystem);
+      formData.append("company_booking_system", newSystem);
 
       const response = await apiUpdateBookingSystem(formData);
       console.log("Update Full Response:", response);
@@ -282,84 +283,86 @@ const UserPageContainer = ({ children }) => {
     }
   };
 
-  const renderBookingSystemUI = () => {
-    if (isLoadingBookingSystem) {
-      return (
-        <div className="flex gap-2.5 items-center">
-          <span className="text-sm text-gray-500">Loading...</span>
-        </div>
-      );
-    }
+const renderBookingSystemUI = () => {
+  if (isLoadingBookingSystem) {
+    return (
+      <div className="flex gap-2.5 items-center">
+        <span className="text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
 
-    // ✅ FIXED: "both" case uses activeSystem for toggle position
-    if (bookingSystem === "both") {
-      return (
-        <div className="flex gap-2.5 items-center">
-          <PageSubTitle
-            title="Auto Dispatch System"
-            className="!leading-[22px]"
-            textColor={2}
-          />
-          <div className="relative">
-            <button
-              onClick={handleBookingSystemToggle}
-              disabled={isSwitchingSystem}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                activeSystem === "bidding" ? "bg-blue-500" : "bg-gray-300"
-              } ${
-                isSwitchingSystem
-                  ? "opacity-50 cursor-not-allowed"
-                  : "cursor-pointer"
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                  activeSystem === "bidding" ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
-          <PageSubTitle
-            title="Bidding System"
-            className="!leading-[22px]"
-            textColor={2}
-          />
-        </div>
-      );
-    }
-
-    if (bookingSystem === "auto_dispatch") {
-      return (
-        <div className="flex gap-2.5 items-center">
-          <PageSubTitle
-            title="Auto Dispatch System"
-            className="!leading-[22px]"
-            textColor={2}
-          />
-        </div>
-      );
-    }
-
-    if (bookingSystem === "bidding") {
-      return (
-        <div className="flex gap-2.5 items-center">
-          <PageSubTitle
-            title="Bidding System"
-            className="!leading-[22px]"
-            textColor={2}
-          />
-        </div>
-      );
-    }
+  // ✅ "both" → show toggle, position based on activeSystem (company_booking_system)
+  if (bookingSystem === "both") {
+    const isBidding = activeSystem === "bidding";
 
     return (
       <div className="flex gap-2.5 items-center">
-        <span className="text-sm text-gray-500">
-          System: {bookingSystem || "Not Set"}
-        </span>
+        <PageSubTitle
+          title="Auto Dispatch"
+          className="!leading-[22px]"
+          textColor={isBidding ? 3 : 1} // dimmed when not active
+        />
+        <div className="relative">
+          <button
+            onClick={handleBookingSystemToggle}
+            disabled={isSwitchingSystem}
+            className={`w-12 h-6 rounded-full transition-colors duration-300 ${
+              isBidding ? "bg-blue-500" : "bg-gray-300"
+            } ${
+              isSwitchingSystem
+                ? "opacity-50 cursor-not-allowed"
+                : "cursor-pointer"
+            }`}
+          >
+            <div
+              className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                isBidding ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+        <PageSubTitle
+          title="Bidding System"
+          className="!leading-[22px]"
+          textColor={isBidding ? 1 : 3} // dimmed when not active
+        />
       </div>
     );
-  };
+  }
+
+  if (bookingSystem === "auto_dispatch") {
+    return (
+      <div className="flex gap-2.5 items-center">
+        <PageSubTitle
+          title="Auto Dispatch System"
+          className="!leading-[22px]"
+          textColor={2}
+        />
+      </div>
+    );
+  }
+
+  if (bookingSystem === "bidding") {
+    return (
+      <div className="flex gap-2.5 items-center">
+        <PageSubTitle
+          title="Bidding System"
+          className="!leading-[22px]"
+          textColor={2}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2.5 items-center">
+      <span className="text-sm text-gray-500">
+        System: {bookingSystem || "Not Set"}
+      </span>
+    </div>
+  );
+};
 
   return (
     <div className="flex">

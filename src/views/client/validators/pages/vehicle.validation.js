@@ -21,9 +21,9 @@ export const getValidationSchema = (
       .required("Minimum distance is required")
       .matches(/^[0-9.]+$/, "Must be a valid number"),
     
-    backup_bid_vehicle_type: Yup.array()
-      .min(1, "At least one backup bid vehicle type is required")
-      .required("Backup bid vehicle type is required"),
+    // backup_bid_vehicle_type: Yup.array()
+    //   .min(1, "At least one backup bid vehicle type is required")
+    //   .required("Backup bid vehicle type is required"),
     
     // Vehicle Image Validation - FIXED
     vehicle_image: Yup.mixed()

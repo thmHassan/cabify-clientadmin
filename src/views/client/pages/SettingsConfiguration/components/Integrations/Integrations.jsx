@@ -7,7 +7,7 @@ const Integrations = () => {
     const [thirdPartyData, setThirdPartyData] = useState({
         google_api_keys: "",
         barikoi_api_keys: "",
-        map_settings: "default",
+        map_settings: "",
         mail_server: "",
         mail_from: "",
         mail_user_name: "",
@@ -15,7 +15,7 @@ const Integrations = () => {
         mail_port: "",
         tls_ssl_version: "TLSv1_2",
         tls_ssl_enabled: true,
-        smtp_type: "default"
+        smtp_type: ""
     });
     const [tableLoading, setTableLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -35,7 +35,7 @@ const Integrations = () => {
                     ...prev,
                     google_api_keys: data.google_api_keys || "",
                     barikoi_api_keys: data.barikoi_api_keys || "",
-                    map_settings: data.map_settings || "default",
+                    map_settings: data.map_settings || "",
                     mail_server: data.mail_server || "",
                     mail_from: data.mail_from || "",
                     mail_user_name: data.mail_user_name || "",
@@ -50,7 +50,7 @@ const Integrations = () => {
             setThirdPartyData({
                 google_api_keys: "",
                 barikoi_api_keys: "",
-                map_settings: "default",
+                map_settings: "",
                 mail_server: "",
                 mail_from: "",
                 mail_user_name: "",
@@ -158,8 +158,8 @@ const Integrations = () => {
                                 type="radio"
                                 name="smtpType"
                                 value="default"
-                                checked={thirdPartyData.smtp_type === "default"}
-                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, smtp_type: e.target.value })}
+                                checked={thirdPartyData.map_settings === "default"}
+                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, map_settings: e.target.value })}
                             />
                             Use default mail settings
                         </label>
@@ -169,14 +169,14 @@ const Integrations = () => {
                                 type="radio"
                                 name="smtpType"
                                 value="custom"
-                                checked={thirdPartyData.smtp_type === "custom"}
-                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, smtp_type: e.target.value })}
+                                checked={thirdPartyData.map_settings === "custom"}
+                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, map_settings: e.target.value })}
                             />
                             Use custom mail settings
                         </label>
                     </div>
 
-                    {thirdPartyData.smtp_type === "custom" && (
+                    {thirdPartyData.map_settings === "custom" && (
                         <div>
                             <div className="grid md:grid-cols-2 gap-5">
                                 <InputBox

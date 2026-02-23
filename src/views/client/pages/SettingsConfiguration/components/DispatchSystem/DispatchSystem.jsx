@@ -15,7 +15,13 @@ const dispatchData = [
         type: "auto_dispatch",
         systemKey: "auto_dispatch_plot_base",
         followUps: [
-            { label: "Immediately show on dispatcher panel", key: "p1_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p1_main" },
+            {
+                label: "Immediately show on dispatcher panel",
+                key: "p1_immediate",
+                stepKey: "immediately_show_on_dispatcher_panel",
+                type: "toggle",
+                group: "p1_main",
+            },
             {
                 label: "Show only after not selected in auto dispatch",
                 key: "p1_retry",
@@ -103,8 +109,8 @@ const dispatchData = [
 const DispatchSystem = () => {
     const [checkedState, setCheckedState] = useState({});
     const [systemStatus, setSystemStatus] = useState({});
-    const [bookingSystem, setBookingSystem] = useState(null);           // company_booking_system
-    const [adminDispatchSystem, setAdminDispatchSystem] = useState(null); // company_admin_dispatch_sytem
+    const [bookingSystem, setBookingSystem] = useState(null);
+    const [adminDispatchSystem, setAdminDispatchSystem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [priorities, setPriorities] = useState({});
@@ -113,7 +119,8 @@ const DispatchSystem = () => {
     const [password, setPassword] = useState("");
     const [verifying, setVerifying] = useState(false);
 
-    const getSystemDisplayName = (key) => ({
+    const getSystemDisplayName = (key) =>
+    ({
         auto_dispatch_plot_base: "Auto Dispatch Plot Based",
         bidding_fixed_fare_plot_base: "Bidding Fixed Fare - Plot Based",
         auto_dispatch_nearest_driver: "Auto Dispatch Nearest Driver",
@@ -168,50 +175,59 @@ const DispatchSystem = () => {
 
                 dispatchRes.data.data.forEach((item) => {
                     dispatchData.forEach((p) => {
-                        if (p.systemKey === item.dispatch_system) {
-                            if (item.priority) {
-                                initialPriorities[p.systemKey] = parseInt(item.priority);
-                            }
+                        if (p.systemKey !== item.dispatch_system) return;
 
-                            if (item.steps === null && p.systemKey === "manual_dispatch_only") {
+                        // ✅ Set priority from API
+                        if (item.priority) {
+                            initialPriorities[p.systemKey] = parseInt(item.priority);
+                        }
+
+                        // ✅ Fix: handle manual_dispatch_only with step "manual_only" or null
+                        if (p.systemKey === "manual_dispatch_only") {
+                            if (item.steps === null || item.steps === "manual_only" || item.steps === "manual_dispatch_only") {
                                 p.followUps.forEach((f) => {
-                                    if (!f.stepKey || f.stepKey === "manual_dispatch_only") {
-                                        initial[f.key] = item.status === "enable";
-                                    }
+                                    initial[f.key] = item.status === "enable";
                                 });
                             }
+                            return; // skip further processing for manual dispatch
+                        }
 
-                            p.followUps.forEach((f) => {
-                                if (f.stepKey === item.steps) {
-                                    initial[f.key] = item.status === "enable";
-                                }
+                        // Process normal followUps
+                        p.followUps.forEach((f) => {
+                            // Match direct step
+                            if (f.stepKey === item.steps) {
+                                initial[f.key] = item.status === "enable";
+                            }
 
-                                let hasEnabledChild = false;
-                                f.children?.forEach((c) => {
-                                    if (c.stepKey === item.steps) {
-                                        initial[c.key] = item.status === "enable";
-                                        if (item.status === "enable") {
-                                            hasEnabledChild = true;
-                                        }
+                            // Match children steps
+                            let hasEnabledChild = false;
+                            f.children?.forEach((c) => {
+                                if (c.stepKey === item.steps) {
+                                    initial[c.key] = item.status === "enable";
+                                    if (item.status === "enable") {
+                                        hasEnabledChild = true;
                                     }
-                                });
-
-                                if (hasEnabledChild && f.children) {
-                                    initial[f.key] = true;
                                 }
                             });
-                        }
+
+                            // ✅ Auto-enable parent toggle if any child is enabled
+                            if (hasEnabledChild && f.children) {
+                                initial[f.key] = true;
+                            }
+                        });
                     });
                 });
 
-                // ✅ Use same filter logic as render for priority initialization
-                const filterType = companyAdminDispatchSystem === "both"
-                    ? companyBookingSystem  // when both → use company_booking_system
-                    : companyAdminDispatchSystem; // otherwise → use company_admin_dispatch_sytem directly
+                // Priority initialization for filtered data
+                const filterType =
+                    companyAdminDispatchSystem === "both"
+                        ? companyBookingSystem
+                        : companyAdminDispatchSystem;
 
-                const filteredData = filterType === "both"
-                    ? dispatchData
-                    : dispatchData.filter((d) => d.type === filterType);
+                const filteredData =
+                    filterType === "both" || !filterType
+                        ? dispatchData
+                        : dispatchData.filter((d) => d.type === filterType);
 
                 filteredData.forEach((p, index) => {
                     if (!initialPriorities[p.systemKey]) {
@@ -229,27 +245,20 @@ const DispatchSystem = () => {
         }
     };
 
-    // ✅ KEY FILTER LOGIC:
-    // - company_admin_dispatch_sytem === "both" → show based on company_booking_system
-    // - company_admin_dispatch_sytem === "auto_dispatch" or "bidding" → show based on company_admin_dispatch_sytem only
     const getFilteredDispatchData = () => {
         if (!adminDispatchSystem) return [];
 
         if (adminDispatchSystem === "both") {
-            // When "both", use company_booking_system to decide which type to show
             if (!bookingSystem || bookingSystem === "both") return dispatchData;
             return dispatchData.filter((d) => d.type === bookingSystem);
         }
 
-        // When admin system is specifically "auto_dispatch" or "bidding"
-        // → ignore company_booking_system, filter by adminDispatchSystem directly
         return dispatchData.filter((d) => d.type === adminDispatchSystem);
     };
 
     const filteredDispatchData = getFilteredDispatchData();
 
-    const toggle = (key) =>
-        setCheckedState((p) => ({ ...p, [key]: !p[key] }));
+    const toggle = (key) => setCheckedState((p) => ({ ...p, [key]: !p[key] }));
 
     const handleToggleGroupChange = (group, selectedKey) => {
         setCheckedState((prev) => {
@@ -278,7 +287,7 @@ const DispatchSystem = () => {
         }));
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         setShowWarning(true);
     };
 
@@ -389,11 +398,9 @@ const DispatchSystem = () => {
                                             const newState = { ...checkedState };
                                             p.followUps.forEach((f) => {
                                                 newState[f.key] = false;
-                                                if (f.children) {
-                                                    f.children.forEach((c) => {
-                                                        newState[c.key] = false;
-                                                    });
-                                                }
+                                                f.children?.forEach((c) => {
+                                                    newState[c.key] = false;
+                                                });
                                             });
                                             setCheckedState(newState);
                                         }
@@ -402,14 +409,19 @@ const DispatchSystem = () => {
                             </div>
                             <div className="flex-1">
                                 <h2 className="font-semibold pb-3">
-                                    {getSystemDisplayName(p.systemKey)} (Priority {priorities[p.systemKey] || i + 1})
+                                    {getSystemDisplayName(p.systemKey)} (Priority{" "}
+                                    {priorities[p.systemKey] || i + 1})
                                 </h2>
 
                                 <div className="mb-4">
-                                    <label className="text-sm text-gray-600 block mb-1">Select Priority</label>
+                                    <label className="text-sm text-gray-600 block mb-1">
+                                        Select Priority
+                                    </label>
                                     <select
                                         value={priorities[p.systemKey] || i + 1}
-                                        onChange={(e) => handlePriorityChange(p.systemKey, e.target.value)}
+                                        onChange={(e) =>
+                                            handlePriorityChange(p.systemKey, e.target.value)
+                                        }
                                         className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         {[1, 2, 3, 4, 5].map((priority) => (
@@ -428,7 +440,9 @@ const DispatchSystem = () => {
                                                     <input
                                                         type="checkbox"
                                                         checked={!!checkedState[f.key]}
-                                                        onChange={() => handleToggleGroupChange(f.group, f.key)}
+                                                        onChange={() =>
+                                                            handleToggleGroupChange(f.group, f.key)
+                                                        }
                                                         className="sr-only peer"
                                                     />
                                                     <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
@@ -481,12 +495,14 @@ const DispatchSystem = () => {
                 </Button>
             </div>
 
+            {/* Warning Modal */}
             {showWarning && (
                 <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                         <h3 className="text-lg font-semibold mb-4">Confirm Changes</h3>
                         <p className="text-gray-600 mb-6">
-                            The changes you make will affect the entire system. Are you sure you want to proceed?
+                            The changes you make will affect the entire system. Are you sure you
+                            want to proceed?
                         </p>
                         <div className="flex justify-end gap-3">
                             <Button
@@ -496,11 +512,7 @@ const DispatchSystem = () => {
                             >
                                 No
                             </Button>
-                            <Button
-                                type="filled"
-                                btnSize="md"
-                                onClick={handleConfirmSave}
-                            >
+                            <Button type="filled" btnSize="md" onClick={handleConfirmSave}>
                                 Yes
                             </Button>
                         </div>
@@ -508,6 +520,7 @@ const DispatchSystem = () => {
                 </div>
             )}
 
+            {/* Password Modal */}
             {showPasswordModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">

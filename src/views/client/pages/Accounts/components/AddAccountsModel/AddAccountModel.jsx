@@ -155,11 +155,11 @@ const AddAccountModel = ({ initialValue = {}, setIsOpen, onAccountCreated }) => 
                                             placeholder="Enter Notes"
                                         />
                                     </div>
-                                    <ErrorMessage
+                                    {/* <ErrorMessage
                                         name="notes"
                                         component="div"
                                         className="text-red-500 text-sm mt-1"
-                                    />
+                                    /> */}
                                 </div>
 
                             </div>

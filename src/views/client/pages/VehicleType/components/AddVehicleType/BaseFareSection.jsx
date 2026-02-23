@@ -1,7 +1,29 @@
 import { Field, ErrorMessage } from "formik";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { useEffect, useState } from "react";
 
 const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
+  const currencySymbols = {
+    INR: "₹",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    AUD: "A$",
+    CAD: "C$",
+    AED: "د.إ",
+  };
+
+  const [currencySymbol, setCurrencySymbol] = useState("₹");
+
+  useEffect(() => {
+    const tenant = getTenantData();
+
+    if (tenant?.currency) {
+      setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+    }
+  }, []);
+
   return (
     <div className="flex flex-row gap-3">
       <div className="flex gap-3 mt-3">
@@ -28,7 +50,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
               type="text"
               name="base_fare_less_than_x_miles"
               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-              placeholder="$0"
+              placeholder={`${currencySymbol}0`}
               disabled={values.base_fare_system_status !== "yes"}
             />
           </div>
@@ -48,7 +70,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
               type="text"
               name="base_fare_less_than_x_price"
               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-              placeholder="$0"
+              placeholder={`${currencySymbol}0`}
               disabled={values.base_fare_system_status !== "yes"}
             />
           </div>
@@ -70,7 +92,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
                   type="text"
                   name="base_fare_from_x_miles"
                   className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                  placeholder="$0"
+                  placeholder={`${currencySymbol}0`}
                   disabled={values.base_fare_system_status !== "yes"}
                 />
               </div>
@@ -87,7 +109,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
                   type="text"
                   name="base_fare_to_x_miles"
                   className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                  placeholder="$0"
+                  placeholder={`${currencySymbol}0`}
                   disabled={values.base_fare_system_status !== "yes"}
                 />
               </div>
@@ -109,7 +131,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
               type="text"
               name="base_fare_from_to_price"
               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-              placeholder="$0"
+              placeholder={`${currencySymbol}0`}
               disabled={values.base_fare_system_status !== "yes"}
             />
           </div>
@@ -129,7 +151,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
               type="text"
               name="base_fare_greater_than_x_miles"
               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-              placeholder="$0"
+              placeholder={`${currencySymbol}0`}
               disabled={values.base_fare_system_status !== "yes"}
             />
           </div>
@@ -149,7 +171,7 @@ const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
               type="text"
               name="base_fare_greater_than_x_price"
               className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-              placeholder="$0"
+              placeholder={`${currencySymbol}0`}
               disabled={values.base_fare_system_status !== "yes"}
             />
           </div>

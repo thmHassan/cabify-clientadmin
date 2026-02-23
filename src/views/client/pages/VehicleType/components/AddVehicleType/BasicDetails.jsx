@@ -21,7 +21,7 @@ const BasicDetails = ({
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <FormLabel htmlFor="vehicle_type_name">Vehicle Type Name *</FormLabel>
+                    <FormLabel htmlFor="vehicle_type_name">Vehicle Type Name</FormLabel>
                     <div className="h-14">
                         <Field
                             type="text"
@@ -38,7 +38,7 @@ const BasicDetails = ({
                 </div>
 
                 <div>
-                    <FormLabel htmlFor="order_no">Order No *</FormLabel>
+                    <FormLabel htmlFor="order_no">Order No</FormLabel>
                     <div className="h-14">
                         <Field
                             type="text"
@@ -56,7 +56,7 @@ const BasicDetails = ({
 
                 <div>
                     <FormLabel htmlFor="vehicle_type_service">
-                        Vehicle Type Service *
+                        Vehicle Type Service
                     </FormLabel>
                     <div className="h-14">
                         <FormSelection
@@ -78,7 +78,7 @@ const BasicDetails = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <FormLabel htmlFor="minimum_distance">
-                        Minimum Distance ({distanceUnit}) *
+                        Minimum Distance ({distanceUnit}) 
                     </FormLabel>
                     <div className="h-14">
                         <Field
@@ -96,7 +96,7 @@ const BasicDetails = ({
                 </div>
                 <div>
                     <FormLabel htmlFor="backupBidTypes">
-                        Backup Bid Vehicle Type *
+                        Backup Bid Vehicle Type
                     </FormLabel>
                     <div className="h-16 w-full">
                         <FormSelection
@@ -115,19 +115,19 @@ const BasicDetails = ({
                             isMulti={true}
                         />
                     </div>
-                    {touched.backup_bid_vehicle_type &&
+                    {/* {touched.backup_bid_vehicle_type &&
                         errors.backup_bid_vehicle_type && (
                             <div className="text-red-500 text-sm mt-1">
                                 {errors.backup_bid_vehicle_type}
                             </div>
-                        )}
+                        )} */}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <FormLabel htmlFor="vehicle_image">Vehicle Type Image *</FormLabel>
-                    
+                    <FormLabel htmlFor="vehicle_image">Vehicle Type Image</FormLabel>
+
                     {/* Show new uploaded image preview */}
                     {vehicleImage && (
                         <div className="mb-3">
@@ -139,7 +139,7 @@ const BasicDetails = ({
                             />
                         </div>
                     )}
-                    
+
                     {/* Show existing image only if no new image is uploaded */}
                     {!vehicleImage && existingVehicleImageUrl && (
                         <div className="mb-3">
@@ -151,7 +151,7 @@ const BasicDetails = ({
                             />
                         </div>
                     )}
-                    
+
                     {/* Hidden file input */}
                     <input
                         id="vehicle_image_input"
@@ -164,7 +164,7 @@ const BasicDetails = ({
                         }}
                         className="hidden"
                     />
-                    
+
                     {/* Custom file input button */}
                     <div className="flex items-center gap-3">
                         <label
@@ -174,15 +174,15 @@ const BasicDetails = ({
                             Choose File
                         </label>
                         <span className="text-sm text-gray-600">
-                            {vehicleImage 
-                                ? vehicleImage.name 
-                                : existingVehicleImageUrl 
+                            {vehicleImage
+                                ? vehicleImage.name
+                                : existingVehicleImageUrl
                                     ? existingVehicleImageUrl.split('/').pop()
                                     : "No file chosen"
                             }
                         </span>
                     </div>
-                    
+
                     {/* Only show error if NOT in edit mode OR if in edit mode but no existing image */}
                     {touched.vehicle_image && errors.vehicle_image && !(isEditMode && existingVehicleImageUrl) && (
                         <div className="text-red-500 text-sm mt-1">

@@ -27,13 +27,13 @@ const Security = () => {
 
             const response = await apiSaveUpdatePassword(formData);
 
-            if (response?.data?.error === 0) {
+            if (response?.data?.success === 1) {
                 toast.success(response?.data?.message || "Password updated successfully");
 
                 setCurrentPassword("");
                 setNewPassword("");
             } else {
-                // toast.error(response?.data?.message || "Failed to update password");
+                toast.error(response?.data?.message || "Failed to update password");
             }
         } catch (error) {
             const errorMsg =

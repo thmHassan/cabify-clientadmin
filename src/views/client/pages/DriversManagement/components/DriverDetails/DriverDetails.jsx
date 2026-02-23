@@ -18,13 +18,21 @@ import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
 
-const FormField = ({ label, type = "text", placeholder, options = [], value = "", onChange, name, disabled = false }) => {
+const FormField = ({
+    label,
+    type = "text",
+    placeholder,
+    options = [],
+    value = "",
+    onChange,
+    name,
+    disabled = false,
+}) => {
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-                {label}
-            </label>
+            <label className="text-sm font-medium text-gray-700">{label}</label>
 
             {type === "select" ? (
                 <select
@@ -36,8 +44,8 @@ const FormField = ({ label, type = "text", placeholder, options = [], value = ""
                 >
                     <option value="">{placeholder}</option>
                     {options.map((opt, index) => (
-                        <option key={index} value={opt}>
-                            {opt}
+                        <option key={index} value={opt.value ?? opt}>
+                            {opt.label ?? opt}
                         </option>
                     ))}
                 </select>
@@ -69,7 +77,9 @@ const DriverDetails = () => {
     const { id: driverId } = useParams();
 
     const tenantData = getTenantData();
-    const isPushNotificationEnabled = tenantData?.push_notification === "enable" || tenantData?.push_notification === "yes";
+    const isPushNotificationEnabled =
+        tenantData?.push_notification === "enable" ||
+        tenantData?.push_notification === "yes";
 
     const [isAddWalletBalanceModalOpen, setIsAddWalletBalanceModalOpen] = useState(false);
     const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false);
@@ -84,7 +94,6 @@ const DriverDetails = () => {
     const savedPagination = useAppSelector(
         (state) => state?.app?.app?.pagination?.companies
     );
-
     const [currentPage, setCurrentPage] = useState(
         Number(savedPagination?.currentPage) || 1
     );
@@ -98,7 +107,7 @@ const DriverDetails = () => {
     const [revenueData, setRevenueData] = useState({
         totalEarnings: "0.00",
         totalCompletedRides: 0,
-        loading: false
+        loading: false,
     });
 
     const [formData, setFormData] = useState({
@@ -125,6 +134,7 @@ const DriverDetails = () => {
         bank_phone_no: "",
         iban_no: "",
     });
+
     const [profileImage, setProfileImage] = useState(null);
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -135,77 +145,79 @@ const DriverDetails = () => {
     const [documentApprovedOffice, setDocumentApprovedOffice] = useState(false);
     const [subCompanyList, setSubCompanyList] = useState([]);
     const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
+    const [vehicleList, setVehicleList] = useState([]);
+    const [loadingVehicles, setLoadingVehicles] = useState(false);
 
-    // vehicle_change_request > 0 હોય તો change_ values show કરવી, નહીં તો original values
     const getVehicleFormData = (data) => {
         const hasChangeRequest = Number(data?.vehicle_change_request) > 0;
-
         return {
             vehicle_name: hasChangeRequest
-                ? (data?.change_vehicle_name || data?.vehicle_name || "")
-                : (data?.vehicle_name || ""),
+                ? data?.change_vehicle_name || data?.vehicle_name || ""
+                : data?.vehicle_name || "",
             vehicle_type: hasChangeRequest
-                ? (data?.change_vehicle_type ? data.change_vehicle_type.toString() : (data?.vehicle_type ? data.vehicle_type.toString() : ""))
-                : (data?.vehicle_type ? data.vehicle_type.toString() : ""),
+                ? data?.change_vehicle_type
+                    ? data.change_vehicle_type.toString()
+                    : data?.vehicle_type
+                        ? data.vehicle_type.toString()
+                        : ""
+                : data?.vehicle_type
+                    ? data.vehicle_type.toString()
+                    : "",
             vehicle_service: hasChangeRequest
-                ? (data?.change_vehicle_service || data?.vehicle_service || "")
-                : (data?.vehicle_service || ""),
+                ? data?.change_vehicle_service || data?.vehicle_service || ""
+                : data?.vehicle_service || "",
             seats: hasChangeRequest
-                ? (data?.change_seats ? data.change_seats.toString() : (data?.seats ? data.seats.toString() : ""))
-                : (data?.seats ? data.seats.toString() : ""),
+                ? data?.change_seats
+                    ? data.change_seats.toString()
+                    : data?.seats
+                        ? data.seats.toString()
+                        : ""
+                : data?.seats
+                    ? data.seats.toString()
+                    : "",
             color: hasChangeRequest
-                ? (data?.change_color || data?.color || "")
-                : (data?.color || ""),
+                ? data?.change_color || data?.color || ""
+                : data?.color || "",
             capacity: hasChangeRequest
-                ? (data?.change_capacity || data?.capacity || "")
-                : (data?.capacity || ""),
+                ? data?.change_capacity || data?.capacity || ""
+                : data?.capacity || "",
             plate_no: hasChangeRequest
-                ? (data?.change_plate_no || data?.plate_no || "")
-                : (data?.plate_no || ""),
+                ? data?.change_plate_no || data?.plate_no || ""
+                : data?.plate_no || "",
             vehicle_registration_date: hasChangeRequest
-                ? (data?.change_vehicle_registration_date
-                    ? data.change_vehicle_registration_date.split('T')[0]
-                    : (data?.vehicle_registration_date ? data.vehicle_registration_date.split('T')[0] : ""))
-                : (data?.vehicle_registration_date
-                    ? data.vehicle_registration_date.split('T')[0]
-                    : ""),
+                ? data?.change_vehicle_registration_date
+                    ? data.change_vehicle_registration_date.split("T")[0]
+                    : data?.vehicle_registration_date
+                        ? data.vehicle_registration_date.split("T")[0]
+                        : ""
+                : data?.vehicle_registration_date
+                    ? data.vehicle_registration_date.split("T")[0]
+                    : "",
         };
     };
 
     const loadDriverRevenue = useCallback(async () => {
         if (!driverId) return;
-
-        setRevenueData(prev => ({ ...prev, loading: true }));
+        setRevenueData((prev) => ({ ...prev, loading: true }));
         try {
             const response = await apiGetDriverRevenue({ driver_id: driverId });
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 setRevenueData({
                     totalEarnings: response?.data?.total_earnings || "0.00",
                     totalCompletedRides: response?.data?.total_completed_rides || 0,
-                    loading: false
+                    loading: false,
                 });
             } else {
-                setRevenueData({
-                    totalEarnings: "0.00",
-                    totalCompletedRides: 0,
-                    loading: false
-                });
+                setRevenueData({ totalEarnings: "0.00", totalCompletedRides: 0, loading: false });
             }
         } catch (error) {
             console.error("Error loading driver revenue:", error);
-            setRevenueData({
-                totalEarnings: "0.00",
-                totalCompletedRides: 0,
-                loading: false
-            });
+            setRevenueData({ totalEarnings: "0.00", totalCompletedRides: 0, loading: false });
         }
     }, [driverId]);
 
     useEffect(() => {
-        if (driverId) {
-            loadDriverRevenue();
-        }
+        if (driverId) loadDriverRevenue();
     }, [driverId, loadDriverRevenue]);
 
     useEffect(() => {
@@ -213,16 +225,11 @@ const DriverDetails = () => {
             setLoadingSubCompanies(true);
             try {
                 const response = await apiGetSubCompany({ page: 1, perPage: 100 });
-
                 if (response?.data?.success === 1) {
                     const companies = response?.data?.list?.data || [];
-
-                    const options = companies.map((company) => ({
-                        label: company.name,
-                        value: company.id.toString(),
-                    }));
-
-                    setSubCompanyList(options);
+                    setSubCompanyList(
+                        companies.map((c) => ({ label: c.name, value: c.id.toString() }))
+                    );
                 }
             } catch (error) {
                 console.error("Error fetching sub-companies:", error);
@@ -230,25 +237,46 @@ const DriverDetails = () => {
                 setLoadingSubCompanies(false);
             }
         };
-
         fetchSubCompanies();
     }, []);
 
+    useEffect(() => {
+        const fetchVehicle = async () => {
+            setLoadingVehicles(true);
+            try {
+                const response = await apiGetAllVehicleType();
+                if (response?.data?.success === 1) {
+                    const vehicletype = response?.data?.list || [];
+                    setVehicleList(
+                        vehicletype.map((v) => ({
+                            label: v.vehicle_type_name,
+                            value: v.id.toString(),
+                        }))
+                    );
+                }
+            } catch (error) {
+                console.error("Error fetching vehicle:", error);
+            } finally {
+                setLoadingVehicles(false);
+            }
+        };
+        fetchVehicle();
+    }, []);
 
     const loadDriverData = useCallback(async () => {
         if (!driverId) return;
-
         setIsLoading(true);
         try {
             const response = await apiGetDriverManagementById({ id: driverId });
-
             if (response?.data?.success === 1 || response?.status === 200) {
-                const data = response?.data?.driver || response?.data?.data || response?.data || {};
+                const data =
+                    response?.data?.driver ||
+                    response?.data?.data ||
+                    response?.data ||
+                    {};
                 setDriverData(data);
 
-                // vehicle fields: change_request > 0 હોય તો change_ values, નહીં તો original
                 const vehicleData = getVehicleFormData(data);
-
                 setFormData({
                     name: data.name || "",
                     email: data.email || "",
@@ -260,10 +288,8 @@ const DriverDetails = () => {
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
-                    joined_date: data.joined_date ? data.joined_date.split('T')[0] : "",
+                    joined_date: data.joined_date ? data.joined_date.split("T")[0] : "",
                     sub_company: data.sub_company ? data.sub_company.toString() : "",
-
-                    // Vehicle fields (change_request logic applied)
                     vehicle_name: vehicleData.vehicle_name,
                     vehicle_type: vehicleData.vehicle_type,
                     vehicle_service: vehicleData.vehicle_service,
@@ -272,8 +298,6 @@ const DriverDetails = () => {
                     capacity: vehicleData.capacity,
                     plate_no: vehicleData.plate_no,
                     vehicle_registration_date: vehicleData.vehicle_registration_date,
-
-                    // Bank fields
                     bank_name: data.bank_name || "",
                     bank_account_number: data.bank_account_number || "",
                     account_holder_name: data.account_holder_name || "",
@@ -281,11 +305,12 @@ const DriverDetails = () => {
                     iban_no: data.iban_no || "",
                 });
 
-                if (data.profile_image) {
-                    setProfileImage(data.profile_image);
-                }
+                if (data.profile_image) setProfileImage(data.profile_image);
                 if (data.document_approved_office !== undefined) {
-                    setDocumentApprovedOffice(data.document_approved_office === 1 || data.document_approved_office === "1");
+                    setDocumentApprovedOffice(
+                        data.document_approved_office === 1 ||
+                        data.document_approved_office === "1"
+                    );
                 }
             }
         } catch (error) {
@@ -301,21 +326,32 @@ const DriverDetails = () => {
 
     const loadDriverDocuments = useCallback(async () => {
         if (!driverId) return;
-
         setIsLoadingDocuments(true);
         try {
             const response = await apiGetDriverDocumentList({ driver_id: driverId });
-
             if (response?.data?.success === 1 || response?.status === 200) {
-                const docs = response?.data?.documentList || response?.data?.data || response?.data?.list || [];
-                const normalizedDocs = (Array.isArray(docs) ? docs : []).map(doc => ({
+                const docs =
+                    response?.data?.documentList ||
+                    response?.data?.data ||
+                    response?.data?.list ||
+                    [];
+                const normalizedDocs = (Array.isArray(docs) ? docs : []).map((doc) => ({
                     ...doc,
-                    displayName: doc.document_detail?.document_name || doc.document_name || "Unnamed Document",
-                    status: doc.status === 'approved' ? 'verified' : (doc.status || 'pending')
+                    displayName:
+                        doc.document_detail?.document_name ||
+                        doc.document_name ||
+                        "Unnamed Document",
+                    status:
+                        doc.status === "approved"
+                            ? "verified"
+                            : doc.status || "pending",
                 }));
                 setDocuments(normalizedDocs);
                 if (response?.data?.document_approved_office !== undefined) {
-                    setDocumentApprovedOffice(response?.data?.document_approved_office === 1 || response?.data?.document_approved_office === "1");
+                    setDocumentApprovedOffice(
+                        response?.data?.document_approved_office === 1 ||
+                        response?.data?.document_approved_office === "1"
+                    );
                 }
             } else {
                 setDocuments([]);
@@ -333,10 +369,7 @@ const DriverDetails = () => {
     }, [loadDriverDocuments]);
 
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleFileChange = (e) => {
@@ -344,9 +377,7 @@ const DriverDetails = () => {
         if (file) {
             setProfileImageFile(file);
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImage(reader.result);
-            };
+            reader.onloadend = () => setProfileImage(reader.result);
             reader.readAsDataURL(file);
         }
     };
@@ -354,7 +385,6 @@ const DriverDetails = () => {
     const handleDeleteDocument = async (documentId) => {
         try {
             const response = await apiDeleteDriverDocument(documentId);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Document deleted successfully");
                 await loadDriverDocuments();
@@ -371,7 +401,10 @@ const DriverDetails = () => {
         try {
             const response = await apiGetDriverDocumentById({ id: documentId });
             if (response?.data?.success === 1 || response?.status === 200) {
-                const docData = response?.data?.data || response?.data?.document || response?.data;
+                const docData =
+                    response?.data?.data ||
+                    response?.data?.document ||
+                    response?.data;
                 setSelectedDocument(docData);
                 lockBodyScroll();
                 setIsAddDocumentModalOpen(true);
@@ -388,12 +421,10 @@ const DriverDetails = () => {
     const handleDocumentStatusChange = async (documentId, status) => {
         try {
             const formDataObj = new FormData();
-            formDataObj.append('driver_id', driverId);
-            formDataObj.append('driver_document_id', documentId);
-            formDataObj.append('status', status);
-
+            formDataObj.append("driver_id", driverId);
+            formDataObj.append("driver_document_id", documentId);
+            formDataObj.append("status", status);
             const response = await apiChangeDriverDocument(formDataObj);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success(`Document ${status}`);
                 await loadDriverDocuments();
@@ -408,9 +439,8 @@ const DriverDetails = () => {
     const handleApproveAll = async () => {
         try {
             const formDataObj = new FormData();
-            formDataObj.append('driver_id', driverId);
-            formDataObj.append('approve_all', '1');
-
+            formDataObj.append("driver_id", driverId);
+            formDataObj.append("approve_all", "1");
             const response = await apiChangeDriverDocument(formDataObj);
             if (response?.data?.success === 1 || response?.status === 200) {
                 await loadDriverDocuments();
@@ -426,9 +456,8 @@ const DriverDetails = () => {
     const handleRejectAll = async () => {
         try {
             const formDataObj = new FormData();
-            formDataObj.append('driver_id', driverId);
-            formDataObj.append('reject_all', '1');
-
+            formDataObj.append("driver_id", driverId);
+            formDataObj.append("reject_all", "1");
             const response = await apiChangeDriverDocument(formDataObj);
             if (response?.data?.success === 1 || response?.status === 200) {
                 await loadDriverDocuments();
@@ -443,10 +472,8 @@ const DriverDetails = () => {
     const handleApproveVehicle = async () => {
         try {
             const formDataObj = new FormData();
-            formDataObj.append('driver_id', driverId);
-
+            formDataObj.append("driver_id", driverId);
             const response = await apiApproveVehicle(formDataObj);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Vehicle approved successfully");
                 await loadDriverData();
@@ -460,15 +487,9 @@ const DriverDetails = () => {
 
     const handleApproveInOffice = async () => {
         if (!driverData?.id) return;
-
         try {
-            const payload = {
-                driver_id: driverData.id,
-                document_approved_office: 1,
-            };
-
+            const payload = { driver_id: driverData.id, document_approved_office: 1 };
             const response = await apiChangeDriverDocument(payload);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Approved in office");
                 await loadDriverData();
@@ -483,10 +504,8 @@ const DriverDetails = () => {
     const handleRejectVehicle = async () => {
         try {
             const formDataObj = new FormData();
-            formDataObj.append('driver_id', driverId);
-
+            formDataObj.append("driver_id", driverId);
             const response = await apiRejectVehicle(formDataObj);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Vehicle rejected");
                 await loadDriverData();
@@ -502,26 +521,23 @@ const DriverDetails = () => {
         setIsSaving(true);
         try {
             const formDataObj = new FormData();
-            formDataObj.append('id', driverId);
-            formDataObj.append('name', formData.name || '');
-            formDataObj.append('email', formData.email || '');
-            formDataObj.append('country_code', formData.country_code || '+91');
-            formDataObj.append('phone_no', formData.phone_no || '');
-            formDataObj.append('address', formData.address || '');
-            formDataObj.append('driver_license', formData.driver_license || '');
-            formDataObj.append('assigned_vehicle', formData.assigned_vehicle || '');
+            formDataObj.append("id", driverId);
+            formDataObj.append("name", formData.name || "");
+            formDataObj.append("email", formData.email || "");
+            formDataObj.append("country_code", formData.country_code || "+91");
+            formDataObj.append("phone_no", formData.phone_no || "");
+            formDataObj.append("address", formData.address || "");
+            formDataObj.append("driver_license", formData.driver_license || "");
+            formDataObj.append("assigned_vehicle", formData.assigned_vehicle || "");
             formDataObj.append(
-                'joined_date',
-                formData.joined_date ? `${formData.joined_date} 00:00:00` : ''
+                "joined_date",
+                formData.joined_date ? `${formData.joined_date} 00:00:00` : ""
             );
-            formDataObj.append('sub_company', formData.sub_company || '');
-
+            formDataObj.append("sub_company", formData.sub_company || "");
             if (profileImageFile) {
-                formDataObj.append('profile_image', profileImageFile);
+                formDataObj.append("profile_image", profileImageFile);
             }
-
             const response = await apiEditDriverManagement(formDataObj);
-
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Driver details updated successfully");
                 await loadDriverData();
@@ -530,9 +546,7 @@ const DriverDetails = () => {
             }
         } catch (error) {
             toast.error(
-                error?.response?.data?.message ||
-                error?.message ||
-                "Error saving driver"
+                error?.response?.data?.message || error?.message || "Error saving driver"
             );
         } finally {
             setIsSaving(false);
@@ -541,12 +555,13 @@ const DriverDetails = () => {
 
     const loadRideHistory = useCallback(async () => {
         if (!driverId) return;
-
         setTableLoading(true);
         try {
             const response = await apiGetDriverRideHistory(driverId);
-
-            if (response?.status === 200 && Array.isArray(response?.data?.rideHistory)) {
+            if (
+                response?.status === 200 &&
+                Array.isArray(response?.data?.rideHistory)
+            ) {
                 setRideHistory(response?.data.rideHistory);
             } else {
                 setRideHistory([]);
@@ -560,15 +575,10 @@ const DriverDetails = () => {
     }, [driverId]);
 
     useEffect(() => {
-        if (driverId) {
-            loadRideHistory();
-        }
+        if (driverId) loadRideHistory();
     }, [driverId, loadRideHistory]);
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
+    const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
     const handleItemsPerPageChange = (newItemsPerPage) => {
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1);
@@ -576,11 +586,7 @@ const DriverDetails = () => {
 
     const handleChangeDriverStatus = async (status) => {
         try {
-            const response = await apieditDriverStatus({
-                id: driverId,
-                status,
-            });
-
+            const response = await apieditDriverStatus({ id: driverId, status });
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success(`Driver status changed to ${status}`);
                 await loadDriverData();
@@ -596,7 +602,8 @@ const DriverDetails = () => {
         }
     };
 
-    const hasVehicleChangeRequest = Number(driverData?.vehicle_change_request) > 0;
+    const hasVehicleChangeRequest =
+        Number(driverData?.vehicle_change_request) > 0;
 
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -608,28 +615,27 @@ const DriverDetails = () => {
                 </div>
                 <div className="w-full sm:mb-[50px] mb-8">
                     <div className="flex flex-row justify-end gap-2">
-                        {(driverData?.status === "rejected" || driverData?.status === "pending") && (
-                            <Button
-                                onClick={() => handleChangeDriverStatus("accepted")}
-                                className="border border-[#10b981] text-[#10b981] font-bold py-2 px-4 rounded-md"
-                            >
-                                Accept
-                            </Button>
-                        )}
-
-                        {(driverData?.status === "accepted" || driverData?.status === "pending") && (
-                            <Button
-                                onClick={() => {
-                                    lockBodyScroll();
-                                    setIsRejectModalOpen(true);
-                                }}
-                                className="border border-[#ff4747] text-[#ff4747] font-bold py-2 px-4 rounded-md"
-                            >
-                                Reject
-                            </Button>
-                        )}
-
-                        {/* Show Send Notification button only if push_notification is enabled */}
+                        {(driverData?.status === "rejected" ||
+                            driverData?.status === "pending") && (
+                                <Button
+                                    onClick={() => handleChangeDriverStatus("accepted")}
+                                    className="border border-[#10b981] text-[#10b981] font-bold py-2 px-4 rounded-md"
+                                >
+                                    Accept
+                                </Button>
+                            )}
+                        {(driverData?.status === "accepted" ||
+                            driverData?.status === "pending") && (
+                                <Button
+                                    onClick={() => {
+                                        lockBodyScroll();
+                                        setIsRejectModalOpen(true);
+                                    }}
+                                    className="border border-[#ff4747] text-[#ff4747] font-bold py-2 px-4 rounded-md"
+                                >
+                                    Reject
+                                </Button>
+                            )}
                         {isPushNotificationEnabled && (
                             <Button
                                 type="filled"
@@ -647,7 +653,6 @@ const DriverDetails = () => {
                 </div>
             </div>
 
-            {/* Driver Details */}
             <div>
                 <CardContainer className="p-5 mt-4">
                     <h2 className="text-base font-semibold text-gray-800 mb-6">
@@ -655,31 +660,39 @@ const DriverDetails = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Name
+                            </label>
                             <input
                                 type="text"
                                 value={formData.name}
-                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                onChange={(e) => handleInputChange("name", e.target.value)}
                                 placeholder="Enter Name"
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Email
+                            </label>
                             <input
                                 type="email"
                                 value={formData.email}
-                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                onChange={(e) => handleInputChange("email", e.target.value)}
                                 placeholder="Enter Email"
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Phone Number
+                            </label>
                             <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-blue-600">
                                 <select
                                     value={formData.country_code}
-                                    onChange={(e) => handleInputChange('country_code', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("country_code", e.target.value)
+                                    }
                                     className="px-3 bg-gray-100 border-r border-gray-300 outline-none font-semibold"
                                 >
                                     <option value="+91">+91</option>
@@ -691,46 +704,77 @@ const DriverDetails = () => {
                                 <input
                                     type="text"
                                     value={formData.phone_no}
-                                    onChange={(e) => handleInputChange('phone_no', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("phone_no", e.target.value)
+                                    }
                                     placeholder="Enter Phone Number"
                                     className="flex-1 h-11 px-4 text-sm focus:outline-none"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Vehicle</label>
-                            <input
-                                type="text"
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Assigned Vehicle
+                            </label>
+                            <select
                                 value={formData.assigned_vehicle}
-                                onChange={(e) => handleInputChange('assigned_vehicle', e.target.value)}
-                                placeholder="Enter Assigned Vehicle"
+                                onChange={(e) =>
+                                    handleInputChange("assigned_vehicle", e.target.value)
+                                }
+                                disabled={loadingVehicles}
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                            />
+                            >
+                                <option value="">
+                                    {loadingVehicles ? "Loading..." : "Select Vehicle"}
+                                </option>
+                                {vehicleList.map((vehicle) => (
+                                    <option key={vehicle.value} value={vehicle.value}>
+                                        {vehicle.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+                        {/* Joined Date */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Joined Date
+                            </label>
                             <input
                                 type="date"
                                 value={formData.joined_date}
-                                onChange={(e) => handleInputChange('joined_date', e.target.value)}
+                                onChange={(e) =>
+                                    handleInputChange("joined_date", e.target.value)
+                                }
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
+                        {/* Wallet Balance */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Balance</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Wallet Balance
+                            </label>
                             <input
                                 type="text"
-                                value={driverData?.wallet_balance ? `${driverData.wallet_balance}` : "$0.00"}
+                                value={
+                                    driverData?.wallet_balance
+                                        ? `${driverData.wallet_balance}`
+                                        : "$0.00"
+                                }
                                 disabled
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm bg-gray-100 text-gray-600"
                             />
                         </div>
+                        {/* Sub Company */}
                         <div className="flex flex-col gap-8">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Sub Company</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Sub Company
+                                </label>
                                 <select
                                     value={formData.sub_company}
-                                    onChange={(e) => handleInputChange("sub_company", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("sub_company", e.target.value)
+                                    }
                                     disabled={loadingSubCompanies}
                                     className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                                 >
@@ -745,6 +789,7 @@ const DriverDetails = () => {
                                 </select>
                             </div>
                         </div>
+                        {/* Add Wallet Balance Button */}
                         <div className="flex items-start justify-end md:col-start-3 mt-4">
                             <Button
                                 btnSize="md"
@@ -760,6 +805,7 @@ const DriverDetails = () => {
                         </div>
                     </div>
 
+                    {/* Save / Cancel */}
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                         <Button
                             btnSize="md"
@@ -782,83 +828,108 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
-            {/* Vehicle Information */}
+            {/* ── Vehicle Information ── */}
             <div>
                 <CardContainer className="p-5 mt-6">
                     <div className="flex items-center gap-3 mb-4">
-                        <h2 className="text-[22px] font-semibold">
-                            Vehicle Information
-                        </h2>
+                        <h2 className="text-[22px] font-semibold">Vehicle Information</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Vehicle Name */}
                         <FormField
                             label="Vehicle Name"
                             placeholder="Enter Vehicle Name"
                             value={formData.vehicle_name}
-                            onChange={(e) => handleInputChange('vehicle_name', e.target.value)}
+                            onChange={(e) => handleInputChange("vehicle_name", e.target.value)}
                             name="vehicle_name"
                         />
-                        <FormField
-                            label="Vehicle Type"
-                            type="select"
-                            placeholder="Select Vehicle Type"
-                            options={["Sedan", "SUV", "Hatchback", "Van"]}
-                            value={formData.vehicle_type}
-                            onChange={(e) => handleInputChange('vehicle_type', e.target.value)}
-                            name="vehicle_type"
-                        />
+
+                        {/* ── Vehicle Type - DYNAMIC from API ── */}
+                        <div className="flex flex-col gap-1">
+                            <label className="text-sm font-medium text-gray-700">
+                                Vehicle Type
+                            </label>
+                            <select
+                                value={formData.vehicle_type}
+                                onChange={(e) =>
+                                    handleInputChange("vehicle_type", e.target.value)
+                                }
+                                disabled={loadingVehicles}
+                                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+                            >
+                                <option value="">
+                                    {loadingVehicles ? "Loading..." : "Select Vehicle Type"}
+                                </option>
+                                {vehicleList.map((v) => (
+                                    <option key={v.value} value={v.value}>
+                                        {v.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Vehicle Service */}
                         <FormField
                             label="Vehicle Service"
                             type="select"
                             placeholder="Select Vehicle Service"
                             options={["local", "Taxi", "Rental", "Delivery"]}
                             value={formData.vehicle_service}
-                            onChange={(e) => handleInputChange('vehicle_service', e.target.value)}
+                            onChange={(e) =>
+                                handleInputChange("vehicle_service", e.target.value)
+                            }
                             name="vehicle_service"
                         />
+                        {/* Seats */}
                         <FormField
                             label="Seats"
                             type="select"
                             placeholder="Select Seats"
                             options={["2", "4", "5", "7", "8"]}
                             value={formData.seats}
-                            onChange={(e) => handleInputChange('seats', e.target.value)}
+                            onChange={(e) => handleInputChange("seats", e.target.value)}
                             name="seats"
                         />
+                        {/* Color */}
                         <FormField
                             label="Color"
                             type="select"
                             placeholder="Select Color"
                             options={["Black", "White", "Red", "Blue", "Silver"]}
                             value={formData.color}
-                            onChange={(e) => handleInputChange('color', e.target.value)}
+                            onChange={(e) => handleInputChange("color", e.target.value)}
                             name="color"
                         />
+                        {/* Capacity */}
                         <FormField
                             label="Capacity"
                             placeholder="Enter Capacity"
                             value={formData.capacity}
-                            onChange={(e) => handleInputChange('capacity', e.target.value)}
+                            onChange={(e) => handleInputChange("capacity", e.target.value)}
                             name="capacity"
                         />
+                        {/* Plate Number */}
                         <FormField
                             label="Plate Number"
                             placeholder="Enter Plate Number"
                             value={formData.plate_no}
-                            onChange={(e) => handleInputChange('plate_no', e.target.value)}
+                            onChange={(e) => handleInputChange("plate_no", e.target.value)}
                             name="plate_no"
                         />
+                        {/* Registration Date */}
                         <FormField
                             label="Vehicle Registration Date"
                             type="date"
                             value={formData.vehicle_registration_date}
-                            onChange={(e) => handleInputChange('vehicle_registration_date', e.target.value)}
+                            onChange={(e) =>
+                                handleInputChange("vehicle_registration_date", e.target.value)
+                            }
                             name="vehicle_registration_date"
                         />
                     </div>
 
-                    {/* Approve/Reject buttons - only when change request exists */}
+                    {/* Approve / Reject vehicle - only when change request exists */}
                     {hasVehicleChangeRequest && (
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                             <Button
@@ -882,56 +953,58 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
-            {/* Bank Information */}
+            {/* ── Bank Information ── */}
             <div className="p-5 mt-6 bg-[#EEF3FF] rounded-xl">
-                <h2 className="text-[22px] font-semibold mb-4">
-                    Bank Information
-                </h2>
+                <h2 className="text-[22px] font-semibold mb-4">Bank Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                         label="Bank Name"
                         placeholder="Enter Bank Name"
                         value={formData.bank_name}
-                        onChange={(e) => handleInputChange('bank_name', e.target.value)}
+                        onChange={(e) => handleInputChange("bank_name", e.target.value)}
                         name="bank_name"
                     />
                     <FormField
                         label="Bank Account Number"
                         placeholder="Enter Account Number"
                         value={formData.bank_account_number}
-                        onChange={(e) => handleInputChange('bank_account_number', e.target.value)}
+                        onChange={(e) =>
+                            handleInputChange("bank_account_number", e.target.value)
+                        }
                         name="bank_account_number"
                     />
                     <FormField
                         label="Account Holder Name"
                         placeholder="Enter Holder Name"
                         value={formData.account_holder_name}
-                        onChange={(e) => handleInputChange('account_holder_name', e.target.value)}
+                        onChange={(e) =>
+                            handleInputChange("account_holder_name", e.target.value)
+                        }
                         name="account_holder_name"
                     />
                     <FormField
                         label="Bank Phone Number"
                         placeholder="Enter Phone Number"
                         value={formData.bank_phone_no}
-                        onChange={(e) => handleInputChange('bank_phone_no', e.target.value)}
+                        onChange={(e) =>
+                            handleInputChange("bank_phone_no", e.target.value)
+                        }
                         name="bank_phone_no"
                     />
                     <FormField
                         label="IBAN Number"
                         placeholder="Enter IBAN Number"
                         value={formData.iban_no}
-                        onChange={(e) => handleInputChange('iban_no', e.target.value)}
+                        onChange={(e) => handleInputChange("iban_no", e.target.value)}
                         name="iban_no"
                     />
                 </div>
             </div>
 
-            {/* Document Information */}
+            {/* ── Document Information ── */}
             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
                 <div className="flex gap-4 items-center mb-4 flex-wrap">
-                    <h2 className="text-[22px] font-semibold">
-                        Document Information
-                    </h2>
+                    <h2 className="text-[22px] font-semibold">Document Information</h2>
                     {Number(driverData?.document_approved_office) === 0 && (
                         <Button
                             type="filledGreen"
@@ -992,7 +1065,9 @@ const DriverDetails = () => {
                                 <div className="flex items-center gap-3">
                                     <select
                                         value={doc.status || "pending"}
-                                        onChange={(e) => handleDocumentStatusChange(doc.id, e.target.value)}
+                                        onChange={(e) =>
+                                            handleDocumentStatusChange(doc.id, e.target.value)
+                                        }
                                         className="border border-[#8D8D8D] text-[#6C6C6C] rounded-[8px] shadow-md px-3 py-1.5 text-sm focus:outline-none"
                                     >
                                         <option value="pending">Pending</option>
@@ -1020,7 +1095,7 @@ const DriverDetails = () => {
                 </Loading>
             </div>
 
-            {/* Revenue */}
+            {/* ── Revenue ── */}
             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
                 <div className="flex justify-between items-center">
                     <p className="font-semibold">Revenue</p>
@@ -1038,7 +1113,7 @@ const DriverDetails = () => {
                 </div>
             </div>
 
-            {/* Ride History */}
+            {/* ── Ride History ── */}
             <div>
                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5] mt-5">
                     <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
@@ -1069,14 +1144,12 @@ const DriverDetails = () => {
                 </CardContainer>
             </div>
 
-            {/* Modals */}
+            {/* ── Modals ── */}
             <Modal isOpen={isAddWalletBalanceModalOpen} className="p-4 sm:p-6 lg:p-10">
                 <AddWalletBalanceModel
                     driverId={driverId}
                     setIsOpen={setIsAddWalletBalanceModalOpen}
-                    onSuccess={async () => {
-                        await loadDriverData();
-                    }}
+                    onSuccess={async () => await loadDriverData()}
                 />
             </Modal>
 
@@ -1091,9 +1164,11 @@ const DriverDetails = () => {
                 />
             </Modal>
 
-            {/* Only render Send Notification modal if push notification is enabled */}
             {isPushNotificationEnabled && (
-                <Modal isOpen={isSendNotificationModalOpen} className="p-4 sm:p-6 lg:p-10">
+                <Modal
+                    isOpen={isSendNotificationModalOpen}
+                    className="p-4 sm:p-6 lg:p-10"
+                >
                     <SendNotifictionModel
                         driverId={driverId}
                         setIsOpen={setIsSendNotificationModalOpen}
@@ -1105,9 +1180,7 @@ const DriverDetails = () => {
                 <RejectModel
                     driverId={driverId}
                     setIsOpen={setIsRejectModalOpen}
-                    onRejected={async () => {
-                        await loadDriverData();
-                    }}
+                    onRejected={async () => await loadDriverData()}
                 />
             </Modal>
         </div>

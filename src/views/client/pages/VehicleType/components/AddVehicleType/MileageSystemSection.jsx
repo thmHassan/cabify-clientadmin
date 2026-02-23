@@ -39,7 +39,7 @@ const MileageSystemSection = ({
                     </div>
                     <div className="w-full">
                         <FormLabel htmlFor="first_mile_km">
-                            First {distanceUnit} *
+                            First {distanceUnit}
                         </FormLabel>
                         <div className="h-14">
                             <Field
@@ -58,7 +58,7 @@ const MileageSystemSection = ({
                     </div>
                     <div className="w-full">
                         <FormLabel htmlFor="second_mile_km">
-                            Second {distanceUnit} *
+                            Second {distanceUnit}
                         </FormLabel>
                         <div className="h-14">
                             <Field

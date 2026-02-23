@@ -11,7 +11,7 @@ import { useAppSelector } from "../../../store";
 import UserDropdown from "../../shared/UserDropdown";
 import { FaSignOutAlt, FaUser } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ACCOUNTS_PATH } from "../../../constants/routes.path.constant/client.route.path.constant";
+import { SETTINGS_CONFIGURATION_PATH } from "../../../constants/routes.path.constant/client.route.path.constant";
 import AppLogoLoader from "../../shared/AppLogoLoader";
 import SearchIcon from "../../svg/SearchIcon";
 import DrawerIcon from "../../svg/DrawerIcon";
@@ -271,7 +271,7 @@ const fetchBookingSystem = async () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [location]);
 
-  const handleProfile = () => navigate(ACCOUNTS_PATH);
+  const handleProfile = () => navigate(SETTINGS_CONFIGURATION_PATH);
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -602,7 +602,7 @@ const renderBookingSystemUI = () => {
                   label: "Profile",
                   icon: FaUser,
                   onClick: handleProfile,
-                  route: ACCOUNTS_PATH,
+                  route: SETTINGS_CONFIGURATION_PATH,
                 },
                 {
                   label: isLoggingOut ? "Logging out..." : "Logout",

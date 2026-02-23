@@ -176,7 +176,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                 <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm mt-1" />
                             </div> */}
 
-                            <div className="w-full sm:w-[calc((100%-20px)/2)]">
+                            {/* <div className="w-full sm:w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="password">Password</FormLabel>
                                 <div className="sm:h-16 h-14">
                                     <Password
@@ -187,7 +187,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                     />
                                 </div>
                                 <ErrorMessage name="password" component="div" className="text-red-500 text-sm mt-1" />
-                            </div>
+                            </div> */}
 
                             <div className="w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="address">Address</FormLabel>

@@ -1,4 +1,32 @@
 import { useEffect, useRef, useState } from "react";
+import { getTenantData } from "../../../../../../../utils/functions/tokenEncryption";
+
+const COUNTRY_CENTERS = {
+    IN: { lat: 20.5937, lng: 78.9629 },    // India
+    AU: { lat: -25.2744, lng: 133.7751 },  // Australia
+    US: { lat: 37.0902, lng: -95.7129 },   // USA
+    GB: { lat: 55.3781, lng: -3.4360 },    // UK
+    BD: { lat: 23.8103, lng: 90.4125 },    // Bangladesh
+    PK: { lat: 30.3753, lng: 69.3451 },    // Pakistan
+    AE: { lat: 23.4241, lng: 53.8478 },    // UAE
+    SA: { lat: 23.8859, lng: 45.0792 },    // Saudi Arabia
+    CA: { lat: 56.1304, lng: -106.3468 },  // Canada
+    NG: { lat: 9.0820, lng: 8.6753 },     // Nigeria
+    KE: { lat: -1.2921, lng: 36.8219 },    // Kenya
+    ZA: { lat: -30.5595, lng: 22.9375 },   // South Africa
+    SG: { lat: 1.3521, lng: 103.8198 },   // Singapore
+    MY: { lat: 4.2105, lng: 101.9758 },   // Malaysia
+    ID: { lat: -0.7893, lng: 113.9213 },   // Indonesia
+    PH: { lat: 12.8797, lng: 121.7740 },   // Philippines
+    NZ: { lat: -40.9006, lng: 174.8860 },  // New Zealand
+    DEFAULT: { lat: 0, lng: 20 },
+};
+
+const getCountryCenter = () => {
+    const tenant = getTenantData();
+    const countryCode = tenant?.country_of_use?.trim().toUpperCase();
+    return COUNTRY_CENTERS[countryCode] || COUNTRY_CENTERS.DEFAULT;
+};
 
 const GoogleMap = ({
     googleApiKey,
@@ -32,11 +60,9 @@ const GoogleMap = ({
         document.head.appendChild(script);
     }, [googleApiKey]);
 
-    // Reverse geocode to get address from coordinates
     const getAddressFromCoords = async (lat, lng) => {
         if (SEARCH_API === "google" || SEARCH_API === "both") {
             const geocoder = new window.google.maps.Geocoder();
-
             return new Promise((resolve) => {
                 geocoder.geocode({ location: { lat, lng } }, (results, status) => {
                     if (status === "OK" && results[0]) {
@@ -47,20 +73,20 @@ const GoogleMap = ({
                 });
             });
         }
-
         return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     };
 
-    // Initialize map once - this runs only once when the component mounts
+    // Initialize map once
     useEffect(() => {
         if (!isLoaded || !mapRef.current || mapInstanceRef.current) return;
 
         try {
-            const center = { lat: 23.8103, lng: 90.4125 };
+            // Use country-based center instead of hardcoded coordinates
+            const center = getCountryCenter();
 
             mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-                zoom: 12,
-                center: center,
+                zoom: 5,
+                center: { lat: center.lat, lng: center.lng },
                 mapTypeControl: true,
                 streetViewControl: false,
                 fullscreenControl: true,
@@ -75,35 +101,28 @@ const GoogleMap = ({
                 },
             });
 
-            // Add click listener to map
+            // Click listener
             mapInstanceRef.current.addListener('click', async (event) => {
                 const lat = event.latLng.lat();
                 const lng = event.latLng.lng();
 
                 clickCountRef.current += 1;
 
-                // Get address from coordinates
                 const address = await getAddressFromCoords(lat, lng);
-
-                // Get plot data
                 const plotData = await fetchPlotName(lat, lng);
 
                 if (clickCountRef.current === 1) {
-                    // First click - set pickup
                     setFieldValue('pickup_point', address);
                     setFieldValue('pickup_latitude', lat);
                     setFieldValue('pickup_longitude', lng);
                     setFieldValue('pickup_plot_id', plotData.id);
                     setPickupPlotData(plotData);
                 } else if (clickCountRef.current === 2) {
-                    // Second click - set destination
                     setFieldValue('destination', address);
                     setFieldValue('destination_latitude', lat);
                     setFieldValue('destination_longitude', lng);
                     setFieldValue('destination_plot_id', plotData.id);
                     setDestinationPlotData(plotData);
-
-                    // Reset counter for next set of clicks
                     clickCountRef.current = 0;
                 }
             });
@@ -113,31 +132,26 @@ const GoogleMap = ({
         }
     }, [isLoaded]);
 
-    // Update markers and route - DEBOUNCED to prevent reloading on every keystroke
+    // Update markers and route (debounced)
     useEffect(() => {
         if (!mapInstanceRef.current || !isLoaded) return;
 
-        // Add 500ms debounce to prevent excessive updates while typing
         const timeoutId = setTimeout(() => {
             const map = mapInstanceRef.current;
 
-            // Clear existing markers
             markersRef.current.forEach(marker => {
-                if (marker && marker.setMap) {
-                    marker.setMap(null);
-                }
+                if (marker && marker.setMap) marker.setMap(null);
             });
             markersRef.current = [];
 
             const bounds = new window.google.maps.LatLngBounds();
             let hasCoordinates = false;
 
-            // Add pickup marker
             if (pickupCoords?.lat && pickupCoords?.lng) {
                 try {
                     const marker = new window.google.maps.Marker({
                         position: pickupCoords,
-                        map: map,
+                        map,
                         icon: {
                             path: window.google.maps.SymbolPath.CIRCLE,
                             scale: 10,
@@ -146,29 +160,22 @@ const GoogleMap = ({
                             strokeColor: "#ffffff",
                             strokeWeight: 2,
                         },
-                        label: {
-                            text: "P",
-                            color: "#ffffff",
-                            fontWeight: "bold",
-                        },
+                        label: { text: "P", color: "#ffffff", fontWeight: "bold" },
                         title: "Pickup Point",
                     });
                     markersRef.current.push(marker);
                     bounds.extend(pickupCoords);
                     hasCoordinates = true;
-                } catch (error) {
-                    console.error("Error creating pickup marker:", error);
-                }
+                } catch (e) { console.error("Pickup marker error:", e); }
             }
 
-            // Add via markers
             if (viaCoords && Array.isArray(viaCoords)) {
                 viaCoords.forEach((coord, index) => {
                     if (coord?.lat && coord?.lng) {
                         try {
                             const marker = new window.google.maps.Marker({
                                 position: coord,
-                                map: map,
+                                map,
                                 icon: {
                                     path: window.google.maps.SymbolPath.CIRCLE,
                                     scale: 10,
@@ -177,29 +184,22 @@ const GoogleMap = ({
                                     strokeColor: "#ffffff",
                                     strokeWeight: 2,
                                 },
-                                label: {
-                                    text: `${index + 1}`,
-                                    color: "#ffffff",
-                                    fontWeight: "bold",
-                                },
+                                label: { text: `${index + 1}`, color: "#ffffff", fontWeight: "bold" },
                                 title: `Via Point ${index + 1}`,
                             });
                             markersRef.current.push(marker);
                             bounds.extend(coord);
                             hasCoordinates = true;
-                        } catch (error) {
-                            console.error(`Error creating via marker ${index}:`, error);
-                        }
+                        } catch (e) { console.error(`Via marker ${index} error:`, e); }
                     }
                 });
             }
 
-            // Add destination marker
             if (destinationCoords?.lat && destinationCoords?.lng) {
                 try {
                     const marker = new window.google.maps.Marker({
                         position: destinationCoords,
-                        map: map,
+                        map,
                         icon: {
                             path: window.google.maps.SymbolPath.CIRCLE,
                             scale: 10,
@@ -208,28 +208,20 @@ const GoogleMap = ({
                             strokeColor: "#ffffff",
                             strokeWeight: 2,
                         },
-                        label: {
-                            text: "D",
-                            color: "#ffffff",
-                            fontWeight: "bold",
-                        },
+                        label: { text: "D", color: "#ffffff", fontWeight: "bold" },
                         title: "Destination",
                     });
                     markersRef.current.push(marker);
                     bounds.extend(destinationCoords);
                     hasCoordinates = true;
-                } catch (error) {
-                    console.error("Error creating destination marker:", error);
-                }
+                } catch (e) { console.error("Destination marker error:", e); }
             }
 
-            // Draw route if we have pickup and destination
             if (pickupCoords?.lat && pickupCoords?.lng &&
                 destinationCoords?.lat && destinationCoords?.lng &&
                 directionsRendererRef.current) {
 
                 const directionsService = new window.google.maps.DirectionsService();
-
                 const waypoints = (viaCoords || [])
                     .filter(coord => coord?.lat && coord?.lng)
                     .map(coord => ({
@@ -241,15 +233,13 @@ const GoogleMap = ({
                     {
                         origin: pickupCoords,
                         destination: destinationCoords,
-                        waypoints: waypoints,
+                        waypoints,
                         travelMode: window.google.maps.TravelMode.DRIVING,
                     },
                     (result, status) => {
                         if (status === "OK" && directionsRendererRef.current) {
                             directionsRendererRef.current.setDirections(result);
                         } else {
-                            console.error("Directions request failed:", status);
-                            // Clear directions on error
                             if (directionsRendererRef.current) {
                                 directionsRendererRef.current.setDirections({ routes: [] });
                             }
@@ -257,54 +247,37 @@ const GoogleMap = ({
                     }
                 );
             } else {
-                // Clear any existing directions
                 if (directionsRendererRef.current) {
                     directionsRendererRef.current.setDirections({ routes: [] });
                 }
             }
 
-            // Fit map to bounds
             if (hasCoordinates) {
                 map.fitBounds(bounds);
-
-                // Ensure minimum zoom level
-                const listener = window.google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
-                    if (map.getZoom() > 15) {
-                        map.setZoom(15);
-                    }
+                window.google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+                    if (map.getZoom() > 15) map.setZoom(15);
                 });
             }
-        }, 500); // 500ms debounce delay
+        }, 500);
 
-        // Cleanup timeout on unmount or when dependencies change
         return () => clearTimeout(timeoutId);
     }, [pickupCoords, destinationCoords, viaCoords, isLoaded]);
 
-    // Cleanup
     useEffect(() => {
         return () => {
             markersRef.current.forEach(marker => {
-                if (marker && marker.setMap) {
-                    marker.setMap(null);
-                }
+                if (marker && marker.setMap) marker.setMap(null);
             });
             markersRef.current = [];
         };
     }, []);
 
     return (
-        <div
-            ref={mapRef}
-            style={{ width: "100%", height: "400px", borderRadius: "8px" }}
-        >
+        <div ref={mapRef} style={{ width: "100%", height: "400px", borderRadius: "8px" }}>
             {!isLoaded && (
                 <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '8px'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    height: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px'
                 }}>
                     <p style={{ color: '#6b7280' }}>Loading map...</p>
                 </div>
@@ -329,7 +302,6 @@ const BarikoiMap = ({
     const [isLoaded, setIsLoaded] = useState(false);
     const clickCountRef = useRef(0);
 
-    // Load MapLibre GL - only once
     useEffect(() => {
         if (window.maplibregl) {
             setIsLoaded(true);
@@ -349,23 +321,26 @@ const BarikoiMap = ({
         document.head.appendChild(script);
     }, []);
 
-    // Initialize map - only once
+    // Initialize map once
     useEffect(() => {
         if (!isLoaded || !containerRef.current || mapRef.current || !apiKey) return;
 
         try {
-            const center = [90.4125, 23.8103];
+            // Use country-based center instead of hardcoded coordinates
+            const center = getCountryCenter();
 
             mapRef.current = new window.maplibregl.Map({
                 container: containerRef.current,
                 style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${apiKey}`,
-                center: center,
-                zoom: 12,
+                // center: [center.lng, center.lat],
+                // zoom: 5,
+                center: [90.4125, 23.8103],
+                zoom: 13,
             });
 
             mapRef.current.addControl(new window.maplibregl.NavigationControl());
 
-            // Add click listener to map
+            // Click listener
             mapRef.current.on('click', async (e) => {
                 const lat = e.lngLat.lat;
                 const lng = e.lngLat.lng;
@@ -376,21 +351,17 @@ const BarikoiMap = ({
                 const plotData = await fetchPlotName(lat, lng);
 
                 if (clickCountRef.current === 1) {
-                    // First click - set pickup
                     setFieldValue('pickup_point', address);
                     setFieldValue('pickup_latitude', lat);
                     setFieldValue('pickup_longitude', lng);
                     setFieldValue('pickup_plot_id', plotData.id);
                     setPickupPlotData(plotData);
                 } else if (clickCountRef.current === 2) {
-                    // Second click - set destination
                     setFieldValue('destination', address);
                     setFieldValue('destination_latitude', lat);
                     setFieldValue('destination_longitude', lng);
                     setFieldValue('destination_plot_id', plotData.id);
                     setDestinationPlotData(plotData);
-
-                    // Reset counter
                     clickCountRef.current = 0;
                 }
             });
@@ -407,68 +378,48 @@ const BarikoiMap = ({
         };
     }, [apiKey, isLoaded]);
 
-    // Update markers and route - DEBOUNCED
+    // Update markers and route (debounced)
     useEffect(() => {
         if (!mapRef.current || !isLoaded) return;
 
-        // Add 500ms debounce
         const timeoutId = setTimeout(() => {
-            // Wait for style to load
             const updateMap = () => {
-                // Clear existing markers
                 markersRef.current.forEach(marker => marker.remove());
                 markersRef.current = [];
 
                 const bounds = new window.maplibregl.LngLatBounds();
                 let hasCoordinates = false;
 
-                // Add pickup marker
-                if (pickupCoords?.lat && pickupCoords?.lng) {
+                const createMarkerEl = (color, text) => {
                     const el = document.createElement('div');
-                    el.style.backgroundColor = '#4CAF50';
-                    el.style.width = '30px';
-                    el.style.height = '30px';
-                    el.style.borderRadius = '50%';
-                    el.style.border = '3px solid white';
-                    el.style.display = 'flex';
-                    el.style.alignItems = 'center';
-                    el.style.justifyContent = 'center';
-                    el.style.color = 'white';
-                    el.style.fontWeight = 'bold';
-                    el.style.fontSize = '14px';
-                    el.innerHTML = 'P';
+                    el.style.cssText = `
+                        background-color: ${color};
+                        width: 30px; height: 30px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        display: flex; align-items: center; justify-content: center;
+                        color: white; font-weight: bold; font-size: 14px;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                    `;
+                    el.innerHTML = text;
+                    return el;
+                };
 
-                    const marker = new window.maplibregl.Marker({ element: el })
+                if (pickupCoords?.lat && pickupCoords?.lng) {
+                    const marker = new window.maplibregl.Marker({ element: createMarkerEl('#4CAF50', 'P') })
                         .setLngLat([pickupCoords.lng, pickupCoords.lat])
                         .addTo(mapRef.current);
-
                     markersRef.current.push(marker);
                     bounds.extend([pickupCoords.lng, pickupCoords.lat]);
                     hasCoordinates = true;
                 }
 
-                // Add via markers
                 if (viaCoords && Array.isArray(viaCoords)) {
                     viaCoords.forEach((coord, index) => {
                         if (coord?.lat && coord?.lng) {
-                            const el = document.createElement('div');
-                            el.style.backgroundColor = '#2196F3';
-                            el.style.width = '30px';
-                            el.style.height = '30px';
-                            el.style.borderRadius = '50%';
-                            el.style.border = '3px solid white';
-                            el.style.display = 'flex';
-                            el.style.alignItems = 'center';
-                            el.style.justifyContent = 'center';
-                            el.style.color = 'white';
-                            el.style.fontWeight = 'bold';
-                            el.style.fontSize = '14px';
-                            el.innerHTML = `${index + 1}`;
-
-                            const marker = new window.maplibregl.Marker({ element: el })
+                            const marker = new window.maplibregl.Marker({ element: createMarkerEl('#2196F3', `${index + 1}`) })
                                 .setLngLat([coord.lng, coord.lat])
                                 .addTo(mapRef.current);
-
                             markersRef.current.push(marker);
                             bounds.extend([coord.lng, coord.lat]);
                             hasCoordinates = true;
@@ -476,48 +427,25 @@ const BarikoiMap = ({
                     });
                 }
 
-                // Add destination marker
                 if (destinationCoords?.lat && destinationCoords?.lng) {
-                    const el = document.createElement('div');
-                    el.style.backgroundColor = '#F44336';
-                    el.style.width = '30px';
-                    el.style.height = '30px';
-                    el.style.borderRadius = '50%';
-                    el.style.border = '3px solid white';
-                    el.style.display = 'flex';
-                    el.style.alignItems = 'center';
-                    el.style.justifyContent = 'center';
-                    el.style.color = 'white';
-                    el.style.fontWeight = 'bold';
-                    el.style.fontSize = '14px';
-                    el.innerHTML = 'D';
-
-                    const marker = new window.maplibregl.Marker({ element: el })
+                    const marker = new window.maplibregl.Marker({ element: createMarkerEl('#F44336', 'D') })
                         .setLngLat([destinationCoords.lng, destinationCoords.lat])
                         .addTo(mapRef.current);
-
                     markersRef.current.push(marker);
                     bounds.extend([destinationCoords.lng, destinationCoords.lat]);
                     hasCoordinates = true;
                 }
 
-                // Remove existing route layer
-                if (mapRef.current.getLayer('route')) {
-                    mapRef.current.removeLayer('route');
-                }
-                if (mapRef.current.getSource('route')) {
-                    mapRef.current.removeSource('route');
-                }
+                // Remove existing route
+                if (mapRef.current.getLayer('route')) mapRef.current.removeLayer('route');
+                if (mapRef.current.getSource('route')) mapRef.current.removeSource('route');
 
-                // Draw route
                 if (pickupCoords?.lat && pickupCoords?.lng &&
                     destinationCoords?.lat && destinationCoords?.lng) {
 
                     const coordinates = [
                         [pickupCoords.lng, pickupCoords.lat],
-                        ...(viaCoords || [])
-                            .filter(c => c?.lat && c?.lng)
-                            .map(c => [c.lng, c.lat]),
+                        ...(viaCoords || []).filter(c => c?.lat && c?.lng).map(c => [c.lng, c.lat]),
                         [destinationCoords.lng, destinationCoords.lat],
                     ];
 
@@ -526,10 +454,7 @@ const BarikoiMap = ({
                         data: {
                             type: 'Feature',
                             properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: coordinates,
-                            },
+                            geometry: { type: 'LineString', coordinates },
                         },
                     });
 
@@ -537,20 +462,13 @@ const BarikoiMap = ({
                         id: 'route',
                         type: 'line',
                         source: 'route',
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round',
-                        },
-                        paint: {
-                            'line-color': '#4285F4',
-                            'line-width': 4,
-                        },
+                        layout: { 'line-join': 'round', 'line-cap': 'round' },
+                        paint: { 'line-color': '#4285F4', 'line-width': 4 },
                     });
                 }
 
-                // Fit map to bounds
                 if (hasCoordinates) {
-                    mapRef.current.fitBounds(bounds, { padding: 50 });
+                    mapRef.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
                 }
             };
 
@@ -559,25 +477,17 @@ const BarikoiMap = ({
             } else {
                 mapRef.current.on('load', updateMap);
             }
-        }, 500); // 500ms debounce delay
+        }, 500);
 
-        // Cleanup timeout
         return () => clearTimeout(timeoutId);
     }, [pickupCoords, destinationCoords, viaCoords, isLoaded]);
 
     return (
-        <div
-            ref={containerRef}
-            style={{ width: "100%", height: "400px", borderRadius: "8px" }}
-        >
+        <div ref={containerRef} style={{ width: "100%", height: "400px", borderRadius: "8px" }}>
             {!isLoaded && (
                 <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '8px'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    height: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px'
                 }}>
                     <p style={{ color: '#6b7280' }}>Loading map...</p>
                 </div>
@@ -597,8 +507,9 @@ export default function Maps({
     setDestinationPlotData,
     SEARCH_API
 }) {
-    const barikoiApiKey = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
-    const googleApiKey = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
+    const tenant = getTenantData();
+    const barikoiApiKey = tenant?.barikoi_api_key || "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
+    const googleApiKey = tenant?.google_api_key || "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 
     if (mapsApi === "barikoi") {
         return (

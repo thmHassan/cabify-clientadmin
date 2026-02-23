@@ -2,7 +2,7 @@ import * as Yup from "yup";
 
 export const DRIVER_DOCUMENT_VALIDATION_SCHEMA = Yup.object().shape({
   documentName: Yup.string().trim().required("Document name is required"),
-  profilePhoto: Yup.boolean().required("profile photo is required"),
+  profilePhoto: Yup.boolean().optional(),
   frontPhoto: Yup.boolean().optional(),
   backPhoto: Yup.boolean().optional(),
   issuePhoto: Yup.boolean().optional(),
@@ -15,6 +15,7 @@ export const DRIVER_DOCUMENT_VALIDATION_SCHEMA = Yup.object().shape({
     function () {
       const p = this.parent || {};
       return !!(
+        p.profilePhoto ||
         p.frontPhoto ||
         p.backPhoto ||
         p.issuePhoto ||

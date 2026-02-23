@@ -420,7 +420,7 @@ const AppDisplayContent = () => {
                                     className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
                                     disabled={isSubmitting}
                                 >
-                                    <span>SAVE</span>
+                                    <span>Save</span>
                                 </Button>
                             </div>
                         </Form>

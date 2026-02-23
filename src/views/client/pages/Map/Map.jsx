@@ -33,7 +33,31 @@ const MARKER_ICONS = {
   },
 };
 
-const loadGoogleMaps = () => {
+// Creates an HTML img element using the same SVG data URL used in Google Maps
+const createSvgMarkerEl = (status) => {
+  const iconData = MARKER_ICONS[status] || MARKER_ICONS.idle;
+  const el = document.createElement("div");
+  el.style.cssText = `
+    width: ${iconData.scaledSize.width}px;
+    height: ${iconData.scaledSize.height}px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  const img = document.createElement("img");
+  img.src = iconData.url;
+  img.style.cssText = `
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  `;
+  el.appendChild(img);
+  return el;
+};
+
+const loadGoogleMaps = (apiKey) => {
   return new Promise((resolve, reject) => {
     if (window.google && window.google.maps) return resolve();
 
@@ -45,7 +69,7 @@ const loadGoogleMaps = () => {
 
     const script = document.createElement("script");
     script.id = "google-maps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.onload = resolve;
@@ -56,7 +80,6 @@ const loadGoogleMaps = () => {
 
 const loadBarikoiMaps = () => {
   return new Promise((resolve, reject) => {
-    // If already fully loaded
     if (window.maplibregl && window.maplibregl.Map) {
       return resolve();
     }
@@ -64,7 +87,6 @@ const loadBarikoiMaps = () => {
     const existingScript = document.getElementById("maplibre-script");
 
     if (existingScript) {
-      // Wait until it's actually ready
       existingScript.onload = () => {
         if (window.maplibregl && window.maplibregl.Map) {
           resolve();
@@ -75,20 +97,17 @@ const loadBarikoiMaps = () => {
       return;
     }
 
-    // Add CSS if not added
     if (!document.getElementById("maplibre-css")) {
       const link = document.createElement("link");
       link.id = "maplibre-css";
       link.rel = "stylesheet";
-      link.href =
-        "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css";
+      link.href = "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css";
       document.head.appendChild(link);
     }
 
     const script = document.createElement("script");
     script.id = "maplibre-script";
-    script.src =
-      "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js";
+    script.src = "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js";
     script.async = true;
 
     script.onload = () => {
@@ -100,7 +119,6 @@ const loadBarikoiMaps = () => {
     };
 
     script.onerror = reject;
-
     document.head.appendChild(script);
   });
 };
@@ -132,16 +150,58 @@ const animateMarker = (marker, newPosition, duration = 1000) => {
   animate();
 };
 
+// Map type decision:
+// - country_of_use === "IN" → Barikoi (unless maps_api explicitly "google")
+// - Other countries → Google (unless maps_api explicitly "barikoi")
 const getMapType = () => {
   const tenant = getTenantData();
-  const mapsApi = tenant?.maps_api;
+  const mapsApi = tenant?.maps_api?.trim().toLowerCase();
+  const countryOfUse = tenant?.country_of_use?.trim().toUpperCase();
 
-  // Only "barikoi" (case-insensitive) → Barikoi
-  // Everything else (google, both, null, undefined, "") → Google
-  if (typeof mapsApi === "string" && mapsApi.trim().toLowerCase() === "barikoi") {
+  if (countryOfUse === "IN") {
+    if (mapsApi === "google") return "google";
     return "barikoi";
   }
+
+  if (mapsApi === "barikoi") return "barikoi";
   return "google";
+};
+
+// Get API keys: use tenant keys if available, fallback to hardcoded defaults
+const getApiKeys = () => {
+  const tenant = getTenantData();
+  return {
+    googleKey: tenant?.google_api_key || GOOGLE_KEY,
+    barikoiKey: tenant?.barikoi_api_key || BARIKOI_KEY,
+  };
+};
+
+// Default map center per country code
+const COUNTRY_CENTERS = {
+  IN: { lat: 20.5937, lng: 78.9629 },   // India
+  AU: { lat: -25.2744, lng: 133.7751 }, // Australia
+  US: { lat: 37.0902, lng: -95.7129 },  // USA
+  GB: { lat: 55.3781, lng: -3.4360 },   // UK
+  BD: { lat: 23.8103, lng: 90.4125 },   // Bangladesh
+  PK: { lat: 30.3753, lng: 69.3451 },   // Pakistan
+  AE: { lat: 23.4241, lng: 53.8478 },   // UAE
+  SA: { lat: 23.8859, lng: 45.0792 },   // Saudi Arabia
+  CA: { lat: 56.1304, lng: -106.3468 }, // Canada
+  NG: { lat: 9.0820, lng: 8.6753 },    // Nigeria
+  KE: { lat: -1.2921, lng: 36.8219 },   // Kenya
+  ZA: { lat: -30.5595, lng: 22.9375 },  // South Africa
+  SG: { lat: 1.3521, lng: 103.8198 },  // Singapore
+  MY: { lat: 4.2105, lng: 101.9758 },  // Malaysia
+  ID: { lat: -0.7893, lng: 113.9213 },  // Indonesia
+  PH: { lat: 12.8797, lng: 121.7740 },  // Philippines
+  NZ: { lat: -40.9006, lng: 174.8860 }, // New Zealand
+  DEFAULT: { lat: 0, lng: 0 },
+};
+
+const getCountryCenter = () => {
+  const tenant = getTenantData();
+  const countryCode = tenant?.country_of_use?.trim().toUpperCase();
+  return COUNTRY_CENTERS[countryCode] || COUNTRY_CENTERS.DEFAULT;
 };
 
 const parseDriverData = (rawData) => {
@@ -186,6 +246,8 @@ const GoogleMapView = ({
   socket,
   setDriverData,
 }) => {
+  const { googleKey } = getApiKeys();
+
   const fitMapToMarkers = () => {
     if (!mapInstance.current || Object.keys(markers.current).length === 0)
       return;
@@ -211,13 +273,14 @@ const GoogleMapView = ({
   useEffect(() => {
     let isMounted = true;
 
-    loadGoogleMaps()
+    loadGoogleMaps(googleKey)
       .then(() => {
         if (!isMounted || !mapRef.current || mapInstance.current) return;
 
+        const center = getCountryCenter();
         mapInstance.current = new window.google.maps.Map(mapRef.current, {
-          center: { lat: 23.0225, lng: 72.5714 },
-          zoom: 13,
+          center: { lat: center.lat, lng: center.lng },
+          zoom: 5,
           styles: [
             {
               featureType: "poi",
@@ -271,8 +334,7 @@ const GoogleMapView = ({
         [driver_id]: { ...data, position, driving_status, name },
       }));
 
-      const markerIcon =
-        MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
+      const markerIcon = MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
 
       const infoContent = `
         <div style="padding:5px;">
@@ -294,14 +356,34 @@ const GoogleMapView = ({
           marker.setPosition(position);
         }
 
-        marker.setIcon(markerIcon);
+        marker.setIcon({
+          url: markerIcon.url,
+          scaledSize: new window.google.maps.Size(
+            markerIcon.scaledSize.width,
+            markerIcon.scaledSize.height
+          ),
+          anchor: new window.google.maps.Point(
+            markerIcon.anchor.x,
+            markerIcon.anchor.y
+          ),
+        });
         marker.infoWindow?.setContent(infoContent);
       } else {
         const marker = new window.google.maps.Marker({
           position,
           map: mapInstance.current,
           title: name,
-          icon: markerIcon,
+          icon: {
+            url: markerIcon.url,
+            scaledSize: new window.google.maps.Size(
+              markerIcon.scaledSize.width,
+              markerIcon.scaledSize.height
+            ),
+            anchor: new window.google.maps.Point(
+              markerIcon.anchor.x,
+              markerIcon.anchor.y
+            ),
+          },
           animation: window.google.maps.Animation.DROP,
         });
 
@@ -359,7 +441,6 @@ const GoogleMapView = ({
   );
 };
 
-
 const BarikoiMapView = ({
   mapRef,
   mapInstance,
@@ -371,22 +452,7 @@ const BarikoiMapView = ({
   setDriverData,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-
-  const createBarikoiMarkerEl = (status) => {
-    const color = status === "busy" ? "#22c55e" : "#ef4444";
-    const el = document.createElement("div");
-    el.style.cssText = `
-      width: 40px; height: 40px;
-      background-color: ${color};
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; cursor: pointer;
-    `;
-    el.innerHTML = "🚗";
-    return el;
-  };
+  const { barikoiKey } = getApiKeys();
 
   const fitMapToMarkers = () => {
     if (!mapInstance.current || Object.keys(markers.current).length === 0)
@@ -426,10 +492,13 @@ const BarikoiMapView = ({
       .then(() => {
         if (!isMounted || !mapRef.current || mapInstance.current) return;
 
+        const center = getCountryCenter();
         mapInstance.current = new window.maplibregl.Map({
           container: mapRef.current,
-          style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${BARIKOI_KEY}`,
-          center: [90.4125, 23.8103], 
+          style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${barikoiKey}`,
+          // center: [center.lng, center.lat],
+          // zoom: 5,
+          center: [90.4125, 23.8103],
           zoom: 13,
         });
 
@@ -507,15 +576,21 @@ const BarikoiMapView = ({
         </div>`;
 
       if (markers.current[driver_id]) {
+        // Update position
         markers.current[driver_id].setLngLat(position);
 
+        // Update icon image to match new status
         const el = markers.current[driver_id].getElement();
-        el.style.backgroundColor =
-          driving_status === "busy" ? "#22c55e" : "#ef4444";
+        const img = el.querySelector("img");
+        if (img) {
+          const iconData = MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
+          img.src = iconData.url;
+        }
 
         markers.current[driver_id].getPopup()?.setHTML(popupHTML);
       } else {
-        const el = createBarikoiMarkerEl(driving_status);
+        // Use the same SVG icon as Google Maps
+        const el = createSvgMarkerEl(driving_status);
 
         const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
           popupHTML
@@ -630,11 +705,6 @@ const Map = () => {
             <GreenCarIcon width={30} height={30} />
             <span className="text-sm font-medium">Active Drivers</span>
           </div>
-          {/* <div className="flex items-center gap-2">
-            <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">
-              {mapType === "barikoi" ? "🗺 Barikoi Map" : "🗺 Google Map"}
-            </span>
-          </div> */}
         </div>
       </CardContainer>
     </div>

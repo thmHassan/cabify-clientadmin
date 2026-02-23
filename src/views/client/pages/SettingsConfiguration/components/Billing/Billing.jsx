@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { apiGetInvoiceHistory, apiGetStripeInformation, apiSaveStripeInformation, apiGetPlanDetails } from "../../../../../../services/SettingsConfigurationServices";
 import toast from 'react-hot-toast';
 import Button from "../../../../../../components/ui/Button/Button";
+import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const Billing = () => {
     const [invoices, setInvoices] = useState([]);
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [invoiceLoading, setInvoiceLoading] = useState(false);
     const [planDetails, setPlanDetails] = useState({
         plan_name: "Professional Plan",
@@ -26,6 +28,24 @@ const Billing = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const currencySymbols = {
+        INR: "₹",
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        AUD: "A$",
+        CAD: "C$",
+        AED: "د.إ",
+    };
+
+    useEffect(() => {
+        const tenant = getTenantData();
+
+        if (tenant?.currency) {
+            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
+        }
+    }, []);
 
     const fetchPlanDetails = useCallback(async () => {
         setPlanLoading(true);
@@ -189,7 +209,15 @@ const Billing = () => {
                                 )}
                             </div>
 
-                            {planDetails.features && planDetails.features.length > 0 ? (
+                            {planDetails.features && (
+                                <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-700">
+                                    {planDetails.features.map((feature, idx) => (
+                                        <Feature key={idx} label={feature} />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* {planDetails.features && planDetails.features.length > 0 ? (
                                 <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-700">
                                     {planDetails.features.map((feature, idx) => (
                                         <Feature key={idx} label={feature} />
@@ -202,7 +230,7 @@ const Billing = () => {
                                     <Feature label="Advanced analytics" />
                                     <Feature label="24/7 support" />
                                 </div>
-                            )}
+                            )} */}
                         </>
                     )}
                 </div>
@@ -225,7 +253,7 @@ const Billing = () => {
                                     </div>
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
                                         <p className="text-[#333333] text-center font-semibold text-sm">
-                                            ${inv.amount || "$0.00"}
+                                            {currencySymbol} {inv.amount || "$0.00"}
                                         </p>
                                     </div>
                                 </div>

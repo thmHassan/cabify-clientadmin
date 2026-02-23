@@ -58,7 +58,7 @@ const dispatchData = [
         type: "auto_dispatch",
         systemKey: "auto_dispatch_nearest_driver",
         followUps: [
-            { label: "Wait Time ___ seconds", key: "p3_wait", stepKey: "wait_time_seconds", type: "toggle", group: "p3_main" },
+            // { label: "Wait Time ___ seconds", key: "p3_wait", stepKey: "wait_time_seconds", type: "toggle", group: "p3_main" },
             { label: "Immediately show on dispatcher panel", key: "p3_immediate", stepKey: "immediately_show_on_dispatcher_panel", type: "toggle", group: "p3_main" },
             {
                 label: "Show only after not selected in auto dispatch",

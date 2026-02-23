@@ -8,12 +8,14 @@ import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import SettlementAmountModel from "../SettlementAmountModel";
 import Modal from "../../../../../../components/shared/Modal/Modal";
+import { apiGetCommissionData } from "../../../../../../services/SettingsConfigurationServices";
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [status, setStatus] = useState(driver?.status || "pending");
     const [loading, setLoading] = useState(false);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [isSettlementOpen, setIsSettlementOpen] = useState(false);
+    const [showSettlementButton, setShowSettlementButton] = useState(false);
 
     const currencySymbols = {
         INR: "₹",
@@ -91,10 +93,31 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
     useEffect(() => {
         const tenant = getTenantData();
-
         if (tenant?.currency) {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
         }
+
+        // API call karva
+        const fetchCommissionData = async () => {
+            try {
+                const response = await apiGetCommissionData();
+                const packageType = response?.data?.data?.main_commission?.package_type;
+
+                if (
+                    packageType === "commission_without_topup" ||
+                    packageType === "packages_post_paid"
+                ) {
+                    setShowSettlementButton(true);
+                } else {
+                    setShowSettlementButton(false);
+                }
+            } catch (error) {
+                console.log("Commission data fetch error:", error);
+                setShowSettlementButton(false);
+            }
+        };
+
+        fetchCommissionData();
     }, []);
 
     return (
@@ -153,15 +176,17 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     </div>
                 </UserDropdown>
 
-                <div>
-                    <Button
-                        type="filled"
-                        className="py-2 px-2 rounded-md w-full sm:w-auto"
-                        onClick={() => setIsSettlementOpen(true)}
-                    >
-                        Settlement Amount
-                    </Button>
-                </div>
+                {showSettlementButton && (
+                    <div>
+                        <Button
+                            type="filled"
+                            className="py-2 px-2 rounded-md w-full sm:w-auto"
+                            onClick={() => setIsSettlementOpen(true)}
+                        >
+                            Settlement Amount
+                        </Button>
+                    </div>
+                )}
 
                 <UserDropdown options={actionOptions} itemData={driver}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">

@@ -10,6 +10,9 @@ import Button from "../../../../../../components/ui/Button/Button";
 import { apiGetAllPlot, apiCreateCalculateFares, apiCreateBooking } from "../../../../../../services/AddBookingServices";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import toast from 'react-hot-toast';
+import { apiGetRideHistory, apiGetUser } from "../../../../../../services/UserService";
+import { debounce } from "lodash";
+import History from "./components/History";
 
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const BARIKOI_KEY = import.meta.env.VITE_BARIKOI_API_KEY;
@@ -102,6 +105,12 @@ const AddBooking = ({ setIsOpen }) => {
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
     const [calculateErrors, setCalculateErrors] = useState({});
     const [bookingErrors, setBookingErrors] = useState({});
+    const [userSuggestions, setUserSuggestions] = useState([]);
+    const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [userHistory, setUserHistory] = useState([]);
 
     const clearCalcError = (key) => setCalculateErrors(prev => ({ ...prev, [key]: undefined }));
     const clearBookingError = (key) => setBookingErrors(prev => ({ ...prev, [key]: undefined }));
@@ -116,6 +125,42 @@ const AddBooking = ({ setIsOpen }) => {
         "return_ac_fares", "ac_parking_charges", "waiting_charges", "extra_charges",
         "congestion_toll", "ac_waiting_charges",
     ];
+
+    const searchUsers = debounce(async (query) => {
+        if (!query || query.length < 3) {
+            setUserSuggestions([]);
+            setShowUserSuggestions(false);
+            return;
+        }
+        setLoadingUsers(true);
+        try {
+            const response = await apiGetUser({ search: query, perPage: 10 });
+            if (response?.data?.success === 1) {
+                const users = response?.data?.users?.data || [];
+                setUserSuggestions(users);
+                setShowUserSuggestions(users.length > 0);
+            } else {
+                setUserSuggestions([]);
+                setShowUserSuggestions(false);
+            }
+        } catch (error) {
+            console.error("User search error:", error);
+            setUserSuggestions([]);
+            setShowUserSuggestions(false);
+        } finally {
+            setLoadingUsers(false);
+        }
+    }, 500);
+
+    const selectUser = (user, setFieldValue) => {
+        setFieldValue("phone_no", user.phone_no || "");
+        setFieldValue("name", user.name || "");
+        setFieldValue("email", user.email || "");
+        setFieldValue("tel_no", user.tel_no || "");
+        setFieldValue("user_id", user.id || "");
+        setShowUserSuggestions(false);
+        setUserSuggestions([]);
+    };
 
     useEffect(() => {
         const tenant = getTenantData();
@@ -669,6 +714,27 @@ const AddBooking = ({ setIsOpen }) => {
         return selectedDateTime > now;
     };
 
+    const handleViewHistory = async (user) => {
+        setSelectedUser(user);
+        setShowUserSuggestions(false);
+        try {
+            const response = await apiGetRideHistory(user.id);
+            if (response?.data?.success === 1) {
+                const rides = response.data.rideHistory?.data || [];
+                setUserHistory(rides.map((ride) => ({
+                    id: ride.id,
+                    date: `${ride.booking_date} ${ride.pickup_time}`,
+                    from: ride.pickup_location || ride.pickup_point,
+                    to: ride.destination_location || ride.destination_point,
+                    status: ride.booking_status,
+                    driver: ride.driver_detail?.name || "N/A",
+                    bookingId: ride.booking_id,
+                })));
+            } else { setUserHistory([]); }
+        } catch { setUserHistory([]); }
+        setShowHistoryModal(true);
+    };
+
     return (
         <>
             <AlertModal
@@ -1052,7 +1118,7 @@ const AddBooking = ({ setIsOpen }) => {
 
                                                             <div className="flex md:flex-row flex-col gap-2">
                                                                 {/* Mobile No */}
-                                                                <div className="text-left flex flex-col">
+                                                                {/* <div className="text-left flex flex-col">
                                                                     <div className="flex">
                                                                         <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
                                                                         <input
@@ -1066,6 +1132,48 @@ const AddBooking = ({ setIsOpen }) => {
                                                                     <div className="ml-20 md:ml-28">
                                                                         <FieldError message={bookingErrors.phone_no} />
                                                                     </div>
+                                                                </div> */}
+                                                                <div className="text-left flex flex-col relative">
+                                                                    <div className="flex">
+                                                                        <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
+                                                                        <div className="w-full relative">
+                                                                            <input type="text" placeholder="Enter Mobile No"
+                                                                                className={`border-[1.5px] shadow-lg rounded-[8px] px-3 py-2 w-full ${bookingErrors.phone_no ? 'border-red-500' : 'border-[#8D8D8D]'}`}
+                                                                                value={values.phone_no || ""}
+                                                                                onChange={(e) => {
+                                                                                    setFieldValue("phone_no", e.target.value);
+                                                                                    searchUsers(e.target.value);
+                                                                                    clearBookingError("phone_no");
+                                                                                }}
+                                                                                onFocus={() => { if (values.phone_no && userSuggestions.length > 0) setShowUserSuggestions(true); }}
+                                                                            />
+                                                                            {showUserSuggestions && (
+                                                                                <div className="absolute mt-1 bg-white border border-gray-300 rounded-lg shadow-xl w-full lg:w-[400px] z-50 max-h-60 overflow-auto">
+                                                                                    {!loadingUsers && userSuggestions.length === 0 && (
+                                                                                        <div className="p-3 text-gray-400 text-center">No users found</div>
+                                                                                    )}
+                                                                                    {userSuggestions.map((user, idx) => (
+                                                                                        <div key={user.id || idx} onClick={() => selectUser(user, setFieldValue)}
+                                                                                            className="flex justify-between items-center p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                                                                        >
+                                                                                            <div className="font-semibold text-gray-800">{user.phone_no}</div>
+                                                                                            <div className="flex gap-4 text-[#1F41BB] text-sm">
+                                                                                                <span className="cursor-pointer flex items-center gap-1">
+                                                                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.6654 12.6667H5.33203C4.96536 12.6667 4.65148 12.5361 4.39036 12.275C4.12925 12.0139 3.9987 11.7 3.9987 11.3334V2.00002C3.9987 1.63335 4.12925 1.31946 4.39036 1.05835C4.65148 0.797243 4.96536 0.666687 5.33203 0.666687H9.9987L13.9987 4.66669V11.3334C13.9987 11.7 13.8681 12.0139 13.607 12.275C13.3459 12.5361 13.032 12.6667 12.6654 12.6667ZM9.33203 5.33335V2.00002H5.33203V11.3334H12.6654V5.33335H9.33203ZM2.66536 15.3334C2.2987 15.3334 1.98481 15.2028 1.7237 14.9417C1.46259 14.6806 1.33203 14.3667 1.33203 14V4.66669H2.66536V14H9.9987V15.3334H2.66536Z" fill="#1F41BB" /></svg>
+                                                                                                    Copy Details
+                                                                                                </span>
+                                                                                                <span onClick={(e) => { e.stopPropagation(); handleViewHistory(user); }} className="cursor-pointer text-[#6C6C6C] flex items-center gap-1">
+                                                                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 14C6.46667 14 5.13056 13.4917 3.99167 12.475C2.85278 11.4583 2.2 10.1889 2.03333 8.66667H3.4C3.55556 9.82222 4.06944 10.7778 4.94167 11.5333C5.81389 12.2889 6.83333 12.6667 8 12.6667C9.3 12.6667 10.4028 12.2139 11.3083 11.3083C12.2139 10.4028 12.6667 9.3 12.6667 8C12.6667 6.7 12.2139 5.59722 11.3083 4.69167C10.4028 3.78611 9.3 3.33333 8 3.33333C7.23333 3.33333 6.51667 3.51111 5.85 3.86667C5.18333 4.22222 4.62222 4.71111 4.16667 5.33333H6V6.66667H2V2.66667H3.33333V4.23333C3.9 3.52222 4.59167 2.97222 5.40833 2.58333C6.225 2.19444 7.08889 2 8 2C8.83333 2 9.61389 2.15833 10.3417 2.475C11.0694 2.79167 11.7028 3.21944 12.2417 3.75833C12.7806 4.29722 13.2083 4.93056 13.525 5.65833C13.8417 6.38611 14 7.16667 14 8C14 8.83333 13.8417 9.61389 13.525 10.3417C13.2083 11.0694 12.7806 11.7028 12.2417 12.2417C11.7028 12.7806 11.0694 13.2083 10.3417 13.525C9.61389 13.8417 8.83333 14 8 14ZM9.86667 10.8L7.33333 8.26667V4.66667H8.66667V7.73333L10.8 9.86667L9.86667 10.8Z" fill="#6C6C6C" /></svg>
+                                                                                                    View History
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="ml-[5rem] md:ml-28"><FieldError message={bookingErrors.phone_no} /></div>
                                                                 </div>
 
                                                                 {/* Tel No */}
@@ -1372,6 +1480,13 @@ const AddBooking = ({ setIsOpen }) => {
                     );
                 }}
             </Formik>
+
+            {showHistoryModal && (
+                <History
+                    user={selectedUser}
+                    historyData={userHistory}
+                    onClose={() => setShowHistoryModal(false)} />
+            )}
         </>
     );
 };

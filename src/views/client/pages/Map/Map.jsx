@@ -33,7 +33,6 @@ const MARKER_ICONS = {
   },
 };
 
-// Creates an HTML img element using the same SVG data URL used in Google Maps
 const createSvgMarkerEl = (status) => {
   const iconData = MARKER_ICONS[status] || MARKER_ICONS.idle;
   const el = document.createElement("div");
@@ -150,9 +149,6 @@ const animateMarker = (marker, newPosition, duration = 1000) => {
   animate();
 };
 
-// Map type decision:
-// - country_of_use === "IN" → Barikoi (unless maps_api explicitly "google")
-// - Other countries → Google (unless maps_api explicitly "barikoi")
 const getMapType = () => {
   const tenant = getTenantData();
   const mapsApi = tenant?.maps_api?.trim().toLowerCase();
@@ -167,7 +163,6 @@ const getMapType = () => {
   return "google";
 };
 
-// Get API keys: use tenant keys if available, fallback to hardcoded defaults
 const getApiKeys = () => {
   const tenant = getTenantData();
   return {
@@ -176,7 +171,6 @@ const getApiKeys = () => {
   };
 };
 
-// Default map center per country code
 const COUNTRY_CENTERS = {
   IN: { lat: 20.5937, lng: 78.9629 },   // India
   AU: { lat: -25.2744, lng: 133.7751 }, // Australia
@@ -337,11 +331,13 @@ const GoogleMapView = ({
       const markerIcon = MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
 
       const infoContent = `
-        <div style="padding:5px;">
-          <strong>${name}</strong><br/>
-          Phone: ${phoneNo}<br/>
-          Vehicle: ${vehiclePlateNo}
-        </div>`;
+  <div style="
+    padding:6px;
+    font-weight:600;
+    font-size:14px;
+  ">
+    ${name}
+  </div>`;
 
       if (markers.current[driver_id]) {
         const marker = markers.current[driver_id];
@@ -391,11 +387,21 @@ const GoogleMapView = ({
           content: infoContent,
         });
 
+        marker.isOpen = false;
+
         marker.addListener("click", () => {
-          Object.values(markers.current).forEach((m) =>
-            m.infoWindow?.close()
-          );
-          infoWindow.open(mapInstance.current, marker);
+          if (marker.isOpen) {
+            infoWindow.close();
+            marker.isOpen = false;
+          } else {
+            Object.values(markers.current).forEach((m) => {
+              m.infoWindow?.close();
+              m.isOpen = false;
+            });
+
+            infoWindow.open(mapInstance.current, marker);
+            marker.isOpen = true;
+          }
         });
 
         marker.infoWindow = infoWindow;
@@ -568,12 +574,13 @@ const BarikoiMapView = ({
       }));
 
       const popupHTML = `
-        <div style="padding:8px; min-width:150px;">
-          <strong>${name}</strong><br/>
-          Phone: ${phoneNo}<br/>
-          Vehicle: ${vehiclePlateNo}<br/>
-          Status: <span style="color:${driving_status === "busy" ? "#22c55e" : "#ef4444"}">${driving_status}</span>
-        </div>`;
+  <div style="
+    padding:6px;
+    font-weight:600;
+    font-size:14px;
+  ">
+    ${name}
+  </div>`;
 
       if (markers.current[driver_id]) {
         // Update position
@@ -592,14 +599,34 @@ const BarikoiMapView = ({
         // Use the same SVG icon as Google Maps
         const el = createSvgMarkerEl(driving_status);
 
-        const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
-          popupHTML
-        );
+        const popup = new window.maplibregl.Popup({
+          offset: 25,
+          closeButton: false,
+          closeOnClick: false,
+        }).setHTML(popupHTML);
 
         const marker = new window.maplibregl.Marker({ element: el })
           .setLngLat(position)
           .setPopup(popup)
           .addTo(mapInstance.current);
+
+        marker._isOpen = false;
+
+        el.addEventListener("click", () => {
+          if (marker._isOpen) {
+            popup.remove();
+            marker._isOpen = false;
+          } else {
+            // close all others
+            Object.values(markers.current).forEach((m) => {
+              m.getPopup()?.remove();
+              m._isOpen = false;
+            });
+
+            popup.addTo(mapInstance.current);
+            marker._isOpen = true;
+          }
+        });
 
         marker._visible = true;
         markers.current[driver_id] = marker;

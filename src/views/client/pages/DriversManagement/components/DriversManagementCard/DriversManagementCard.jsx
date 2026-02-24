@@ -120,6 +120,11 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         fetchCommissionData();
     }, []);
 
+    const capitalizeFirst = (value) => {
+        if (!value) return "-";
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    };
+
     return (
         <div className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto">
             <div className="flex items-center gap-3">
@@ -132,7 +137,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
             <div className="flex items-center justify-center gap-3">
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Vehicle Type</p>
-                    <p className="text-black text-center font-semibold text-sm">{driver.vahicleType || "Bike"}</p>
+                    <p className="text-black text-center font-semibold text-sm">{capitalizeFirst(driver.vehicle_type)}</p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
@@ -142,10 +147,10 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     </p>
                 </div>
 
-                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
+                {/* <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Referral Code</p>
                     <p className="text-black text-center font-semibold text-sm">{driver.referralCode || "123456"}</p>
-                </div>
+                </div> */}
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Wallet Balance</p>

@@ -501,11 +501,9 @@ const BarikoiMapView = ({
         const center = getCountryCenter();
         mapInstance.current = new window.maplibregl.Map({
           container: mapRef.current,
-          style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${barikoiKey}`,
-          // center: [center.lng, center.lat],
-          // zoom: 5,
-          center: [90.4125, 23.8103],
-          zoom: 13,
+          style: `https://map.barikoi.com/styles/osm-liberty/style.json?key=${barikoiKey}`,
+          center: [center.lng, center.lat],
+          zoom: 5,
         });
 
         mapInstance.current.on("load", () => {
@@ -550,8 +548,6 @@ const BarikoiMapView = ({
       const longitude = data.longitude;
       const driving_status = data.driving_status || "idle";
       const name = data.name || data.driver_name || `Driver ${driver_id}`;
-      const phoneNo = data?.phone_no || "";
-      const vehiclePlateNo = data?.plate_no || "";
 
       if (
         latitude == null ||

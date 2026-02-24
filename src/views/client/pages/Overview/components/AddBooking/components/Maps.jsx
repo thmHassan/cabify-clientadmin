@@ -331,11 +331,9 @@ const BarikoiMap = ({
 
             mapRef.current = new window.maplibregl.Map({
                 container: containerRef.current,
-                style: `https://map.barikoi.com/styles/barikoi-light/style.json?key=${apiKey}`,
-                // center: [center.lng, center.lat],
-                // zoom: 5,
-                center: [90.4125, 23.8103],
-                zoom: 13,
+                style: `https://map.barikoi.com/styles/osm-liberty/style.json?key=${apiKey}`,
+                center: [center.lng, center.lat],
+                zoom: 5,
             });
 
             mapRef.current.addControl(new window.maplibregl.NavigationControl());

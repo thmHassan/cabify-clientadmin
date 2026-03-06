@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
@@ -16,6 +15,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [isSettlementOpen, setIsSettlementOpen] = useState(false);
     const [showSettlementButton, setShowSettlementButton] = useState(false);
+    const [commissionPackageType, setCommissionPackageType] = useState(null);
 
     const currencySymbols = {
         INR: "₹",
@@ -46,8 +46,8 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         ];
 
         return statuses
-            .filter(s => s.value !== status)
-            .map(s => ({
+            .filter((s) => s.value !== status)
+            .map((s) => ({
                 label: s.label,
                 onClick: () => handleStatusChange(s.value),
             }));
@@ -65,11 +65,9 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
 
             if (response?.data?.success === 1) {
                 setStatus(newStatus);
-
                 toast.success(`Driver status changed to ${newStatus}`, {
                     duration: 4000,
                 });
-
                 if (onStatusChange) {
                     onStatusChange(driver.id, newStatus);
                 }
@@ -97,19 +95,22 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
         }
 
-        // API call karva
         const fetchCommissionData = async () => {
             try {
                 const response = await apiGetCommissionData();
-                const packageType = response?.data?.data?.main_commission?.package_type;
+                const packageType =
+                    response?.data?.data?.main_commission?.package_type;
 
+                // Show Settlement button for BOTH commission types
                 if (
                     packageType === "commission_without_topup" ||
                     packageType === "packages_post_paid"
                 ) {
                     setShowSettlementButton(true);
+                    setCommissionPackageType(packageType);
                 } else {
                     setShowSettlementButton(false);
+                    setCommissionPackageType(null);
                 }
             } catch (error) {
                 console.log("Commission data fetch error:", error);
@@ -134,10 +135,13 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     <p className="text-xs">{driver.phone}</p>
                 </div>
             </div>
+
             <div className="flex items-center justify-center gap-3">
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Vehicle Type</p>
-                    <p className="text-black text-center font-semibold text-sm">{capitalizeFirst(driver.vehicle_type)}</p>
+                    <p className="text-black text-center font-semibold text-sm">
+                        {capitalizeFirst(driver.vehicle_type)}
+                    </p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
@@ -147,27 +151,26 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     </p>
                 </div>
 
-                {/* <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
-                    <p className="text-xs text-center text-gray-500">Referral Code</p>
-                    <p className="text-black text-center font-semibold text-sm">{driver.referralCode || "123456"}</p>
-                </div> */}
-
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#006FFF1A] text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Wallet Balance</p>
-                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm"> {currencySymbol} {driver.wallet_balance || "0"}</p>
+                    <p className="text-black text-center text-[#1F41BB] font-semibold text-sm">
+                        {currencySymbol} {driver.wallet_balance || "0"}
+                    </p>
                 </div>
 
                 <UserDropdown options={getStatusOptions()} itemData={driver}>
                     <div
                         className={`${status === "accepted"
-                            ? "bg-[#10B981] text-white"
-                            : status === "rejected"
-                                ? "bg-[#FF4747] text-white"
-                                : "bg-[#F5C60B] text-white"
+                                ? "bg-[#10B981] text-white"
+                                : status === "rejected"
+                                    ? "bg-[#FF4747] text-white"
+                                    : "bg-[#F5C60B] text-white"
                             } text-center xl:h-10 lg:h-10 md:h-10 h-10 w-28 xl:py-3 lg:py-3 md:py-3 py-1 rounded-full flex items-center justify-center cursor-pointer`}
                     >
                         <p className="font-semibold text-sm">
-                            {loading ? "Updating..." : status.charAt(0).toUpperCase() + status.slice(1)}
+                            {loading
+                                ? "Updating..."
+                                : status.charAt(0).toUpperCase() + status.slice(1)}
                         </p>
                         <svg
                             className="w-4 h-4 text-white ml-2"
@@ -176,7 +179,11 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                             strokeWidth="2"
                             viewBox="0 0 24 24"
                         >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19 9l-7 7-7-7"
+                            />
                         </svg>
                     </div>
                 </UserDropdown>
@@ -201,7 +208,11 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
             </div>
 
             <Modal isOpen={isSettlementOpen} onClose={() => setIsSettlementOpen(false)}>
-                <SettlementAmountModel driver={driver} onClose={() => setIsSettlementOpen(false)} />
+                <SettlementAmountModel
+                    driver={driver}
+                    packageType={commissionPackageType}
+                    onClose={() => setIsSettlementOpen(false)}
+                />
             </Modal>
         </div>
     );

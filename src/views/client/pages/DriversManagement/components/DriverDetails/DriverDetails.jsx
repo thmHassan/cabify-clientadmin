@@ -115,6 +115,7 @@ const DriverDetails = () => {
         email: "",
         country_code: "",
         phone_no: "",
+        password: "", // ← NEW
         address: "",
         driver_license: "",
         assigned_vehicle: "",
@@ -147,6 +148,7 @@ const DriverDetails = () => {
     const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
     const [vehicleList, setVehicleList] = useState([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // ← NEW: toggle visibility
 
     const getVehicleFormData = (data) => {
         const hasChangeRequest = Number(data?.vehicle_change_request) > 0;
@@ -281,10 +283,9 @@ const DriverDetails = () => {
                     name: data.name || "",
                     email: data.email || "",
                     phone_no: data.phone_no || "",
-                    country_code:
-                        data.country_code && data.country_code.startsWith("+")
-                            ? data.country_code
-                            : "+91",
+                    country_code: data.country_code
+                        ? `+${data.country_code.replace("+", "")}`
+                        : "",
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
@@ -303,6 +304,7 @@ const DriverDetails = () => {
                     account_holder_name: data.account_holder_name || "",
                     bank_phone_no: data.bank_phone_no || "",
                     iban_no: data.iban_no || "",
+                    password: "", // ← always reset password on reload
                 });
 
                 if (data.profile_image) setProfileImage(data.profile_image);
@@ -524,7 +526,7 @@ const DriverDetails = () => {
             formDataObj.append("id", driverId);
             formDataObj.append("name", formData.name || "");
             formDataObj.append("email", formData.email || "");
-            formDataObj.append("country_code", formData.country_code || "+91");
+            formDataObj.append("country_code", formData.country_code || "");
             formDataObj.append("phone_no", formData.phone_no || "");
             formDataObj.append("address", formData.address || "");
             formDataObj.append("driver_license", formData.driver_license || "");
@@ -534,13 +536,17 @@ const DriverDetails = () => {
                 formData.joined_date ? `${formData.joined_date} 00:00:00` : ""
             );
             formDataObj.append("sub_company", formData.sub_company || "");
+            // ← Only send password if the admin actually typed one
+            if (formData.password?.trim()) {
+                formDataObj.append("password", formData.password.trim());
+            }
             if (profileImageFile) {
                 formDataObj.append("profile_image", profileImageFile);
             }
             const response = await apiEditDriverManagement(formDataObj);
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Driver details updated successfully");
-                await loadDriverData();
+                await loadDriverData(); // this resets password field to ""
             } else {
                 toast.error(response?.data?.message || "Failed to update driver");
             }
@@ -603,7 +609,7 @@ const DriverDetails = () => {
     };
 
     const hasVehicleChangeRequest =
-        Number(driverData?.vehicle_change_request) > 0;
+        Number(driverData?.vehicle_change_request) === 1;
 
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -659,6 +665,7 @@ const DriverDetails = () => {
                         Driver Details
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                        {/* Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Name
@@ -671,6 +678,7 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
+                        {/* Email */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Email
@@ -683,24 +691,18 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
+                        {/* Phone Number */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Phone Number
                             </label>
-                            <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-blue-600">
-                                <select
+                            <div className="flex block text-sm font-medium text-gray-700 mb-2">
+                                <input
+                                    type="text"
                                     value={formData.country_code}
-                                    onChange={(e) =>
-                                        handleInputChange("country_code", e.target.value)
-                                    }
-                                    className="px-3 bg-gray-100 border-r border-gray-300 outline-none font-semibold"
-                                >
-                                    <option value="+91">+91</option>
-                                    <option value="+92">+92</option>
-                                    <option value="+1">+1</option>
-                                    <option value="+44">+44</option>
-                                    <option value="+971">+971</option>
-                                </select>
+                                    onChange={(e) => handleInputChange("country_code", e.target.value)}
+                                    className="w-16 bg-gray-100 h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+                                />
                                 <input
                                     type="text"
                                     value={formData.phone_no}
@@ -708,10 +710,48 @@ const DriverDetails = () => {
                                         handleInputChange("phone_no", e.target.value)
                                     }
                                     placeholder="Enter Phone Number"
-                                    className="flex-1 h-11 px-4 text-sm focus:outline-none"
+                                    className="flex-1 text-sm w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                                 />
                             </div>
                         </div>
+
+                        {/* ── Password (NEW) ── */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={formData.password}
+                                    onChange={(e) => handleInputChange("password", e.target.value)}
+                                    placeholder="Enter New Password (leave blank to keep current)"
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4 pr-10 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+                                />
+                                {/* Show / Hide toggle */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? (
+                                        // Eye-off icon
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-9-7a9.77 9.77 0 012.22-4.78M6.1 6.1A9.956 9.956 0 0112 5c5 0 9 4 9 7a9.77 9.77 0 01-1.63 3.37M15 12a3 3 0 01-4.24 4.24M9 9l6 6M3 3l18 18" />
+                                        </svg>
+                                    ) : (
+                                        // Eye icon
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Assigned Vehicle */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Assigned Vehicle
@@ -836,7 +876,6 @@ const DriverDetails = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Vehicle Name */}
                         <FormField
                             label="Vehicle Name"
                             placeholder="Enter Vehicle Name"
@@ -844,8 +883,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("vehicle_name", e.target.value)}
                             name="vehicle_name"
                         />
-
-                        {/* ── Vehicle Type - DYNAMIC from API ── */}
                         <div className="flex flex-col gap-1">
                             <label className="text-sm font-medium text-gray-700">
                                 Vehicle Type
@@ -868,8 +905,6 @@ const DriverDetails = () => {
                                 ))}
                             </select>
                         </div>
-
-                        {/* Vehicle Service */}
                         <FormField
                             label="Vehicle Service"
                             type="select"
@@ -881,7 +916,6 @@ const DriverDetails = () => {
                             }
                             name="vehicle_service"
                         />
-                        {/* Seats */}
                         <FormField
                             label="Seats"
                             type="select"
@@ -891,7 +925,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("seats", e.target.value)}
                             name="seats"
                         />
-                        {/* Color */}
                         <FormField
                             label="Color"
                             type="select"
@@ -901,7 +934,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("color", e.target.value)}
                             name="color"
                         />
-                        {/* Capacity */}
                         <FormField
                             label="Capacity"
                             placeholder="Enter Capacity"
@@ -909,7 +941,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("capacity", e.target.value)}
                             name="capacity"
                         />
-                        {/* Plate Number */}
                         <FormField
                             label="Plate Number"
                             placeholder="Enter Plate Number"
@@ -917,7 +948,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("plate_no", e.target.value)}
                             name="plate_no"
                         />
-                        {/* Registration Date */}
                         <FormField
                             label="Vehicle Registration Date"
                             type="date"
@@ -929,7 +959,6 @@ const DriverDetails = () => {
                         />
                     </div>
 
-                    {/* Approve / Reject vehicle - only when change request exists */}
                     {hasVehicleChangeRequest && (
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
                             <Button
@@ -1188,3 +1217,1187 @@ const DriverDetails = () => {
 };
 
 export default DriverDetails;
+
+// import { useCallback, useState, useEffect } from "react";
+// import { useParams } from "react-router-dom";
+// import CardContainer from "../../../../../../components/shared/CardContainer";
+// import Button from "../../../../../../components/ui/Button/Button";
+// import PageTitle from "../../../../../../components/ui/PageTitle/PageTitle";
+// import Modal from "../../../../../../components/shared/Modal/Modal";
+// import { lockBodyScroll } from "../../../../../../utils/functions/common.function";
+// import AddWalletBalanceModel from "./component/AddWalletBalanceModel/AddWalletBalanceModel";
+// import AddDocumentModel from "./component/AddDocumentModel/AddDocumentModel";
+// import SendNotifictionModel from "./component/SendNotifictionModel/SendNotifictionModel";
+// import Loading from "../../../../../../components/shared/Loading/Loading";
+// import Pagination from "../../../../../../components/ui/Pagination/Pagination";
+// import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
+// import { useAppSelector } from "../../../../../../store";
+// import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocumentList, apiChangeDriverDocument, apiDeleteDriverDocument, apiApproveVehicle, apiGetDriverRideHistory, apiRejectVehicle, apiGetDriverDocumentById, apieditDriverStatus, apiGetDriverRevenue } from "../../../../../../services/DriverManagementService";
+// import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
+// import DriverRideHistory from "./component/DriverRideHistory";
+// import RejectModel from "./component/RejectModel";
+// import toast from "react-hot-toast";
+// import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+// import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
+
+// const FormField = ({
+//     label,
+//     type = "text",
+//     placeholder,
+//     options = [],
+//     value = "",
+//     onChange,
+//     name,
+//     disabled = false,
+// }) => {
+//     return (
+//         <div className="flex flex-col gap-1">
+//             <label className="text-sm font-medium text-gray-700">{label}</label>
+
+//             {type === "select" ? (
+//                 <select
+//                     value={value}
+//                     onChange={onChange}
+//                     name={name}
+//                     disabled={disabled}
+//                     className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+//                 >
+//                     <option value="">{placeholder}</option>
+//                     {options.map((opt, index) => (
+//                         <option key={index} value={opt.value ?? opt}>
+//                             {opt.label ?? opt}
+//                         </option>
+//                     ))}
+//                 </select>
+//             ) : type === "date" ? (
+//                 <input
+//                     type="date"
+//                     value={value}
+//                     onChange={onChange}
+//                     name={name}
+//                     disabled={disabled}
+//                     className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+//                 />
+//             ) : (
+//                 <input
+//                     type="text"
+//                     value={value}
+//                     onChange={onChange}
+//                     name={name}
+//                     placeholder={placeholder}
+//                     disabled={disabled}
+//                     className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+//                 />
+//             )}
+//         </div>
+//     );
+// };
+
+// const DriverDetails = () => {
+//     const { id: driverId } = useParams();
+
+//     const tenantData = getTenantData();
+//     const isPushNotificationEnabled =
+//         tenantData?.push_notification === "enable" ||
+//         tenantData?.push_notification === "yes";
+
+//     const [isAddWalletBalanceModalOpen, setIsAddWalletBalanceModalOpen] = useState(false);
+//     const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false);
+//     const [isSendNotificationModalOpen, setIsSendNotificationModalOpen] = useState(false);
+//     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+//     const [selectedDocument, setSelectedDocument] = useState(null);
+//     const [isLoadingDocument, setIsLoadingDocument] = useState(false);
+//     const [tableLoading, setTableLoading] = useState(false);
+//     const [_selectedStatus, setSelectedStatus] = useState(
+//         STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
+//     );
+//     const savedPagination = useAppSelector(
+//         (state) => state?.app?.app?.pagination?.companies
+//     );
+//     const [currentPage, setCurrentPage] = useState(
+//         Number(savedPagination?.currentPage) || 1
+//     );
+//     const [itemsPerPage, setItemsPerPage] = useState(
+//         Number(savedPagination?.itemsPerPage) || 10
+//     );
+//     const [totalItems, setTotalItems] = useState(0);
+//     const [totalPages, setTotalPages] = useState(1);
+//     const [rideHistory, setRideHistory] = useState([]);
+
+//     const [revenueData, setRevenueData] = useState({
+//         totalEarnings: "0.00",
+//         totalCompletedRides: 0,
+//         loading: false,
+//     });
+
+//     const [formData, setFormData] = useState({
+//         name: "",
+//         email: "",
+//         country_code: "",
+//         phone_no: "",
+//         address: "",
+//         driver_license: "",
+//         assigned_vehicle: "",
+//         joined_date: "",
+//         sub_company: "",
+//         vehicle_name: "",
+//         vehicle_type: "",
+//         vehicle_service: "",
+//         seats: "",
+//         color: "",
+//         capacity: "",
+//         plate_no: "",
+//         vehicle_registration_date: "",
+//         bank_name: "",
+//         bank_account_number: "",
+//         account_holder_name: "",
+//         bank_phone_no: "",
+//         iban_no: "",
+//     });
+
+//     const [profileImage, setProfileImage] = useState(null);
+//     const [profileImageFile, setProfileImageFile] = useState(null);
+//     const [isLoading, setIsLoading] = useState(false);
+//     const [isSaving, setIsSaving] = useState(false);
+//     const [driverData, setDriverData] = useState(null);
+//     const [documents, setDocuments] = useState([]);
+//     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+//     const [documentApprovedOffice, setDocumentApprovedOffice] = useState(false);
+//     const [subCompanyList, setSubCompanyList] = useState([]);
+//     const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
+//     const [vehicleList, setVehicleList] = useState([]);
+//     const [loadingVehicles, setLoadingVehicles] = useState(false);
+
+//     const getVehicleFormData = (data) => {
+//         const hasChangeRequest = Number(data?.vehicle_change_request) > 0;
+//         return {
+//             vehicle_name: hasChangeRequest
+//                 ? data?.change_vehicle_name || data?.vehicle_name || ""
+//                 : data?.vehicle_name || "",
+//             vehicle_type: hasChangeRequest
+//                 ? data?.change_vehicle_type
+//                     ? data.change_vehicle_type.toString()
+//                     : data?.vehicle_type
+//                         ? data.vehicle_type.toString()
+//                         : ""
+//                 : data?.vehicle_type
+//                     ? data.vehicle_type.toString()
+//                     : "",
+//             vehicle_service: hasChangeRequest
+//                 ? data?.change_vehicle_service || data?.vehicle_service || ""
+//                 : data?.vehicle_service || "",
+//             seats: hasChangeRequest
+//                 ? data?.change_seats
+//                     ? data.change_seats.toString()
+//                     : data?.seats
+//                         ? data.seats.toString()
+//                         : ""
+//                 : data?.seats
+//                     ? data.seats.toString()
+//                     : "",
+//             color: hasChangeRequest
+//                 ? data?.change_color || data?.color || ""
+//                 : data?.color || "",
+//             capacity: hasChangeRequest
+//                 ? data?.change_capacity || data?.capacity || ""
+//                 : data?.capacity || "",
+//             plate_no: hasChangeRequest
+//                 ? data?.change_plate_no || data?.plate_no || ""
+//                 : data?.plate_no || "",
+//             vehicle_registration_date: hasChangeRequest
+//                 ? data?.change_vehicle_registration_date
+//                     ? data.change_vehicle_registration_date.split("T")[0]
+//                     : data?.vehicle_registration_date
+//                         ? data.vehicle_registration_date.split("T")[0]
+//                         : ""
+//                 : data?.vehicle_registration_date
+//                     ? data.vehicle_registration_date.split("T")[0]
+//                     : "",
+//         };
+//     };
+
+//     const loadDriverRevenue = useCallback(async () => {
+//         if (!driverId) return;
+//         setRevenueData((prev) => ({ ...prev, loading: true }));
+//         try {
+//             const response = await apiGetDriverRevenue({ driver_id: driverId });
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 setRevenueData({
+//                     totalEarnings: response?.data?.total_earnings || "0.00",
+//                     totalCompletedRides: response?.data?.total_completed_rides || 0,
+//                     loading: false,
+//                 });
+//             } else {
+//                 setRevenueData({ totalEarnings: "0.00", totalCompletedRides: 0, loading: false });
+//             }
+//         } catch (error) {
+//             console.error("Error loading driver revenue:", error);
+//             setRevenueData({ totalEarnings: "0.00", totalCompletedRides: 0, loading: false });
+//         }
+//     }, [driverId]);
+
+//     useEffect(() => {
+//         if (driverId) loadDriverRevenue();
+//     }, [driverId, loadDriverRevenue]);
+
+//     useEffect(() => {
+//         const fetchSubCompanies = async () => {
+//             setLoadingSubCompanies(true);
+//             try {
+//                 const response = await apiGetSubCompany({ page: 1, perPage: 100 });
+//                 if (response?.data?.success === 1) {
+//                     const companies = response?.data?.list?.data || [];
+//                     setSubCompanyList(
+//                         companies.map((c) => ({ label: c.name, value: c.id.toString() }))
+//                     );
+//                 }
+//             } catch (error) {
+//                 console.error("Error fetching sub-companies:", error);
+//             } finally {
+//                 setLoadingSubCompanies(false);
+//             }
+//         };
+//         fetchSubCompanies();
+//     }, []);
+
+//     useEffect(() => {
+//         const fetchVehicle = async () => {
+//             setLoadingVehicles(true);
+//             try {
+//                 const response = await apiGetAllVehicleType();
+//                 if (response?.data?.success === 1) {
+//                     const vehicletype = response?.data?.list || [];
+//                     setVehicleList(
+//                         vehicletype.map((v) => ({
+//                             label: v.vehicle_type_name,
+//                             value: v.id.toString(),
+//                         }))
+//                     );
+//                 }
+//             } catch (error) {
+//                 console.error("Error fetching vehicle:", error);
+//             } finally {
+//                 setLoadingVehicles(false);
+//             }
+//         };
+//         fetchVehicle();
+//     }, []);
+
+//     const loadDriverData = useCallback(async () => {
+//         if (!driverId) return;
+//         setIsLoading(true);
+//         try {
+//             const response = await apiGetDriverManagementById({ id: driverId });
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 const data =
+//                     response?.data?.driver ||
+//                     response?.data?.data ||
+//                     response?.data ||
+//                     {};
+//                 setDriverData(data);
+
+//                 const vehicleData = getVehicleFormData(data);
+//                 setFormData({
+//                     name: data.name || "",
+//                     email: data.email || "",
+//                     phone_no: data.phone_no || "",
+//                     country_code: data.country_code
+//                         ? `+${data.country_code.replace("+", "")}`
+//                         : "",
+//                     address: data.address || "",
+//                     driver_license: data.driver_license || "",
+//                     assigned_vehicle: data.assigned_vehicle || "",
+//                     joined_date: data.joined_date ? data.joined_date.split("T")[0] : "",
+//                     sub_company: data.sub_company ? data.sub_company.toString() : "",
+//                     vehicle_name: vehicleData.vehicle_name,
+//                     vehicle_type: vehicleData.vehicle_type,
+//                     vehicle_service: vehicleData.vehicle_service,
+//                     seats: vehicleData.seats,
+//                     color: vehicleData.color,
+//                     capacity: vehicleData.capacity,
+//                     plate_no: vehicleData.plate_no,
+//                     vehicle_registration_date: vehicleData.vehicle_registration_date,
+//                     bank_name: data.bank_name || "",
+//                     bank_account_number: data.bank_account_number || "",
+//                     account_holder_name: data.account_holder_name || "",
+//                     bank_phone_no: data.bank_phone_no || "",
+//                     iban_no: data.iban_no || "",
+//                 });
+
+//                 if (data.profile_image) setProfileImage(data.profile_image);
+//                 if (data.document_approved_office !== undefined) {
+//                     setDocumentApprovedOffice(
+//                         data.document_approved_office === 1 ||
+//                         data.document_approved_office === "1"
+//                     );
+//                 }
+//             }
+//         } catch (error) {
+//             console.error("Error loading driver data:", error);
+//         } finally {
+//             setIsLoading(false);
+//         }
+//     }, [driverId]);
+
+//     useEffect(() => {
+//         loadDriverData();
+//     }, [loadDriverData]);
+
+//     const loadDriverDocuments = useCallback(async () => {
+//         if (!driverId) return;
+//         setIsLoadingDocuments(true);
+//         try {
+//             const response = await apiGetDriverDocumentList({ driver_id: driverId });
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 const docs =
+//                     response?.data?.documentList ||
+//                     response?.data?.data ||
+//                     response?.data?.list ||
+//                     [];
+//                 const normalizedDocs = (Array.isArray(docs) ? docs : []).map((doc) => ({
+//                     ...doc,
+//                     displayName:
+//                         doc.document_detail?.document_name ||
+//                         doc.document_name ||
+//                         "Unnamed Document",
+//                     status:
+//                         doc.status === "approved"
+//                             ? "verified"
+//                             : doc.status || "pending",
+//                 }));
+//                 setDocuments(normalizedDocs);
+//                 if (response?.data?.document_approved_office !== undefined) {
+//                     setDocumentApprovedOffice(
+//                         response?.data?.document_approved_office === 1 ||
+//                         response?.data?.document_approved_office === "1"
+//                     );
+//                 }
+//             } else {
+//                 setDocuments([]);
+//             }
+//         } catch (error) {
+//             console.error("Error loading driver documents:", error);
+//             setDocuments([]);
+//         } finally {
+//             setIsLoadingDocuments(false);
+//         }
+//     }, [driverId]);
+
+//     useEffect(() => {
+//         loadDriverDocuments();
+//     }, [loadDriverDocuments]);
+
+//     const handleInputChange = (field, value) => {
+//         setFormData((prev) => ({ ...prev, [field]: value }));
+//     };
+
+//     const handleFileChange = (e) => {
+//         const file = e.target.files[0];
+//         if (file) {
+//             setProfileImageFile(file);
+//             const reader = new FileReader();
+//             reader.onloadend = () => setProfileImage(reader.result);
+//             reader.readAsDataURL(file);
+//         }
+//     };
+
+//     const handleDeleteDocument = async (documentId) => {
+//         try {
+//             const response = await apiDeleteDriverDocument(documentId);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success("Document deleted successfully");
+//                 await loadDriverDocuments();
+//             } else {
+//                 toast.error("Failed to delete document");
+//             }
+//         } catch (error) {
+//             toast.error("Error deleting document");
+//         }
+//     };
+
+//     const handleViewDocument = async (documentId) => {
+//         setIsLoadingDocument(true);
+//         try {
+//             const response = await apiGetDriverDocumentById({ id: documentId });
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 const docData =
+//                     response?.data?.data ||
+//                     response?.data?.document ||
+//                     response?.data;
+//                 setSelectedDocument(docData);
+//                 lockBodyScroll();
+//                 setIsAddDocumentModalOpen(true);
+//             } else {
+//                 console.error(response?.data?.message || "Failed to fetch document");
+//             }
+//         } catch (error) {
+//             console.error("Error fetching document:", error);
+//         } finally {
+//             setIsLoadingDocument(false);
+//         }
+//     };
+
+//     const handleDocumentStatusChange = async (documentId, status) => {
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("driver_id", driverId);
+//             formDataObj.append("driver_document_id", documentId);
+//             formDataObj.append("status", status);
+//             const response = await apiChangeDriverDocument(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success(`Document ${status}`);
+//                 await loadDriverDocuments();
+//             } else {
+//                 toast.error("Failed to update document");
+//             }
+//         } catch (error) {
+//             toast.error("Error updating document");
+//         }
+//     };
+
+//     const handleApproveAll = async () => {
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("driver_id", driverId);
+//             formDataObj.append("approve_all", "1");
+//             const response = await apiChangeDriverDocument(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 await loadDriverDocuments();
+//                 await loadDriverData();
+//             } else {
+//                 console.error(response?.data?.message || "Failed to approve all documents");
+//             }
+//         } catch (error) {
+//             console.error("Error approving all documents:", error);
+//         }
+//     };
+
+//     const handleRejectAll = async () => {
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("driver_id", driverId);
+//             formDataObj.append("reject_all", "1");
+//             const response = await apiChangeDriverDocument(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 await loadDriverDocuments();
+//             } else {
+//                 console.error(response?.data?.message || "Failed to reject all documents");
+//             }
+//         } catch (error) {
+//             console.error("Error rejecting all documents:", error);
+//         }
+//     };
+
+//     const handleApproveVehicle = async () => {
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("driver_id", driverId);
+//             const response = await apiApproveVehicle(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success("Vehicle approved successfully");
+//                 await loadDriverData();
+//             } else {
+//                 toast.error(response?.data?.message || "Failed to approve vehicle");
+//             }
+//         } catch (error) {
+//             toast.error("Error approving vehicle");
+//         }
+//     };
+
+//     const handleApproveInOffice = async () => {
+//         if (!driverData?.id) return;
+//         try {
+//             const payload = { driver_id: driverData.id, document_approved_office: 1 };
+//             const response = await apiChangeDriverDocument(payload);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success("Approved in office");
+//                 await loadDriverData();
+//             } else {
+//                 console.error("Approval failed");
+//             }
+//         } catch (error) {
+//             console.error("Error approving in office:", error);
+//         }
+//     };
+
+//     const handleRejectVehicle = async () => {
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("driver_id", driverId);
+//             const response = await apiRejectVehicle(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success("Vehicle rejected");
+//                 await loadDriverData();
+//             } else {
+//                 toast.error(response?.data?.message || "Failed to reject vehicle");
+//             }
+//         } catch (error) {
+//             toast.error("Error rejecting vehicle");
+//         }
+//     };
+
+//     const handleSave = async () => {
+//         setIsSaving(true);
+//         try {
+//             const formDataObj = new FormData();
+//             formDataObj.append("id", driverId);
+//             formDataObj.append("name", formData.name || "");
+//             formDataObj.append("email", formData.email || "");
+//             formDataObj.append("country_code", formData.country_code || "");
+//             formDataObj.append("phone_no", formData.phone_no || "");
+//             formDataObj.append("address", formData.address || "");
+//             formDataObj.append("driver_license", formData.driver_license || "");
+//             formDataObj.append("assigned_vehicle", formData.assigned_vehicle || "");
+//             formDataObj.append(
+//                 "joined_date",
+//                 formData.joined_date ? `${formData.joined_date} 00:00:00` : ""
+//             );
+//             formDataObj.append("sub_company", formData.sub_company || "");
+//             if (profileImageFile) {
+//                 formDataObj.append("profile_image", profileImageFile);
+//             }
+//             const response = await apiEditDriverManagement(formDataObj);
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success("Driver details updated successfully");
+//                 await loadDriverData();
+//             } else {
+//                 toast.error(response?.data?.message || "Failed to update driver");
+//             }
+//         } catch (error) {
+//             toast.error(
+//                 error?.response?.data?.message || error?.message || "Error saving driver"
+//             );
+//         } finally {
+//             setIsSaving(false);
+//         }
+//     };
+
+//     const loadRideHistory = useCallback(async () => {
+//         if (!driverId) return;
+//         setTableLoading(true);
+//         try {
+//             const response = await apiGetDriverRideHistory(driverId);
+//             if (
+//                 response?.status === 200 &&
+//                 Array.isArray(response?.data?.rideHistory)
+//             ) {
+//                 setRideHistory(response?.data.rideHistory);
+//             } else {
+//                 setRideHistory([]);
+//             }
+//         } catch (error) {
+//             console.error("Error loading ride history", error);
+//             setRideHistory([]);
+//         } finally {
+//             setTableLoading(false);
+//         }
+//     }, [driverId]);
+
+//     useEffect(() => {
+//         if (driverId) loadRideHistory();
+//     }, [driverId, loadRideHistory]);
+
+//     const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+//     const handleItemsPerPageChange = (newItemsPerPage) => {
+//         setItemsPerPage(newItemsPerPage);
+//         setCurrentPage(1);
+//     };
+
+//     const handleChangeDriverStatus = async (status) => {
+//         try {
+//             const response = await apieditDriverStatus({ id: driverId, status });
+//             if (response?.data?.success === 1 || response?.status === 200) {
+//                 toast.success(`Driver status changed to ${status}`);
+//                 await loadDriverData();
+//             } else {
+//                 toast.error(response?.data?.message || "Failed to change status");
+//             }
+//         } catch (error) {
+//             toast.error(
+//                 error?.response?.data?.message ||
+//                 error?.message ||
+//                 "Error changing driver status"
+//             );
+//         }
+//     };
+
+//     const hasVehicleChangeRequest =
+//         Number(driverData?.vehicle_change_request) === 1;
+
+//     return (
+//         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
+//             <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
+//                 <div className="sm:mb-[30px] mb-1 sm:w-[calc(100%-240px)] w-full flex gap-5 items-center">
+//                     <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
+//                         <PageTitle title="Drivers Details" />
+//                     </div>
+//                 </div>
+//                 <div className="w-full sm:mb-[50px] mb-8">
+//                     <div className="flex flex-row justify-end gap-2">
+//                         {(driverData?.status === "rejected" ||
+//                             driverData?.status === "pending") && (
+//                                 <Button
+//                                     onClick={() => handleChangeDriverStatus("accepted")}
+//                                     className="border border-[#10b981] text-[#10b981] font-bold py-2 px-4 rounded-md"
+//                                 >
+//                                     Accept
+//                                 </Button>
+//                             )}
+//                         {(driverData?.status === "accepted" ||
+//                             driverData?.status === "pending") && (
+//                                 <Button
+//                                     onClick={() => {
+//                                         lockBodyScroll();
+//                                         setIsRejectModalOpen(true);
+//                                     }}
+//                                     className="border border-[#ff4747] text-[#ff4747] font-bold py-2 px-4 rounded-md"
+//                                 >
+//                                     Reject
+//                                 </Button>
+//                             )}
+//                         {isPushNotificationEnabled && (
+//                             <Button
+//                                 type="filled"
+//                                 btnSize="2xl"
+//                                 onClick={() => {
+//                                     lockBodyScroll();
+//                                     setIsSendNotificationModalOpen(true);
+//                                 }}
+//                                 className="w-full sm:w-auto !py-3.5"
+//                             >
+//                                 Send Notification
+//                             </Button>
+//                         )}
+//                     </div>
+//                 </div>
+//             </div>
+
+//             <div>
+//                 <CardContainer className="p-5 mt-4">
+//                     <h2 className="text-base font-semibold text-gray-800 mb-6">
+//                         Driver Details
+//                     </h2>
+//                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Name
+//                             </label>
+//                             <input
+//                                 type="text"
+//                                 value={formData.name}
+//                                 onChange={(e) => handleInputChange("name", e.target.value)}
+//                                 placeholder="Enter Name"
+//                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                             />
+//                         </div>
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Email
+//                             </label>
+//                             <input
+//                                 type="email"
+//                                 value={formData.email}
+//                                 onChange={(e) => handleInputChange("email", e.target.value)}
+//                                 placeholder="Enter Email"
+//                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                             />
+//                         </div>
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Phone Number
+//                             </label>
+//                             <div className="flex block text-sm font-medium text-gray-700 mb-2">
+//                                 <input
+//                                     type="text"
+//                                     value={formData.country_code}
+//                                     onChange={(e) => handleInputChange("country_code", e.target.value)}
+//                                     className="w-16 bg-gray-100 h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                                 />
+
+//                                 <input
+//                                     type="text"
+//                                     value={formData.phone_no}
+//                                     onChange={(e) =>
+//                                         handleInputChange("phone_no", e.target.value)
+//                                     }
+//                                     placeholder="Enter Phone Number"
+//                                     className="flex-1 text-sm w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                                 />
+//                             </div>
+//                         </div>
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Assigned Vehicle
+//                             </label>
+//                             <select
+//                                 value={formData.assigned_vehicle}
+//                                 onChange={(e) =>
+//                                     handleInputChange("assigned_vehicle", e.target.value)
+//                                 }
+//                                 disabled={loadingVehicles}
+//                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                             >
+//                                 <option value="">
+//                                     {loadingVehicles ? "Loading..." : "Select Vehicle"}
+//                                 </option>
+//                                 {vehicleList.map((vehicle) => (
+//                                     <option key={vehicle.value} value={vehicle.value}>
+//                                         {vehicle.label}
+//                                     </option>
+//                                 ))}
+//                             </select>
+//                         </div>
+//                         {/* Joined Date */}
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Joined Date
+//                             </label>
+//                             <input
+//                                 type="date"
+//                                 value={formData.joined_date}
+//                                 onChange={(e) =>
+//                                     handleInputChange("joined_date", e.target.value)
+//                                 }
+//                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                             />
+//                         </div>
+//                         {/* Wallet Balance */}
+//                         <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                 Wallet Balance
+//                             </label>
+//                             <input
+//                                 type="text"
+//                                 value={
+//                                     driverData?.wallet_balance
+//                                         ? `${driverData.wallet_balance}`
+//                                         : "$0.00"
+//                                 }
+//                                 disabled
+//                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm bg-gray-100 text-gray-600"
+//                             />
+//                         </div>
+//                         {/* Sub Company */}
+//                         <div className="flex flex-col gap-8">
+//                             <div>
+//                                 <label className="block text-sm font-medium text-gray-700 mb-2">
+//                                     Sub Company
+//                                 </label>
+//                                 <select
+//                                     value={formData.sub_company}
+//                                     onChange={(e) =>
+//                                         handleInputChange("sub_company", e.target.value)
+//                                     }
+//                                     disabled={loadingSubCompanies}
+//                                     className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
+//                                 >
+//                                     <option value="">
+//                                         {loadingSubCompanies ? "Loading..." : "Select Sub Company"}
+//                                     </option>
+//                                     {subCompanyList.map((company) => (
+//                                         <option key={company.value} value={company.value}>
+//                                             {company.label}
+//                                         </option>
+//                                     ))}
+//                                 </select>
+//                             </div>
+//                         </div>
+//                         {/* Add Wallet Balance Button */}
+//                         <div className="flex items-start justify-end md:col-start-3 mt-4">
+//                             <Button
+//                                 btnSize="md"
+//                                 type="filled"
+//                                 className="pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+//                                 onClick={() => {
+//                                     lockBodyScroll();
+//                                     setIsAddWalletBalanceModalOpen(true);
+//                                 }}
+//                             >
+//                                 <span>Add Wallet Balance</span>
+//                             </Button>
+//                         </div>
+//                     </div>
+
+//                     {/* Save / Cancel */}
+//                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
+//                         <Button
+//                             btnSize="md"
+//                             type="filledGray"
+//                             className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+//                             onClick={() => loadDriverData()}
+//                         >
+//                             <span>Cancel</span>
+//                         </Button>
+//                         <Button
+//                             btnSize="md"
+//                             type="filled"
+//                             className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+//                             onClick={handleSave}
+//                             disabled={isSaving}
+//                         >
+//                             {isSaving ? "Saving..." : "Save"}
+//                         </Button>
+//                     </div>
+//                 </CardContainer>
+//             </div>
+
+//             {/* ── Vehicle Information ── */}
+//             <div>
+//                 <CardContainer className="p-5 mt-6">
+//                     <div className="flex items-center gap-3 mb-4">
+//                         <h2 className="text-[22px] font-semibold">Vehicle Information</h2>
+//                     </div>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                         {/* Vehicle Name */}
+//                         <FormField
+//                             label="Vehicle Name"
+//                             placeholder="Enter Vehicle Name"
+//                             value={formData.vehicle_name}
+//                             onChange={(e) => handleInputChange("vehicle_name", e.target.value)}
+//                             name="vehicle_name"
+//                         />
+
+//                         {/* ── Vehicle Type - DYNAMIC from API ── */}
+//                         <div className="flex flex-col gap-1">
+//                             <label className="text-sm font-medium text-gray-700">
+//                                 Vehicle Type
+//                             </label>
+//                             <select
+//                                 value={formData.vehicle_type}
+//                                 onChange={(e) =>
+//                                     handleInputChange("vehicle_type", e.target.value)
+//                                 }
+//                                 disabled={loadingVehicles}
+//                                 className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+//                             >
+//                                 <option value="">
+//                                     {loadingVehicles ? "Loading..." : "Select Vehicle Type"}
+//                                 </option>
+//                                 {vehicleList.map((v) => (
+//                                     <option key={v.value} value={v.value}>
+//                                         {v.label}
+//                                     </option>
+//                                 ))}
+//                             </select>
+//                         </div>
+
+//                         {/* Vehicle Service */}
+//                         <FormField
+//                             label="Vehicle Service"
+//                             type="select"
+//                             placeholder="Select Vehicle Service"
+//                             options={["local", "Taxi", "Rental", "Delivery"]}
+//                             value={formData.vehicle_service}
+//                             onChange={(e) =>
+//                                 handleInputChange("vehicle_service", e.target.value)
+//                             }
+//                             name="vehicle_service"
+//                         />
+//                         {/* Seats */}
+//                         <FormField
+//                             label="Seats"
+//                             type="select"
+//                             placeholder="Select Seats"
+//                             options={["2", "4", "5", "7", "8"]}
+//                             value={formData.seats}
+//                             onChange={(e) => handleInputChange("seats", e.target.value)}
+//                             name="seats"
+//                         />
+//                         {/* Color */}
+//                         <FormField
+//                             label="Color"
+//                             type="select"
+//                             placeholder="Select Color"
+//                             options={["Black", "White", "Red", "Blue", "Silver"]}
+//                             value={formData.color}
+//                             onChange={(e) => handleInputChange("color", e.target.value)}
+//                             name="color"
+//                         />
+//                         {/* Capacity */}
+//                         <FormField
+//                             label="Capacity"
+//                             placeholder="Enter Capacity"
+//                             value={formData.capacity}
+//                             onChange={(e) => handleInputChange("capacity", e.target.value)}
+//                             name="capacity"
+//                         />
+//                         {/* Plate Number */}
+//                         <FormField
+//                             label="Plate Number"
+//                             placeholder="Enter Plate Number"
+//                             value={formData.plate_no}
+//                             onChange={(e) => handleInputChange("plate_no", e.target.value)}
+//                             name="plate_no"
+//                         />
+//                         {/* Registration Date */}
+//                         <FormField
+//                             label="Vehicle Registration Date"
+//                             type="date"
+//                             value={formData.vehicle_registration_date}
+//                             onChange={(e) =>
+//                                 handleInputChange("vehicle_registration_date", e.target.value)
+//                             }
+//                             name="vehicle_registration_date"
+//                         />
+//                     </div>
+
+//                     {/* Approve / Reject vehicle - only when change request exists */}
+//                     {hasVehicleChangeRequest && (
+//                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-4">
+//                             <Button
+//                                 btnSize="md"
+//                                 type="filledRed"
+//                                 className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+//                                 onClick={handleRejectVehicle}
+//                             >
+//                                 <span>Reject</span>
+//                             </Button>
+//                             <Button
+//                                 btnSize="md"
+//                                 type="filledGreen"
+//                                 className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+//                                 onClick={handleApproveVehicle}
+//                             >
+//                                 Approve
+//                             </Button>
+//                         </div>
+//                     )}
+//                 </CardContainer>
+//             </div>
+
+//             {/* ── Bank Information ── */}
+//             <div className="p-5 mt-6 bg-[#EEF3FF] rounded-xl">
+//                 <h2 className="text-[22px] font-semibold mb-4">Bank Information</h2>
+//                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                     <FormField
+//                         label="Bank Name"
+//                         placeholder="Enter Bank Name"
+//                         value={formData.bank_name}
+//                         onChange={(e) => handleInputChange("bank_name", e.target.value)}
+//                         name="bank_name"
+//                     />
+//                     <FormField
+//                         label="Bank Account Number"
+//                         placeholder="Enter Account Number"
+//                         value={formData.bank_account_number}
+//                         onChange={(e) =>
+//                             handleInputChange("bank_account_number", e.target.value)
+//                         }
+//                         name="bank_account_number"
+//                     />
+//                     <FormField
+//                         label="Account Holder Name"
+//                         placeholder="Enter Holder Name"
+//                         value={formData.account_holder_name}
+//                         onChange={(e) =>
+//                             handleInputChange("account_holder_name", e.target.value)
+//                         }
+//                         name="account_holder_name"
+//                     />
+//                     <FormField
+//                         label="Bank Phone Number"
+//                         placeholder="Enter Phone Number"
+//                         value={formData.bank_phone_no}
+//                         onChange={(e) =>
+//                             handleInputChange("bank_phone_no", e.target.value)
+//                         }
+//                         name="bank_phone_no"
+//                     />
+//                     <FormField
+//                         label="IBAN Number"
+//                         placeholder="Enter IBAN Number"
+//                         value={formData.iban_no}
+//                         onChange={(e) => handleInputChange("iban_no", e.target.value)}
+//                         name="iban_no"
+//                     />
+//                 </div>
+//             </div>
+
+//             {/* ── Document Information ── */}
+//             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
+//                 <div className="flex gap-4 items-center mb-4 flex-wrap">
+//                     <h2 className="text-[22px] font-semibold">Document Information</h2>
+//                     {Number(driverData?.document_approved_office) === 0 && (
+//                         <Button
+//                             type="filledGreen"
+//                             onClick={handleApproveInOffice}
+//                             className="bg-[#10B981] hover:bg-[#10B981] text-white py-1.5 px-4 rounded-md text-sm"
+//                         >
+//                             Approve in office
+//                         </Button>
+//                     )}
+//                     {Number(driverData?.document_approved_office) === 1 && (
+//                         <span className="bg-[#10B981] text-white text-sm px-3 py-1 rounded-full flex items-center gap-1">
+//                             <svg
+//                                 className="w-4 h-4 bg-white rounded-full text-[#10B981]"
+//                                 fill="none"
+//                                 stroke="currentColor"
+//                                 viewBox="0 0 24 24"
+//                             >
+//                                 <path
+//                                     strokeLinecap="round"
+//                                     strokeLinejoin="round"
+//                                     strokeWidth={2}
+//                                     d="M5 13l4 4L19 7"
+//                                 />
+//                             </svg>
+//                             Approved in office
+//                         </span>
+//                     )}
+//                     <div className="flex gap-3 ml-auto">
+//                         <Button
+//                             type="filledGreen"
+//                             className="bg-[#10B981] hover:bg-[#10B981] text-white py-1.5 px-4 rounded-md text-sm"
+//                             onClick={handleApproveAll}
+//                         >
+//                             Approve All
+//                         </Button>
+//                         <Button
+//                             type="filledRed"
+//                             className="bg-[#FF4747] hover:bg-[#FF4747] text-white py-1.5 px-4 rounded-md text-sm border-0"
+//                             onClick={handleRejectAll}
+//                         >
+//                             Reject All
+//                         </Button>
+//                     </div>
+//                 </div>
+
+//                 <Loading loading={isLoadingDocuments} type="cover">
+//                     {documents.length === 0 ? (
+//                         <div className="text-center py-8 text-gray-500">
+//                             No documents found
+//                         </div>
+//                     ) : (
+//                         documents.map((doc) => (
+//                             <div
+//                                 key={doc.id}
+//                                 className="flex justify-between items-center bg-white p-4 rounded-lg mb-3"
+//                             >
+//                                 <span className="font-medium">{doc.displayName}</span>
+//                                 <div className="flex items-center gap-3">
+//                                     <select
+//                                         value={doc.status || "pending"}
+//                                         onChange={(e) =>
+//                                             handleDocumentStatusChange(doc.id, e.target.value)
+//                                         }
+//                                         className="border border-[#8D8D8D] text-[#6C6C6C] rounded-[8px] shadow-md px-3 py-1.5 text-sm focus:outline-none"
+//                                     >
+//                                         <option value="pending">Pending</option>
+//                                         <option value="verified">Approved</option>
+//                                         <option value="failed">Rejected</option>
+//                                     </select>
+//                                     <Button
+//                                         type="filled"
+//                                         className="py-1.5 px-4 rounded-[8px] leading-[25px]"
+//                                         onClick={() => handleViewDocument(doc.id)}
+//                                         disabled={isLoadingDocument}
+//                                     >
+//                                         View
+//                                     </Button>
+//                                     <Button
+//                                         className="py-1.5 px-4 rounded-[8px] leading-[25px] border-[1px] border-[#FF4747] text-[#FF4747]"
+//                                         onClick={() => handleDeleteDocument(doc.id)}
+//                                     >
+//                                         Delete
+//                                     </Button>
+//                                 </div>
+//                             </div>
+//                         ))
+//                     )}
+//                 </Loading>
+//             </div>
+
+//             {/* ── Revenue ── */}
+//             <div className="p-5 mt-6 bg-[#EEEDFF] rounded-xl">
+//                 <div className="flex justify-between items-center">
+//                     <p className="font-semibold">Revenue</p>
+//                     {revenueData.loading && (
+//                         <span className="text-sm text-gray-500">Loading...</span>
+//                     )}
+//                 </div>
+//                 <div className="mt-2">
+//                     <p className="font-semibold text-2xl pt-2 pl-2">
+//                         ${revenueData.totalEarnings}
+//                     </p>
+//                     <p className="text-sm text-gray-600 pt-1 pl-2">
+//                         Total Completed Rides: {revenueData.totalCompletedRides}
+//                     </p>
+//                 </div>
+//             </div>
+
+//             {/* ── Ride History ── */}
+//             <div>
+//                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5] mt-5">
+//                     <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
+//                         <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
+//                             <PageTitle title="Ride History" />
+//                         </div>
+//                     </div>
+//                     <Loading loading={tableLoading} type="cover">
+//                         <div className="flex flex-col gap-4 pt-4">
+//                             {rideHistory.map((driver) => (
+//                                 <DriverRideHistory key={driver.id} driver={driver} />
+//                             ))}
+//                         </div>
+//                     </Loading>
+//                     {Array.isArray(rideHistory) && rideHistory.length > 0 && (
+//                         <div className="mt-4 border-t border-[#E9E9E9] pt-3">
+//                             <Pagination
+//                                 currentPage={currentPage}
+//                                 totalPages={totalPages}
+//                                 itemsPerPage={itemsPerPage}
+//                                 onPageChange={handlePageChange}
+//                                 onItemsPerPageChange={handleItemsPerPageChange}
+//                                 itemsPerPageOptions={PAGE_SIZE_OPTIONS}
+//                                 pageKey="ride-history"
+//                             />
+//                         </div>
+//                     )}
+//                 </CardContainer>
+//             </div>
+
+//             {/* ── Modals ── */}
+//             <Modal isOpen={isAddWalletBalanceModalOpen} className="p-4 sm:p-6 lg:p-10">
+//                 <AddWalletBalanceModel
+//                     driverId={driverId}
+//                     setIsOpen={setIsAddWalletBalanceModalOpen}
+//                     onSuccess={async () => await loadDriverData()}
+//                 />
+//             </Modal>
+
+//             <Modal isOpen={isAddDocumentModalOpen} className="p-4 sm:p-6 lg:p-10">
+//                 <AddDocumentModel
+//                     initialValue={selectedDocument}
+//                     setIsOpen={(value) => {
+//                         setIsAddDocumentModalOpen(value);
+//                         if (!value) setSelectedDocument(null);
+//                     }}
+//                     onDocumentCreated={loadDriverDocuments}
+//                 />
+//             </Modal>
+
+//             {isPushNotificationEnabled && (
+//                 <Modal
+//                     isOpen={isSendNotificationModalOpen}
+//                     className="p-4 sm:p-6 lg:p-10"
+//                 >
+//                     <SendNotifictionModel
+//                         driverId={driverId}
+//                         setIsOpen={setIsSendNotificationModalOpen}
+//                     />
+//                 </Modal>
+//             )}
+
+//             <Modal isOpen={isRejectModalOpen} className="p-4 sm:p-6 lg:p-10">
+//                 <RejectModel
+//                     driverId={driverId}
+//                     setIsOpen={setIsRejectModalOpen}
+//                     onRejected={async () => await loadDriverData()}
+//                 />
+//             </Modal>
+//         </div>
+//     );
+// };
+
+// export default DriverDetails;

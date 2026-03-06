@@ -56,6 +56,102 @@ const createSvgMarkerEl = (status) => {
   return el;
 };
 
+// ── Shared info popup HTML ────────────────────────────────────────────────────
+const buildInfoHTML = ({ name, phoneNo, vehiclePlateNo, driving_status }) => {
+  const statusColor = driving_status === "busy" ? "#10B981" : "#EF4444";
+  const statusLabel = driving_status === "busy" ? "Active" : "Idle";
+
+  return `
+    <div style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-width: 180px;
+      padding: 4px 2px;
+    ">
+      <!-- Driver name -->
+      <div style="
+        font-weight: 700;
+        font-size: 14px;
+        color: #111827;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        ${name || "Unknown Driver"}
+      </div>
+
+      <!-- Divider -->
+      <div style="border-top: 1px solid #F3F4F6; margin-bottom: 8px;"></div>
+
+      <!-- Phone -->
+      <div style="
+        font-size: 12px;
+        color: #374151;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+        <span style="font-weight: 500;">${phoneNo || "N/A"}</span>
+      </div>
+
+      <!-- Plate number -->
+      <div style="
+        font-size: 12px;
+        color: #374151;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8l2-2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 6l3 5h3l1 3H13" />
+        </svg>
+        <span style="
+          font-weight: 600;
+          font-size: 11px;
+          letter-spacing: 1px;
+          background: #F3F4F6;
+          padding: 2px 6px;
+          border-radius: 4px;
+          border: 1px solid #D1D5DB;
+          color: #111827;
+        ">${vehiclePlateNo || "N/A"}</span>
+      </div>
+
+      <!-- Status badge -->
+      <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: ${statusColor}18;
+        color: ${statusColor};
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 99px;
+        border: 1px solid ${statusColor}40;
+      ">
+        <span style="
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: ${statusColor};
+          display: inline-block;
+        "></span>
+        ${statusLabel}
+      </div>
+    </div>
+  `;
+};
+
 const loadGoogleMaps = (apiKey) => {
   return new Promise((resolve, reject) => {
     if (window.google && window.google.maps) return resolve();
@@ -172,23 +268,23 @@ const getApiKeys = () => {
 };
 
 const COUNTRY_CENTERS = {
-  IN: { lat: 20.5937, lng: 78.9629 },   // India
-  AU: { lat: -25.2744, lng: 133.7751 }, // Australia
-  US: { lat: 37.0902, lng: -95.7129 },  // USA
-  GB: { lat: 55.3781, lng: -3.4360 },   // UK
-  BD: { lat: 23.8103, lng: 90.4125 },   // Bangladesh
-  PK: { lat: 30.3753, lng: 69.3451 },   // Pakistan
-  AE: { lat: 23.4241, lng: 53.8478 },   // UAE
-  SA: { lat: 23.8859, lng: 45.0792 },   // Saudi Arabia
-  CA: { lat: 56.1304, lng: -106.3468 }, // Canada
-  NG: { lat: 9.0820, lng: 8.6753 },    // Nigeria
-  KE: { lat: -1.2921, lng: 36.8219 },   // Kenya
-  ZA: { lat: -30.5595, lng: 22.9375 },  // South Africa
-  SG: { lat: 1.3521, lng: 103.8198 },  // Singapore
-  MY: { lat: 4.2105, lng: 101.9758 },  // Malaysia
-  ID: { lat: -0.7893, lng: 113.9213 },  // Indonesia
-  PH: { lat: 12.8797, lng: 121.7740 },  // Philippines
-  NZ: { lat: -40.9006, lng: 174.8860 }, // New Zealand
+  IN: { lat: 20.5937, lng: 78.9629 },
+  AU: { lat: -25.2744, lng: 133.7751 },
+  US: { lat: 37.0902, lng: -95.7129 },
+  GB: { lat: 55.3781, lng: -3.4360 },
+  BD: { lat: 23.8103, lng: 90.4125 },
+  PK: { lat: 30.3753, lng: 69.3451 },
+  AE: { lat: 23.4241, lng: 53.8478 },
+  SA: { lat: 23.8859, lng: 45.0792 },
+  CA: { lat: 56.1304, lng: -106.3468 },
+  NG: { lat: 9.0820, lng: 8.6753 },
+  KE: { lat: -1.2921, lng: 36.8219 },
+  ZA: { lat: -30.5595, lng: 22.9375 },
+  SG: { lat: 1.3521, lng: 103.8198 },
+  MY: { lat: 4.2105, lng: 101.9758 },
+  ID: { lat: -0.7893, lng: 113.9213 },
+  PH: { lat: 12.8797, lng: 121.7740 },
+  NZ: { lat: -40.9006, lng: 174.8860 },
   DEFAULT: { lat: 0, lng: 0 },
 };
 
@@ -310,8 +406,8 @@ const GoogleMapView = ({
       const longitude = data.longitude;
       const driving_status = data.driving_status || "idle";
       const name = data.name || data.driver_name || `Driver ${driver_id}`;
-      const phoneNo = data?.phone_no || "";
-      const vehiclePlateNo = data?.plate_no || "";
+      const phoneNo = data?.phone_no || data?.mobile || "";
+      const vehiclePlateNo = data?.plate_no || data?.vehicle_plate_no || "";
 
       if (
         latitude == null ||
@@ -325,19 +421,12 @@ const GoogleMapView = ({
 
       setDriverData((prev) => ({
         ...prev,
-        [driver_id]: { ...data, position, driving_status, name },
+        [driver_id]: { ...data, position, driving_status, name, phoneNo, vehiclePlateNo },
       }));
 
       const markerIcon = MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
-
-      const infoContent = `
-  <div style="
-    padding:6px;
-    font-weight:600;
-    font-size:14px;
-  ">
-    ${name}
-  </div>`;
+      // ── Rich popup with name + phone + plate ──
+      const infoContent = buildInfoHTML({ name, phoneNo, vehiclePlateNo, driving_status });
 
       if (markers.current[driver_id]) {
         const marker = markers.current[driver_id];
@@ -501,7 +590,7 @@ const BarikoiMapView = ({
         const center = getCountryCenter();
         mapInstance.current = new window.maplibregl.Map({
           container: mapRef.current,
-          style: `https://map.barikoi.com/styles/osm-liberty/style.json?key=${barikoiKey}`,
+          style: `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_KEY}`,
           center: [center.lng, center.lat],
           zoom: 5,
         });
@@ -548,6 +637,8 @@ const BarikoiMapView = ({
       const longitude = data.longitude;
       const driving_status = data.driving_status || "idle";
       const name = data.name || data.driver_name || `Driver ${driver_id}`;
+      const phoneNo = data?.phone_no || data?.mobile || "";
+      const vehiclePlateNo = data?.plate_no || data?.vehicle_plate_no || "";
 
       if (
         latitude == null ||
@@ -566,23 +657,17 @@ const BarikoiMapView = ({
           position: { lat: Number(latitude), lng: Number(longitude) },
           driving_status,
           name,
+          phoneNo,
+          vehiclePlateNo,
         },
       }));
 
-      const popupHTML = `
-  <div style="
-    padding:6px;
-    font-weight:600;
-    font-size:14px;
-  ">
-    ${name}
-  </div>`;
+      // ── Rich popup with name + phone + plate ──
+      const popupHTML = buildInfoHTML({ name, phoneNo, vehiclePlateNo, driving_status });
 
       if (markers.current[driver_id]) {
-        // Update position
         markers.current[driver_id].setLngLat(position);
 
-        // Update icon image to match new status
         const el = markers.current[driver_id].getElement();
         const img = el.querySelector("img");
         if (img) {
@@ -592,13 +677,13 @@ const BarikoiMapView = ({
 
         markers.current[driver_id].getPopup()?.setHTML(popupHTML);
       } else {
-        // Use the same SVG icon as Google Maps
         const el = createSvgMarkerEl(driving_status);
 
         const popup = new window.maplibregl.Popup({
           offset: 25,
           closeButton: false,
           closeOnClick: false,
+          maxWidth: "240px",
         }).setHTML(popupHTML);
 
         const marker = new window.maplibregl.Marker({ element: el })
@@ -613,7 +698,6 @@ const BarikoiMapView = ({
             popup.remove();
             marker._isOpen = false;
           } else {
-            // close all others
             Object.values(markers.current).forEach((m) => {
               m.getPopup()?.remove();
               m._isOpen = false;

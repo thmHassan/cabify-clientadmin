@@ -5,8 +5,8 @@ import SigninFormFields from "./components/SigninFormFields";
 
 const SignIn = () => {
   const initialValues = {
-    email: "divonyx23@gmail.com",
-    password: "divonyx@123",
+    email: "",
+    password: "",
   };
 
   return (

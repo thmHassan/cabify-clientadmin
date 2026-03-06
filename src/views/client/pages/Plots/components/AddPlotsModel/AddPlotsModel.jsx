@@ -8,25 +8,24 @@ import { PLOT_VALIDATION_SCHEMA } from "../../../../validators/pages/plot.valida
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
-// ── Country-based default centers ────────────────────────────────────────────
 const COUNTRY_CENTERS = {
-  IN:  { lat: 20.5937,  lng: 78.9629  },
-  AU:  { lat: -25.2744, lng: 133.7751 },
-  US:  { lat: 37.0902,  lng: -95.7129 },
-  GB:  { lat: 55.3781,  lng: -3.4360  },
-  BD:  { lat: 23.8103,  lng: 90.4125  },
-  PK:  { lat: 30.3753,  lng: 69.3451  },
-  AE:  { lat: 23.4241,  lng: 53.8478  },
-  SA:  { lat: 23.8859,  lng: 45.0792  },
-  CA:  { lat: 56.1304,  lng: -106.3468},
-  NG:  { lat: 9.0820,   lng: 8.6753   },
-  KE:  { lat: -1.2921,  lng: 36.8219  },
-  ZA:  { lat: -30.5595, lng: 22.9375  },
-  SG:  { lat: 1.3521,   lng: 103.8198 },
-  MY:  { lat: 4.2105,   lng: 101.9758 },
-  ID:  { lat: -0.7893,  lng: 113.9213 },
-  PH:  { lat: 12.8797,  lng: 121.7740 },
-  NZ:  { lat: -40.9006, lng: 174.8860 },
+  IN: { lat: 20.5937, lng: 78.9629 },
+  AU: { lat: -25.2744, lng: 133.7751 },
+  US: { lat: 37.0902, lng: -95.7129 },
+  GB: { lat: 55.3781, lng: -3.4360 },
+  BD: { lat: 23.8103, lng: 90.4125 },
+  PK: { lat: 30.3753, lng: 69.3451 },
+  AE: { lat: 23.4241, lng: 53.8478 },
+  SA: { lat: 23.8859, lng: 45.0792 },
+  CA: { lat: 56.1304, lng: -106.3468 },
+  NG: { lat: 9.0820, lng: 8.6753 },
+  KE: { lat: -1.2921, lng: 36.8219 },
+  ZA: { lat: -30.5595, lng: 22.9375 },
+  SG: { lat: 1.3521, lng: 103.8198 },
+  MY: { lat: 4.2105, lng: 101.9758 },
+  ID: { lat: -0.7893, lng: 113.9213 },
+  PH: { lat: 12.8797, lng: 121.7740 },
+  NZ: { lat: -40.9006, lng: 174.8860 },
   DEFAULT: { lat: 0, lng: 20 },
 };
 
@@ -52,39 +51,31 @@ const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
 const MAP_TYPE = getMapType();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// KEY FIX: All hooks are at component level (NOT inside Formik render prop).
-// Map container is a manually created div appended to mapWrapperRef.
-// This prevents React's removeChild conflict with Leaflet/Google Maps DOM.
-// ─────────────────────────────────────────────────────────────────────────────
+
 const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
-  const [submitError, setSubmitError]   = useState(null);
-  const [isLoading, setIsLoading]       = useState(false);
-  const [isEditMode, setIsEditMode]     = useState(false);
-  const [mapLoaded, setMapLoaded]       = useState(false);
-  const [allPlots, setAllPlots]         = useState([]);
+  const [submitError, setSubmitError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [allPlots, setAllPlots] = useState([]);
   const [loadingPlots, setLoadingPlots] = useState(false);
-  // coordinates kept in component state (not Formik) to avoid stale closure in map click
-  const [coordinates, setCoordinates]   = useState(
+  const [coordinates, setCoordinates] = useState(
     Array.isArray(initialValue?.coordinates) ? initialValue.coordinates : []
   );
 
-  const mapWrapperRef       = useRef(null); // React-controlled div
-  const mapContainerRef     = useRef(null); // Manually created div — lives outside React tree
-  const mapInstanceRef      = useRef(null);
-  const polygonRef          = useRef(null);
-  const markersRef          = useRef([]);
-  const coordinatesRef      = useRef(coordinates);
+  const mapWrapperRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const polygonRef = useRef(null);
+  const markersRef = useRef([]);
+  const coordinatesRef = useRef(coordinates);
   const existingPolygonsRef = useRef([]);
-  const formikSetFieldRef   = useRef(null); // bridge: map click → Formik setFieldValue
+  const formikSetFieldRef = useRef(null);
 
-  // Keep coordinatesRef in sync with state
   useEffect(() => { coordinatesRef.current = coordinates; }, [coordinates]);
-
   useEffect(() => { setIsEditMode(!!initialValue?.id); }, [initialValue]);
 
-  // ── Create map container div once, append to wrapper ──────────────────────
-  // This div is NEVER touched by React so removeChild never fires
+  // ── Create map container div once ─────────────────────────────────────────
   useEffect(() => {
     if (!mapWrapperRef.current) return;
 
@@ -96,29 +87,27 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     mapWrapperRef.current.appendChild(mapContainerRef.current);
 
     return () => {
-      // Destroy map BEFORE React removes the wrapper div
       if (mapInstanceRef.current) {
         if (MAP_TYPE === "barikoi") {
-          try { mapInstanceRef.current.remove(); } catch {}
+          try { mapInstanceRef.current.remove(); } catch { }
         } else {
-          try { markersRef.current.forEach(m => m.setMap(null)); } catch {}
-          try { if (polygonRef.current) polygonRef.current.setMap(null); } catch {}
-          try { existingPolygonsRef.current.forEach(p => p.setMap(null)); } catch {}
+          try { markersRef.current.forEach(m => m.setMap(null)); } catch { }
+          try { if (polygonRef.current) polygonRef.current.setMap(null); } catch { }
+          try { existingPolygonsRef.current.forEach(p => p.setMap(null)); } catch { }
         }
         mapInstanceRef.current = null;
       }
-      // Detach our container from wrapper safely
       try {
         if (mapContainerRef.current?.parentNode) {
           mapContainerRef.current.parentNode.removeChild(mapContainerRef.current);
         }
-      } catch {}
+      } catch { }
     };
-  }, []); // run once
+  }, []);
 
   // ── Fetch existing plots ──────────────────────────────────────────────────
   useEffect(() => {
-    const fetch = async () => {
+    const fetchAllPlots = async () => {
       setLoadingPlots(true);
       try {
         const res = await apiGetPlot({ page: 1, perPage: 100 });
@@ -129,7 +118,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
       } catch (e) { console.error(e); }
       finally { setLoadingPlots(false); }
     };
-    fetch();
+    fetchAllPlots();
   }, [initialValue?.id]);
 
   // ── Load map script ───────────────────────────────────────────────────────
@@ -192,7 +181,7 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     return [];
   }, []);
 
-  // ── Init map once ready ───────────────────────────────────────────────────
+  // ── Init map once (NO polygon rendering here) ─────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -212,18 +201,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
         }).addTo(map);
       });
       tile.addTo(map);
-
-      allPlots.forEach((plot, i) => {
-        const coords = parseCoordinates(plot);
-        if (coords.length >= 3) {
-          const colors = ["#9CA3AF","#6B7280","#4B5563","#374151"];
-          const p = window.L.polygon(coords.map(c => [c.lat, c.lng]), {
-            color: colors[i%4], fillOpacity: 0.1, weight: 2, dashArray: "5,5",
-          }).addTo(map);
-          p.bindPopup(`<div style="padding:8px;font-weight:600">${plot.name}</div>`);
-          existingPolygonsRef.current.push(p);
-        }
-      });
 
       map.on("click", (e) => {
         const { lat, lng } = e.latlng;
@@ -246,13 +223,14 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
         }
       });
 
+      // Draw initial coordinates (edit mode)
       const initCoords = coordinatesRef.current;
       if (initCoords.length >= 3) {
         initCoords.forEach((c, idx) => {
           const m = window.L.circleMarker([c[1], c[0]], {
             radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
           }).addTo(map);
-          m.bindTooltip(`${idx+1}`, { permanent: true, direction: "center", className: "coordinate-label" });
+          m.bindTooltip(`${idx + 1}`, { permanent: true, direction: "center", className: "coordinate-label" });
           markersRef.current.push(m);
         });
         polygonRef.current = window.L.polygon(initCoords.map(c => [c[1], c[0]]), {
@@ -267,23 +245,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
       const map = new window.google.maps.Map(mapContainerRef.current, {
         center: { lat: center.lat, lng: center.lng }, zoom: 5,
         styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }],
-      });
-
-      allPlots.forEach((plot, i) => {
-        const coords = parseCoordinates(plot);
-        if (coords.length >= 3) {
-          const colors = ["#9CA3AF","#6B7280","#4B5563","#374151"];
-          const color = colors[i%4];
-          const p = new window.google.maps.Polygon({
-            paths: coords, strokeColor: color, strokeOpacity: 0.8,
-            strokeWeight: 2, fillColor: color, fillOpacity: 0.1, map, clickable: true,
-          });
-          const iw = new window.google.maps.InfoWindow({
-            content: `<div style="padding:8px;font-weight:600">${plot.name}</div>`,
-          });
-          p.addListener("click", (e) => { iw.setPosition(e.latLng); iw.open(map); });
-          existingPolygonsRef.current.push(p);
-        }
       });
 
       map.addListener("click", (e) => {
@@ -313,12 +274,13 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
         }
       });
 
+      // Draw initial coordinates (edit mode)
       const initCoords = coordinatesRef.current;
       if (initCoords.length >= 3) {
         initCoords.forEach((c, idx) => {
           markersRef.current.push(new window.google.maps.Marker({
             position: { lat: c[1], lng: c[0] }, map,
-            label: { text: `${idx+1}`, color: "#1e40af", fontWeight: "bold", fontSize: "12px" },
+            label: { text: `${idx + 1}`, color: "#1e40af", fontWeight: "bold", fontSize: "12px" },
             icon: {
               path: window.google.maps.SymbolPath.CIRCLE,
               scale: 8, fillColor: "#3B82F6", fillOpacity: 0.8, strokeColor: "#fff", strokeWeight: 2,
@@ -337,18 +299,65 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 
       mapInstanceRef.current = map;
     }
-  }, [mapLoaded, allPlots, parseCoordinates]);
+  }, [mapLoaded]); // ← only depends on mapLoaded, NOT allPlots
+
+  // ── Render existing plot polygons whenever allPlots OR map becomes ready ──
+  // This is the KEY fix: separated from map init so it re-runs when data arrives
+  useEffect(() => {
+    if (!mapLoaded || !mapInstanceRef.current) return;
+
+    // Clear previously drawn existing-plot polygons
+    if (MAP_TYPE === "barikoi") {
+      existingPolygonsRef.current.forEach(p => {
+        try { mapInstanceRef.current.removeLayer(p); } catch { }
+      });
+    } else {
+      existingPolygonsRef.current.forEach(p => {
+        try { p.setMap(null); } catch { }
+      });
+    }
+    existingPolygonsRef.current = [];
+
+    if (!allPlots.length) return;
+
+    const colors = ["#9CA3AF", "#6B7280", "#4B5563", "#374151"];
+
+    allPlots.forEach((plot, i) => {
+      const coords = parseCoordinates(plot);
+      if (coords.length < 3) return;
+      const color = colors[i % 4];
+
+      if (MAP_TYPE === "barikoi" && window.L) {
+        const p = window.L.polygon(coords.map(c => [c.lat, c.lng]), {
+          color, fillOpacity: 0.1, weight: 2, dashArray: "5,5",
+        }).addTo(mapInstanceRef.current);
+        p.bindPopup(`<div style="padding:8px;font-weight:600">${plot.name}</div>`);
+        existingPolygonsRef.current.push(p);
+      } else if (MAP_TYPE === "google" && window.google?.maps) {
+        const p = new window.google.maps.Polygon({
+          paths: coords, strokeColor: color, strokeOpacity: 0.8,
+          strokeWeight: 2, fillColor: color, fillOpacity: 0.1,
+          map: mapInstanceRef.current, clickable: true,
+        });
+        const iw = new window.google.maps.InfoWindow({
+          content: `<div style="padding:8px;font-weight:600">${plot.name}</div>`,
+        });
+        p.addListener("click", (e) => { iw.setPosition(e.latLng); iw.open(mapInstanceRef.current); });
+        existingPolygonsRef.current.push(p);
+      }
+    });
+  }, [allPlots, mapLoaded, parseCoordinates]); // ← re-runs when allPlots data arrives
 
   // ── Clear all ─────────────────────────────────────────────────────────────
   const handleClearCoordinates = useCallback((setFieldValue) => {
     setCoordinates([]); coordinatesRef.current = [];
     setFieldValue("coordinates", []);
     if (MAP_TYPE === "barikoi" && mapInstanceRef.current) {
-      markersRef.current.forEach(m => { try { mapInstanceRef.current.removeLayer(m); } catch {} });
-      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch {} polygonRef.current = null; }
+      markersRef.current.forEach(m => { try { mapInstanceRef.current.removeLayer(m); } catch { } });
+      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { } polygonRef.current = null; }
     } else {
-      markersRef.current.forEach(m => { try { m.setMap(null); } catch {} });
-      if (polygonRef.current) { try { polygonRef.current.setMap(null); } catch {} polygonRef.current = null; }
+      markersRef.current.forEach(m => { try { m.setMap(null); } catch { } });
+      if (polygonRef.current) { try { polygonRef.current.setMap(null); } catch { } polygonRef.current = null; }
     }
     markersRef.current = [];
   }, []);
@@ -361,8 +370,8 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
     setFieldValue("coordinates", newCoords);
     if (MAP_TYPE === "barikoi" && mapInstanceRef.current) {
       const last = markersRef.current.pop();
-      if (last) { try { mapInstanceRef.current.removeLayer(last); } catch {} }
-      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch {} polygonRef.current = null; }
+      if (last) { try { mapInstanceRef.current.removeLayer(last); } catch { } }
+      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { } polygonRef.current = null; }
       if (newCoords.length >= 3) {
         polygonRef.current = window.L.polygon(newCoords.map(c => [c[1], c[0]]), {
           color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
@@ -370,8 +379,8 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
       }
     } else {
       const last = markersRef.current.pop();
-      if (last) { try { last.setMap(null); } catch {} }
-      if (polygonRef.current) { try { polygonRef.current.setMap(null); } catch {} polygonRef.current = null; }
+      if (last) { try { last.setMap(null); } catch { } }
+      if (polygonRef.current) { try { polygonRef.current.setMap(null); } catch { } polygonRef.current = null; }
       if (newCoords.length >= 3 && mapInstanceRef.current) {
         polygonRef.current = new window.google.maps.Polygon({
           paths: newCoords.map(c => ({ lat: c[1], lng: c[0] })),
@@ -416,7 +425,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
         onSubmit={handleSubmit}
       >
         {({ values, setFieldValue }) => {
-          // Store setFieldValue in ref so map click can call it without stale closure
           formikSetFieldRef.current = setFieldValue;
 
           return (
@@ -459,7 +467,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
                 )}
               </div>
 
-              {/* mapWrapperRef = React div | mapContainerRef = manually appended div for map */}
               <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 mb-3">
                 <div ref={mapWrapperRef} className="w-full h-full">
                   {!mapLoaded && (
@@ -530,699 +537,6 @@ const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
 };
 
 export default AddPlotsModel;
-
-// import { ErrorMessage, Field, Form, Formik } from "formik";
-// import React, { useRef, useState, useEffect } from "react";
-// import _ from "lodash";
-// import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
-// import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
-// import Button from "../../../../../../components/ui/Button/Button";
-// import { apiCreatePlot, apiEditPlot, apiGetPlot } from "../../../../../../services/PlotService";
-// import { PLOT_VALIDATION_SCHEMA } from "../../../../validators/pages/plot.validation";
-// import toast from "react-hot-toast";
-// import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-
-// // ── Same getMapType as Map.jsx / Plots.jsx ────────────────────────────────────
-// const getMapType = () => {
-//   try {
-//     const tenant = getTenantData();
-//     const mapsApi = tenant?.maps_api;
-//     if (typeof mapsApi === "string" && mapsApi.trim().toLowerCase() === "barikoi") {
-//       return "barikoi";
-//     }
-//     const allKeys = Object.keys(localStorage);
-//     for (const key of allKeys) {
-//       const raw = localStorage.getItem(key);
-//       if (!raw) continue;
-//       try {
-//         const parsed = JSON.parse(raw);
-//         const api =
-//           parsed?.data?.maps_api ||
-//           parsed?.maps_api ||
-//           parsed?.tenant?.maps_api ||
-//           null;
-//         if (api && typeof api === "string") {
-//           return api.trim().toLowerCase() === "barikoi" ? "barikoi" : "google";
-//         }
-//       } catch {
-//         continue;
-//       }
-//     }
-//     return "google";
-//   } catch {
-//     return "google";
-//   }
-// };
-
-// const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
-// const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
-
-// // ── map type decided once ─────────────────────────────────────────────────────
-// const MAP_TYPE = getMapType();
-
-// const AddPlotsModel = ({ initialValue = {}, setIsOpen, onPlotsCreated }) => {
-//     const [submitError, setSubmitError] = useState(null);
-//     const [isLoading, setIsLoading] = useState(false);
-//     const [isEditMode, setIsEditMode] = useState(false);
-//     const [mapLoaded, setMapLoaded] = useState(false);
-//     const [clickedCoord, setClickedCoord] = useState(null);
-//     const [allPlots, setAllPlots] = useState([]);
-//     const [loadingPlots, setLoadingPlots] = useState(false);
-
-//     const mapRef = useRef(null);
-//     const mapInstanceRef = useRef(null);
-//     const polygonRef = useRef(null);
-//     const markersRef = useRef([]);
-//     const coordinatesRef = useRef([]);
-//     const existingPlotsPolygonsRef = useRef([]);
-
-//     useEffect(() => {
-//         setIsEditMode(!!initialValue?.id);
-//     }, [initialValue]);
-
-//     // Fetch all existing plots
-//     useEffect(() => {
-//         const fetchAllPlots = async () => {
-//             setLoadingPlots(true);
-//             try {
-//                 const response = await apiGetPlot({ page: 1, perPage: 100 });
-//                 if (response?.data?.success === 1) {
-//                     const plots = response?.data?.list?.data || [];
-//                     const otherPlots = initialValue?.id
-//                         ? plots.filter(plot => plot.id !== initialValue.id)
-//                         : plots;
-//                     setAllPlots(otherPlots);
-//                 }
-//             } catch (error) {
-//                 console.error("Error fetching plots:", error);
-//             } finally {
-//                 setLoadingPlots(false);
-//             }
-//         };
-//         fetchAllPlots();
-//     }, [initialValue?.id]);
-
-//     // ── Load map script based on maps_api ─────────────────────────────────────
-//     useEffect(() => {
-//         if (MAP_TYPE === "barikoi") {
-//             // Load Leaflet (same as original for barikoi)
-//             if (window.L) {
-//                 setMapLoaded(true);
-//                 return;
-//             }
-//             const existingLink = document.querySelector('link[href*="leaflet.css"]');
-//             const existingScript = document.querySelector('script[src*="leaflet.js"]');
-
-//             if (!existingLink) {
-//                 const link = document.createElement('link');
-//                 link.rel = 'stylesheet';
-//                 link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
-//                 link.setAttribute('data-leaflet-modal-css', 'true');
-//                 document.head.appendChild(link);
-//             }
-
-//             if (!existingScript) {
-//                 const script = document.createElement('script');
-//                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
-//                 script.setAttribute('data-leaflet-modal-script', 'true');
-//                 script.onload = () => setMapLoaded(true);
-//                 script.onerror = () => console.error('Failed to load Leaflet');
-//                 document.body.appendChild(script);
-//             } else if (window.L) {
-//                 setMapLoaded(true);
-//             }
-//         } else {
-//             // Load Google Maps
-//             if (window.google?.maps) {
-//                 setMapLoaded(true);
-//                 return;
-//             }
-//             const existing = document.getElementById("google-maps-script");
-//             if (existing) {
-//                 existing.addEventListener("load", () => setMapLoaded(true));
-//                 existing.addEventListener("error", () => console.error("Google Maps failed"));
-//                 return;
-//             }
-//             const script = document.createElement("script");
-//             script.id = "google-maps-script";
-//             script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places,geometry`;
-//             script.async = true;
-//             script.defer = true;
-//             script.onload = () => setMapLoaded(true);
-//             script.onerror = () => console.error("Failed to load Google Maps");
-//             document.head.appendChild(script);
-//         }
-
-//         return () => {
-//             // Cleanup handled by parent
-//         };
-//     }, []);
-
-//     const parseCoordinates = (plot) => {
-//         if (!plot) return [];
-//         try {
-//             const features = typeof plot.features === "string" ? JSON.parse(plot.features) : plot.features;
-
-//             let coordinatesData = features?.geometry?.coordinates;
-//             if (typeof coordinatesData === "string") {
-//                 coordinatesData = JSON.parse(coordinatesData);
-//             }
-
-//             const coords = Array.isArray(coordinatesData) ? coordinatesData[0] : coordinatesData;
-//             if (Array.isArray(coords) && coords.length) {
-//                 return coords.map((pair) => {
-//                     if (Array.isArray(pair) && pair.length >= 2) {
-//                         const [lng, lat] = pair;
-//                         return { lat: Number(lat), lng: Number(lng) };
-//                     }
-//                     return null;
-//                 }).filter(Boolean);
-//             }
-
-//             if (Array.isArray(plot.coordinates) && plot.coordinates.length) {
-//                 return plot.coordinates.map((pair) => {
-//                     if (!Array.isArray(pair) || pair.length < 2) return null;
-//                     const [first, second] = pair;
-//                     const latFirstLooksLikeLat = Math.abs(Number(first)) <= 90;
-//                     const lngSecondLooksLikeLng = Math.abs(Number(second)) <= 180;
-//                     if (latFirstLooksLikeLat && lngSecondLooksLikeLng) {
-//                         return { lat: Number(first), lng: Number(second) };
-//                     }
-//                     return { lat: Number(second), lng: Number(first) };
-//                 }).filter(Boolean);
-//             }
-
-//             if (plot.lat && plot.lng) {
-//                 return [{ lat: Number(plot.lat), lng: Number(plot.lng) }];
-//             }
-//         } catch (error) {
-//             console.error("Error parsing plot features:", error);
-//         }
-//         return [];
-//     };
-
-//     // ── Render existing plots on Leaflet map ──────────────────────────────────
-//     const renderExistingPlotsLeaflet = (map) => {
-//         existingPlotsPolygonsRef.current.forEach(polygon => {
-//             if (polygon && map) map.removeLayer(polygon);
-//         });
-//         existingPlotsPolygonsRef.current = [];
-
-//         allPlots.forEach((plot, index) => {
-//             const coords = parseCoordinates(plot);
-//             if (coords && coords.length >= 3) {
-//                 const latLngs = coords.map(c => [c.lat, c.lng]);
-//                 const colors = ['#9CA3AF', '#6B7280', '#4B5563', '#374151'];
-//                 const color = colors[index % colors.length];
-//                 const polygon = window.L.polygon(latLngs, {
-//                     color, fillColor: color, fillOpacity: 0.1,
-//                     weight: 2, dashArray: '5, 5'
-//                 }).addTo(map);
-//                 polygon.bindPopup(`<div style="padding:8px;font-weight:600;color:#333;">${plot.name}</div>`);
-//                 existingPlotsPolygonsRef.current.push(polygon);
-//             }
-//         });
-//     };
-
-//     // ── Render existing plots on Google map ───────────────────────────────────
-//     const renderExistingPlotsGoogle = (map) => {
-//         existingPlotsPolygonsRef.current.forEach(polygon => {
-//             if (polygon) polygon.setMap(null);
-//         });
-//         existingPlotsPolygonsRef.current = [];
-
-//         allPlots.forEach((plot, index) => {
-//             const coords = parseCoordinates(plot);
-//             if (coords && coords.length >= 3) {
-//                 const colors = ['#9CA3AF', '#6B7280', '#4B5563', '#374151'];
-//                 const color = colors[index % colors.length];
-//                 const polygon = new window.google.maps.Polygon({
-//                     paths: coords,
-//                     strokeColor: color,
-//                     strokeOpacity: 0.8,
-//                     strokeWeight: 2,
-//                     fillColor: color,
-//                     fillOpacity: 0.1,
-//                     map,
-//                     clickable: true,
-//                 });
-//                 const infoWindow = new window.google.maps.InfoWindow({
-//                     content: `<div style="padding:8px;font-weight:600;color:#333;">${plot.name}</div>`,
-//                 });
-//                 polygon.addListener('click', (e) => {
-//                     infoWindow.setPosition(e.latLng);
-//                     infoWindow.open(map);
-//                 });
-//                 existingPlotsPolygonsRef.current.push(polygon);
-//             }
-//         });
-//     };
-
-//     const handleSubmit = async (values) => {
-//         console.log("values===", values);
-//         setIsLoading(true);
-//         setSubmitError(null);
-
-//         try {
-//             const formDataObj = new FormData();
-
-//             if (isEditMode) {
-//                 formDataObj.append('id', initialValue.id);
-//             }
-
-//             formDataObj.append('name', values.name || '');
-//             formDataObj.append('features[type]', 'Feature');
-//             formDataObj.append('features[properties][name]', values.name);
-//             formDataObj.append('features[geometry][type]', 'Polygon');
-//             const closedCoordinates = [...values.coordinates, values.coordinates[0]];
-//             const polygonCoordinates = [closedCoordinates];
-//             formDataObj.append('features[geometry][coordinates]', JSON.stringify(polygonCoordinates));
-
-//             const response = isEditMode
-//                 ? await apiEditPlot(formDataObj)
-//                 : await apiCreatePlot(formDataObj);
-
-//             if (response?.data?.success === 1 || response?.status === 200) {
-//                 toast.success(isEditMode ? "Plot updated successfully" : "Plot created successfully");
-//                 if (onPlotsCreated) onPlotsCreated();
-//                 unlockBodyScroll();
-//                 setIsOpen({ type: "new", isOpen: false });
-//             } else {
-//                 setSubmitError(response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} plot`);
-//             }
-//         } catch (error) {
-//             console.error(`Plot ${isEditMode ? 'edit' : 'creation'} error:`, error);
-//             setSubmitError(error?.response?.data?.message || error?.message || `Error ${isEditMode ? 'updating' : 'creating'} plot`);
-//         } finally {
-//             setIsLoading(false);
-//         }
-//     };
-
-//     return (
-//         <div className="w-full">
-//             <Formik
-//                 initialValues={{
-//                     name: initialValue?.name || "",
-//                     coordinates: Array.isArray(initialValue?.coordinates) ? initialValue.coordinates : [],
-//                 }}
-//                 validationSchema={PLOT_VALIDATION_SCHEMA}
-//                 onSubmit={handleSubmit}
-//             >
-//                 {({ values, setFieldValue, errors, touched }) => {
-//                     useEffect(() => {
-//                         coordinatesRef.current = values.coordinates;
-//                     }, [values.coordinates]);
-
-//                     // ── Map init effect ───────────────────────────────────────
-//                     useEffect(() => {
-//                         if (!mapLoaded || !mapRef.current || mapInstanceRef.current) return;
-
-//                         // ── BARIKOI / LEAFLET ─────────────────────────────────
-//                         if (MAP_TYPE === "barikoi" && window.L) {
-//                             const map = window.L.map(mapRef.current).setView([21.1702, 72.8311], 12);
-
-//                             const tileUrl = `https://map.barikoi.com/styles/osm-bright/{z}/{x}/{y}.png?key=${BARIKOI_KEY}`;
-//                             const tileLayer = window.L.tileLayer(tileUrl, {
-//                                 attribution: '© Barikoi',
-//                                 maxZoom: 19
-//                             });
-//                             tileLayer.on("tileerror", () => {
-//                                 tileLayer.off("tileerror");
-//                                 map.removeLayer(tileLayer);
-//                                 window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//                                     attribution: '© OpenStreetMap contributors',
-//                                     maxZoom: 19
-//                                 }).addTo(map);
-//                             });
-//                             tileLayer.addTo(map);
-
-//                             if (allPlots.length > 0) renderExistingPlotsLeaflet(map);
-
-//                             map.on('click', (e) => {
-//                                 const { lat, lng } = e.latlng;
-//                                 setClickedCoord({ lat, lng });
-
-//                                 const currentCoordinates = coordinatesRef.current;
-//                                 const newCoordinates = [...currentCoordinates, [lng, lat]];
-//                                 setFieldValue('coordinates', newCoordinates);
-
-//                                 const marker = window.L.circleMarker([lat, lng], {
-//                                     radius: 6, fillColor: '#3B82F6', color: '#fff',
-//                                     weight: 2, opacity: 1, fillOpacity: 0.8
-//                                 }).addTo(map);
-//                                 marker.bindTooltip(`${newCoordinates.length}`, {
-//                                     permanent: true, direction: 'center', className: 'coordinate-label'
-//                                 });
-//                                 markersRef.current.push(marker);
-
-//                                 if (newCoordinates.length >= 3) {
-//                                     if (polygonRef.current) map.removeLayer(polygonRef.current);
-//                                     const latLngs = newCoordinates.map(coord => [coord[1], coord[0]]);
-//                                     polygonRef.current = window.L.polygon(latLngs, {
-//                                         color: '#3B82F6', fillColor: '#3B82F6',
-//                                         fillOpacity: 0.2, weight: 2
-//                                     }).addTo(map);
-//                                 }
-//                             });
-
-//                             mapInstanceRef.current = map;
-
-//                             // Draw existing coordinates if editing
-//                             const initialCoords = Array.isArray(coordinatesRef.current) ? coordinatesRef.current : [];
-//                             if (initialCoords.length >= 3) {
-//                                 const latLngs = initialCoords.map(coord => [coord[1], coord[0]]);
-//                                 initialCoords.forEach((coord, index) => {
-//                                     const marker = window.L.circleMarker([coord[1], coord[0]], {
-//                                         radius: 6, fillColor: '#3B82F6', color: '#fff',
-//                                         weight: 2, opacity: 1, fillOpacity: 0.8
-//                                     }).addTo(map);
-//                                     marker.bindTooltip(`${index + 1}`, {
-//                                         permanent: true, direction: 'center', className: 'coordinate-label'
-//                                     });
-//                                     markersRef.current.push(marker);
-//                                 });
-//                                 polygonRef.current = window.L.polygon(latLngs, {
-//                                     color: '#3B82F6', fillColor: '#3B82F6',
-//                                     fillOpacity: 0.2, weight: 2
-//                                 }).addTo(map);
-//                                 map.fitBounds(polygonRef.current.getBounds());
-//                             }
-
-//                         // ── GOOGLE MAPS ───────────────────────────────────────
-//                         } else if (MAP_TYPE === "google" && window.google?.maps) {
-//                             const defaultCenter = { lat: 21.1702, lng: 72.8311 };
-//                             const map = new window.google.maps.Map(mapRef.current, {
-//                                 center: defaultCenter,
-//                                 zoom: 12,
-//                                 styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }],
-//                             });
-
-//                             if (allPlots.length > 0) renderExistingPlotsGoogle(map);
-
-//                             map.addListener('click', (e) => {
-//                                 const lat = e.latLng.lat();
-//                                 const lng = e.latLng.lng();
-//                                 setClickedCoord({ lat, lng });
-
-//                                 const currentCoordinates = coordinatesRef.current;
-//                                 const newCoordinates = [...currentCoordinates, [lng, lat]];
-//                                 setFieldValue('coordinates', newCoordinates);
-
-//                                 // Add circle marker
-//                                 const marker = new window.google.maps.Marker({
-//                                     position: { lat, lng },
-//                                     map,
-//                                     label: {
-//                                         text: `${newCoordinates.length}`,
-//                                         color: '#1e40af',
-//                                         fontWeight: 'bold',
-//                                         fontSize: '12px',
-//                                     },
-//                                     icon: {
-//                                         path: window.google.maps.SymbolPath.CIRCLE,
-//                                         scale: 8,
-//                                         fillColor: '#3B82F6',
-//                                         fillOpacity: 0.8,
-//                                         strokeColor: '#fff',
-//                                         strokeWeight: 2,
-//                                     },
-//                                 });
-//                                 markersRef.current.push(marker);
-
-//                                 // Draw/update polygon
-//                                 if (newCoordinates.length >= 3) {
-//                                     if (polygonRef.current) polygonRef.current.setMap(null);
-//                                     const paths = newCoordinates.map(coord => ({ lat: coord[1], lng: coord[0] }));
-//                                     polygonRef.current = new window.google.maps.Polygon({
-//                                         paths,
-//                                         strokeColor: '#3B82F6',
-//                                         strokeOpacity: 0.9,
-//                                         strokeWeight: 2,
-//                                         fillColor: '#3B82F6',
-//                                         fillOpacity: 0.2,
-//                                         map,
-//                                     });
-//                                 }
-//                             });
-
-//                             mapInstanceRef.current = map;
-
-//                             // Draw existing coordinates if editing
-//                             const initialCoords = Array.isArray(coordinatesRef.current) ? coordinatesRef.current : [];
-//                             if (initialCoords.length >= 3) {
-//                                 initialCoords.forEach((coord, index) => {
-//                                     const marker = new window.google.maps.Marker({
-//                                         position: { lat: coord[1], lng: coord[0] },
-//                                         map,
-//                                         label: {
-//                                             text: `${index + 1}`,
-//                                             color: '#1e40af',
-//                                             fontWeight: 'bold',
-//                                             fontSize: '12px',
-//                                         },
-//                                         icon: {
-//                                             path: window.google.maps.SymbolPath.CIRCLE,
-//                                             scale: 8,
-//                                             fillColor: '#3B82F6',
-//                                             fillOpacity: 0.8,
-//                                             strokeColor: '#fff',
-//                                             strokeWeight: 2,
-//                                         },
-//                                     });
-//                                     markersRef.current.push(marker);
-//                                 });
-
-//                                 const paths = initialCoords.map(coord => ({ lat: coord[1], lng: coord[0] }));
-//                                 polygonRef.current = new window.google.maps.Polygon({
-//                                     paths,
-//                                     strokeColor: '#3B82F6',
-//                                     strokeOpacity: 0.9,
-//                                     strokeWeight: 2,
-//                                     fillColor: '#3B82F6',
-//                                     fillOpacity: 0.2,
-//                                     map,
-//                                 });
-
-//                                 // Fit bounds
-//                                 const bounds = new window.google.maps.LatLngBounds();
-//                                 initialCoords.forEach(coord => bounds.extend({ lat: coord[1], lng: coord[0] }));
-//                                 map.fitBounds(bounds);
-//                             }
-//                         }
-
-//                         return () => {
-//                             if (mapInstanceRef.current) {
-//                                 if (MAP_TYPE === "barikoi") {
-//                                     mapInstanceRef.current.remove();
-//                                 } else {
-//                                     // Google maps — just null the ref, no remove()
-//                                     markersRef.current.forEach(m => m.setMap(null));
-//                                     if (polygonRef.current) polygonRef.current.setMap(null);
-//                                     existingPlotsPolygonsRef.current.forEach(p => p.setMap(null));
-//                                 }
-//                                 mapInstanceRef.current = null;
-//                             }
-//                         };
-//                     }, [mapLoaded, allPlots]);
-
-//                     const handleClearCoordinates = () => {
-//                         setFieldValue('coordinates', []);
-//                         setClickedCoord(null);
-
-//                         if (MAP_TYPE === "barikoi") {
-//                             markersRef.current.forEach(marker => {
-//                                 if (mapInstanceRef.current) mapInstanceRef.current.removeLayer(marker);
-//                             });
-//                             if (polygonRef.current && mapInstanceRef.current) {
-//                                 mapInstanceRef.current.removeLayer(polygonRef.current);
-//                                 polygonRef.current = null;
-//                             }
-//                         } else {
-//                             markersRef.current.forEach(marker => marker.setMap(null));
-//                             if (polygonRef.current) { polygonRef.current.setMap(null); polygonRef.current = null; }
-//                         }
-//                         markersRef.current = [];
-//                     };
-
-//                     const handleRemoveLastPoint = () => {
-//                         if (values.coordinates.length > 0) {
-//                             const newCoordinates = values.coordinates.slice(0, -1);
-//                             setFieldValue('coordinates', newCoordinates);
-
-//                             if (MAP_TYPE === "barikoi") {
-//                                 const lastMarker = markersRef.current.pop();
-//                                 if (lastMarker && mapInstanceRef.current) mapInstanceRef.current.removeLayer(lastMarker);
-//                                 if (polygonRef.current && mapInstanceRef.current) {
-//                                     mapInstanceRef.current.removeLayer(polygonRef.current);
-//                                     polygonRef.current = null;
-//                                 }
-//                                 if (newCoordinates.length >= 3 && mapInstanceRef.current) {
-//                                     const latLngs = newCoordinates.map(coord => [coord[1], coord[0]]);
-//                                     polygonRef.current = window.L.polygon(latLngs, {
-//                                         color: '#3B82F6', fillColor: '#3B82F6',
-//                                         fillOpacity: 0.2, weight: 2
-//                                     }).addTo(mapInstanceRef.current);
-//                                 }
-//                             } else {
-//                                 const lastMarker = markersRef.current.pop();
-//                                 if (lastMarker) lastMarker.setMap(null);
-//                                 if (polygonRef.current) { polygonRef.current.setMap(null); polygonRef.current = null; }
-//                                 if (newCoordinates.length >= 3 && mapInstanceRef.current) {
-//                                     const paths = newCoordinates.map(coord => ({ lat: coord[1], lng: coord[0] }));
-//                                     polygonRef.current = new window.google.maps.Polygon({
-//                                         paths,
-//                                         strokeColor: '#3B82F6', strokeOpacity: 0.9,
-//                                         strokeWeight: 2, fillColor: '#3B82F6',
-//                                         fillOpacity: 0.2, map: mapInstanceRef.current,
-//                                     });
-//                                 }
-//                             }
-
-//                             if (newCoordinates.length === 0) setClickedCoord(null);
-//                         }
-//                     };
-
-//                     return (
-//                         <div className="w-full">
-//                             <Form>
-//                                 <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
-//                                     <span className="w-full text-center block">
-//                                         {isEditMode ? 'Edit Plot' : 'Add New Plot'}
-//                                     </span>
-//                                 </div>
-
-//                                 {submitError && (
-//                                     <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-//                                         {submitError}
-//                                     </div>
-//                                 )}
-
-//                                 <div className="">
-//                                     <div className="w-full mb-4">
-//                                         <FormLabel htmlFor="name">Plot Name</FormLabel>
-//                                         <div className="sm:h-16 h-10">
-//                                             <Field
-//                                                 type="text"
-//                                                 name="name"
-//                                                 className="sm:px-5 px-4 sm:py-[21px] py-3 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-//                                                 placeholder="Enter Plot Name"
-//                                             />
-//                                         </div>
-//                                         <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
-//                                     </div>
-//                                 </div>
-
-//                                 {/* Points Counter and Actions */}
-//                                 <div className="mb-3">
-//                                     <div className="flex justify-between items-center">
-//                                         <div />
-//                                         {values.coordinates.length > 0 && (
-//                                             <div className="flex gap-2">
-//                                                 <button
-//                                                     type="button"
-//                                                     onClick={handleRemoveLastPoint}
-//                                                     className="text-orange-600 hover:text-orange-800 font-medium text-xs bg-white px-2 py-1 rounded border border-orange-200"
-//                                                 >
-//                                                     Remove Last
-//                                                 </button>
-//                                                 <button
-//                                                     type="button"
-//                                                     onClick={handleClearCoordinates}
-//                                                     className="text-red-600 hover:text-red-800 font-medium text-xs bg-white px-2 py-1 rounded border border-red-200"
-//                                                 >
-//                                                     Clear All
-//                                                 </button>
-//                                             </div>
-//                                         )}
-//                                     </div>
-//                                 </div>
-
-//                                 {/* Map Container */}
-//                                 <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 mb-3">
-//                                     <div ref={mapRef} className="w-full h-full">
-//                                         {!mapLoaded && (
-//                                             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-//                                                 <div className="text-center">
-//                                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-//                                                     <p className="text-gray-600 text-sm">Loading map...</p>
-//                                                 </div>
-//                                             </div>
-//                                         )}
-//                                         {loadingPlots && (
-//                                             <div className="absolute top-4 right-4 bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200">
-//                                                 <div className="flex items-center gap-2">
-//                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-//                                                     <span className="text-sm text-gray-600">Loading plots...</span>
-//                                                 </div>
-//                                             </div>
-//                                         )}
-//                                     </div>
-//                                     {allPlots.length > 0 && mapLoaded && (
-//                                         <div className="absolute bottom-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200">
-//                                             <div className="text-xs text-gray-600">
-//                                                 Showing {allPlots.length} existing plot{allPlots.length !== 1 ? 's' : ''}
-//                                             </div>
-//                                         </div>
-//                                     )}
-//                                     {/* Map type indicator */}
-//                                     <div className="absolute top-4 left-4 bg-white px-2 py-1 rounded shadow text-xs text-gray-500 border border-gray-200">
-//                                         {MAP_TYPE === "barikoi" ? "🗺 Barikoi Map" : "🗺 Google Map"}
-//                                     </div>
-//                                 </div>
-
-//                                 <ErrorMessage name="coordinates" component="div" className="text-red-500 text-sm mb-3" />
-
-//                                 <style>{`
-//                                     .coordinate-label {
-//                                         background: transparent !important;
-//                                         border: none !important;
-//                                         box-shadow: none !important;
-//                                         font-weight: bold;
-//                                         color: #1e40af;
-//                                         font-size: 12px;
-//                                     }
-//                                     .coordinate-label::before {
-//                                         display: none;
-//                                     }
-//                                 `}</style>
-
-//                                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-3">
-//                                     <Button
-//                                         btnSize="md"
-//                                         type="filledGray"
-//                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
-//                                         onClick={() => {
-//                                             unlockBodyScroll();
-//                                             setIsOpen({ type: "new", isOpen: false });
-//                                         }}
-//                                     >
-//                                         <span>Cancel</span>
-//                                     </Button>
-//                                     <Button
-//                                         btnType="submit"
-//                                         btnSize="md"
-//                                         type="filled"
-//                                         className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
-//                                         disabled={isLoading || values.coordinates.length < 3}
-//                                     >
-//                                         <span>
-//                                             {isLoading
-//                                                 ? (isEditMode ? "Updating..." : "Creating...")
-//                                                 : (isEditMode ? "Update" : "Create")
-//                                             }
-//                                         </span>
-//                                     </Button>
-//                                 </div>
-//                             </Form>
-//                         </div>
-//                     );
-//                 }}
-//             </Formik>
-//         </div>
-//     );
-// };
-
-// export default AddPlotsModel;
 
 // import { ErrorMessage, Field, Form, Formik } from "formik";
 // import React, { useRef, useState, useEffect } from "react";

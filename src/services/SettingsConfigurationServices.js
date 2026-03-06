@@ -92,7 +92,6 @@ export async function apiSaveCommissionData(data) {
 
 export async function apiGetCommissionData() {
     try {
-        console.log("Making API call to:", GET_COMMISSION, "with params:");
         return ApiService.fetchData({
             url: GET_COMMISSION,
             method: METHOD_GET,

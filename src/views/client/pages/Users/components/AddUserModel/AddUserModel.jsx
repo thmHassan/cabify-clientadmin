@@ -56,28 +56,23 @@ const COUNTRY_CODE_MAP = {
     VI: "+1340", YE: "+967", ZM: "+260", ZW: "+263",
 };
 
-const COUNTRY_CODE_OPTIONS = [
-    ...new Map(
-        Object.entries(COUNTRY_CODE_MAP).map(([code, dial]) => [dial, { label: `${dial} (${code})`, value: dial }])
-    ).values()
-].sort((a, b) => a.label.localeCompare(b.label));
-
 const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
     const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const tenantData = getTenantData();
 
+    // ✅ Get country code from tenant's country_of_use (e.g. "AU" → "+61")
+    // Falls back to "" if country not found
     const defaultCountryCode =
-        COUNTRY_CODE_MAP[tenantData?.country_of_use] || "";
+        COUNTRY_CODE_MAP[tenantData?.data?.country_of_use || tenantData?.country_of_use] || "";
 
     const handleSubmit = async (values) => {
         setIsLoading(true);
-
         try {
             const formData = new FormData();
             formData.append("name", values.name || "");
             formData.append("email", values.email || "");
-            formData.append("country_code", values.countryCode || "");
+            formData.append("country_code", values.country_code || "");
             formData.append("phone_no", values.phoneNumber || "");
             formData.append("password", values.password || "");
             formData.append("address", values.address || "");
@@ -86,40 +81,25 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
             const response = await apiCreateUser(formData);
 
             if (response?.data?.error === 1) {
-                toast.error(response?.data?.message || "Something went wrong", {
-                    duration: 5000,
-                });
+                toast.error(response?.data?.message || "Something went wrong", { duration: 5000 });
                 return;
             }
 
-            toast.success(
-                response?.data?.message || "User created successfully",
-                {
-                    duration: 5000,
-                }
-            );
+            toast.success(response?.data?.message || "User created successfully", { duration: 5000 });
 
-            if (onUserCreated) {
-                onUserCreated();
-            }
+            if (onUserCreated) onUserCreated();
 
             unlockBodyScroll();
             setIsOpen({ type: "new", isOpen: false });
-
         } catch (error) {
             toast.error(
-                error?.response?.data?.message ||
-                error?.message ||
-                "Server error",
-                {
-                    duration: 5000,
-                }
+                error?.response?.data?.message || error?.message || "Server error",
+                { duration: 5000 }
             );
         } finally {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div>
@@ -127,7 +107,8 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                 initialValues={{
                     name: initialValue.name || '',
                     email: initialValue.email || '',
-                    country_code: initialValue?.country_code || defaultCountryCode,
+                    // ✅ Always use tenant's country code — not from initialValue
+                    country_code: defaultCountryCode,
                     phoneNumber: initialValue.phoneNumber || '',
                     password: initialValue.password || '',
                     address: initialValue.address || '',
@@ -141,9 +122,7 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                 {({ values, setFieldValue }) => (
                     <Form>
                         <div className="text-xl sm:text-2xl lg:text-[26px] leading-7 sm:leading-8 lg:leading-9 font-semibold text-[#252525] mb-4 sm:mb-6 lg:mb-7 text-center mx-auto max-w-full sm:max-w-[85%] lg:max-w-[75%] w-full px-2">
-                            <span className="w-full text-center block truncate">
-                                Add User
-                            </span>
+                            <span className="w-full text-center block truncate">Add User</span>
                         </div>
 
                         {submitError && (
@@ -178,21 +157,15 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                 </div>
                                 <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
                             </div>
+
+                            {/* ✅ Phone Number — country code shown as static badge (no dropdown) */}
                             <div className="w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="phoneNumber">Phone Number</FormLabel>
-
                                 <div className="flex items-center border border-[#8D8D8D] rounded-lg shadow-[-4px_4px_6px_0px_#0000001F] overflow-hidden sm:h-16 h-14">
-                                    <Field
-                                        as="select"
-                                        name="country_code"
-                                        className="h-full px-3 sm:px-4 bg-gray-100 border-r border-[#8D8D8D] outline-none font-semibold"
-                                    >
-                                        {COUNTRY_CODE_OPTIONS.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.value}
-                                            </option>
-                                        ))}
-                                    </Field>
+                                    {/* Static country code badge — matches driver management style */}
+                                    <div className="h-full px-3 sm:px-4 bg-gray-100 border-r border-[#8D8D8D] flex items-center font-semibold text-[#252525] sm:text-base text-sm whitespace-nowrap">
+                                        {defaultCountryCode || "+1"}
+                                    </div>
                                     <Field
                                         type="text"
                                         name="phoneNumber"
@@ -200,49 +173,8 @@ const AddUserModel = ({ initialValue = {}, setIsOpen, onUserCreated }) => {
                                         placeholder="Enter phone number"
                                     />
                                 </div>
-
-                                <ErrorMessage name="countryCode" component="div" className="text-red-500 text-sm mt-1" />
                                 <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm mt-1" />
                             </div>
-
-                            {/* <div className="w-[calc((100%-20px)/2)]">
-                                <FormLabel htmlFor="countryCode">Country Code</FormLabel>
-                                <div className="sm:h-16 h-14">
-                                    <Field
-                                        type="text"
-                                        name="countryCode"
-                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F]"
-                                        placeholder="+91"
-                                    />
-                                </div>
-                                <ErrorMessage name="countryCode" component="div" className="text-red-500 text-sm mt-1" />
-                            </div>
-
-                            <div className="w-[calc((100%-20px)/2)]">
-                                <FormLabel htmlFor="phone-number">Phone Number</FormLabel>
-                                <div className="sm:h-16 h-14">
-                                    <Field
-                                        type="text"
-                                        name="phoneNumber"
-                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                        placeholder="Enter Phone Number"
-                                    />
-                                </div>
-                                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm mt-1" />
-                            </div> */}
-
-                            {/* <div className="w-full sm:w-[calc((100%-20px)/2)]">
-                                <FormLabel htmlFor="password">Password</FormLabel>
-                                <div className="sm:h-16 h-14">
-                                    <Password
-                                        name="password"
-                                        className="sm:px-5 px-4 sm:py-[21px] py-4 !select-none border border-[#8D8D8D] rounded-lg w-full h-14 sm:h-16 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                        placeholder="Enter password"
-                                        autoComplete="off"
-                                    />
-                                </div>
-                                <ErrorMessage name="password" component="div" className="text-red-500 text-sm mt-1" />
-                            </div> */}
 
                             <div className="w-[calc((100%-20px)/2)]">
                                 <FormLabel htmlFor="address">Address</FormLabel>

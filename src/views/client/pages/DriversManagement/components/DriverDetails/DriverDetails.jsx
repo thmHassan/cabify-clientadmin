@@ -290,7 +290,9 @@ const DriverDetails = () => {
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
-                    joined_date: data.joined_date ? data.joined_date.split("T")[0] : "",
+                    joined_date: data.joined_date
+                        ? data.joined_date.split(" ")[0]
+                        : "",
                     sub_company: data.sub_company ? data.sub_company.toString() : "",
                     vehicle_name: vehicleData.vehicle_name,
                     vehicle_type: vehicleData.vehicle_type,
@@ -971,13 +973,13 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("color", e.target.value)}
                             name="color"
                         />
-                        <FormField
+                        {/* <FormField
                             label="Capacity"
                             placeholder="Enter Capacity"
                             value={formData.capacity}
                             onChange={(e) => handleInputChange("capacity", e.target.value)}
                             name="capacity"
-                        />
+                        /> */}
                         <FormField
                             label="Plate Number"
                             placeholder="Enter Plate Number"

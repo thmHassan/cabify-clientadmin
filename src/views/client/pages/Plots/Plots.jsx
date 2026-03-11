@@ -17,7 +17,6 @@ import _ from "lodash";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
 
-// ── Country-based default centers ─────────────────────────────────────────────
 const COUNTRY_CENTERS = {
   IN: { lat: 20.5937, lng: 78.9629 },
   AU: { lat: -25.2744, lng: 133.7751 },
@@ -50,21 +49,13 @@ const getMapType = () => {
     const tenant = getTenantData();
     const mapsApi = tenant?.maps_api?.trim().toLowerCase();
     const countryOfUse = tenant?.country_of_use?.trim().toUpperCase();
-
-    if (countryOfUse === "IN") {
-      return mapsApi === "google" ? "google" : "barikoi";
-    }
+    if (countryOfUse === "IN") return mapsApi === "google" ? "google" : "barikoi";
     return mapsApi === "barikoi" ? "barikoi" : "google";
-  } catch {
-    return "google";
-  }
+  } catch { return "google"; }
 };
 
 const Plots = () => {
-  const [isPlotsModelOpen, setIsPlotsModelOpen] = useState({
-    type: "new",
-    isOpen: false,
-  });
+  const [isPlotsModelOpen, setIsPlotsModelOpen] = useState({ type: "new", isOpen: false });
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
@@ -72,15 +63,9 @@ const Plots = () => {
   const [_selectedStatus, setSelectedStatus] = useState(
     STATUS_OPTIONS.find((o) => o.value === "all") ?? STATUS_OPTIONS[0]
   );
-  const savedPagination = useAppSelector(
-    (state) => state?.app?.app?.pagination?.companies
-  );
-  const [currentPage, setCurrentPage] = useState(
-    Number(savedPagination?.currentPage) || 1
-  );
-  const [itemsPerPage, setItemsPerPage] = useState(
-    Number(savedPagination?.itemsPerPage) || 10
-  );
+  const savedPagination = useAppSelector((state) => state?.app?.app?.pagination?.companies);
+  const [currentPage, setCurrentPage] = useState(Number(savedPagination?.currentPage) || 1);
+  const [itemsPerPage, setItemsPerPage] = useState(Number(savedPagination?.itemsPerPage) || 10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -88,6 +73,7 @@ const Plots = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState(null);
+
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
   const googlePolygonsRef = useRef([]);
@@ -95,135 +81,13 @@ const Plots = () => {
   const leafletPolygonsRef = useRef([]);
   const [mapsReady, setMapsReady] = useState(false);
   const [leafletReady, setLeafletReady] = useState(false);
-
   const [mapProvider] = useState(() => getMapType());
+  const [mapError, setMapError] = useState(false);
 
   const googleApiKey = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
   const barikoiApiKey = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
 
-  const [mapError, setMapError] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const fetchPlots = useCallback(async () => {
-    setTableLoading(true);
-    try {
-      const params = { page: currentPage, perPage: itemsPerPage };
-      if (debouncedSearchQuery?.trim()) {
-        params.search = debouncedSearchQuery.trim();
-      }
-      const response = await apiGetPlot(params);
-      if (response?.data?.success === 1) {
-        const listData = response?.data?.list;
-        setPlotsData(listData?.data || []);
-        setTotalItems(listData?.total || 0);
-        setTotalPages(listData?.last_page || 1);
-      }
-    } catch (error) {
-      console.error("Error fetching plots:", error);
-      setPlotsData([]);
-    } finally {
-      setTableLoading(false);
-    }
-  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
-
-  const handleDeletePlot = async () => {
-    if (!plotToDelete?.id) return;
-    setIsDeleting(true);
-    try {
-      const response = await apiDeletePlot(plotToDelete.id);
-      if (response?.data?.success === 1 || response?.status === 200) {
-        setDeleteModalOpen(false);
-        setPlotToDelete(null);
-        setRefreshTrigger(prev => prev + 1);
-      }
-    } catch (error) {
-      console.error("Error deleting plot:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlots();
-  }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchPlots, refreshTrigger]);
-
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
-  const handleItemsPerPageChange = (newItemsPerPage) => {
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1);
-  };
-  const handleOnPlotsCreated = () => setRefreshTrigger(prev => prev + 1);
-
-  const loadGoogleMaps = useCallback((apiKey) => {
-    if (!apiKey) { setMapError(false); return; }
-    if (window.google && window.google.maps) { setMapsReady(true); setMapError(false); return; }
-    const existing = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existing) {
-      if (window.google && window.google.maps) { setMapsReady(true); setMapError(false); }
-      else {
-        existing.addEventListener('load', () => { setMapsReady(true); setMapError(false); });
-        existing.addEventListener('error', () => setMapError(true));
-      }
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => { setMapsReady(true); setMapError(false); };
-    script.onerror = () => setMapError(true);
-    window.gm_authFailure = () => setMapError(true);
-    document.body.appendChild(script);
-  }, []);
-
-  const loadLeaflet = useCallback(() => {
-    if (window.L) { setLeafletReady(true); setMapError(false); return; }
-    const existingScript = document.querySelector('script[src*="leaflet.js"]');
-    if (existingScript) {
-      if (window.L) { setLeafletReady(true); setMapError(false); }
-      else {
-        existingScript.addEventListener("load", () => { setLeafletReady(true); setMapError(false); });
-        existingScript.addEventListener("error", () => setMapError(true));
-      }
-      return;
-    }
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";
-    document.head.appendChild(link);
-
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => { setLeafletReady(true); setMapError(false); };
-    script.onerror = () => setMapError(true);
-    document.body.appendChild(script);
-  }, []);
-
-  useEffect(() => {
-    if (mapProvider === "google") {
-      setLeafletReady(false);
-      loadGoogleMaps(googleApiKey);
-    } else if (mapProvider === "barikoi") {
-      setMapsReady(false);
-      loadLeaflet();
-    }
-    return () => {
-      if (googleMapRef.current) googleMapRef.current = null;
-      googlePolygonsRef.current.forEach(p => { if (p) p.setMap(null); });
-      googlePolygonsRef.current = [];
-      if (leafletMapRef.current) { leafletMapRef.current.remove(); leafletMapRef.current = null; }
-      leafletPolygonsRef.current = [];
-    };
-  }, [mapProvider, googleApiKey, loadGoogleMaps, loadLeaflet]);
-
+  // ─── Parse coordinates from plot ─────────────────────────────────────────
   const parseCoordinates = useCallback((plot) => {
     if (!plot) return [];
     try {
@@ -258,55 +122,253 @@ const Plots = () => {
     return [];
   }, []);
 
-  const generatePlotColor = (index, plot) => {
-    if (selectedPlot?.id === plot?.id) return '#EF4444';
-    return '#4285F4';
+  // ─── SMOOTH FLY TO PLOT ───────────────────────────────────────────────────
+  // Called whenever selectedPlot changes — smoothly pans & zooms to the plot bounds
+  const flyToPlot = useCallback((plot) => {
+    if (!plot) return;
+    const coords = parseCoordinates(plot);
+    if (!coords || coords.length < 1) return;
+
+    // ── Google Maps ──
+    if (mapProvider === "google" && googleMapRef.current && mapsReady) {
+      const bounds = new window.google.maps.LatLngBounds();
+      coords.forEach((c) => bounds.extend(c));
+
+      // fitBounds zooms AND pans to fit polygon tightly
+      googleMapRef.current.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
+    }
+
+    // ── Leaflet / Barikoi ──
+    if (mapProvider === "barikoi" && leafletMapRef.current && leafletReady) {
+      const latLngs = coords.map((c) => [c.lat, c.lng]);
+      const bounds = window.L.latLngBounds(latLngs);
+      leafletMapRef.current.flyToBounds(bounds, {
+        padding: [60, 60],
+        maxZoom: 17,
+        duration: 0.8,
+        easeLinearity: 0.3,
+      });
+    }
+  }, [mapProvider, mapsReady, leafletReady, parseCoordinates]);
+
+  // ─── Fly to plot whenever selection changes ───────────────────────────────
+  useEffect(() => {
+    if (selectedPlot) {
+      flyToPlot(selectedPlot);
+    }
+    // selectedPlot === null means "show all" — renderAllPolygons handles fitBounds
+  }, [selectedPlot, flyToPlot]);
+
+  // ─── Show All — zoom out to fit all plots ────────────────────────────────
+  const showAllPlots = useCallback(() => {
+    setSelectedPlot(null);
+
+    // Google Maps — fit all polygon bounds
+    if (mapProvider === "google" && googleMapRef.current && mapsReady) {
+      const bounds = new window.google.maps.LatLngBounds();
+      let hasCoords = false;
+      plotsData.forEach((plot) => {
+        const coords = parseCoordinates(plot);
+        coords.forEach((c) => { bounds.extend(c); hasCoords = true; });
+      });
+      if (hasCoords) {
+        googleMapRef.current.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
+      }
+    }
+
+    // Leaflet — flyToBounds all polygons
+    if (mapProvider === "barikoi" && leafletMapRef.current && leafletReady) {
+      const allBounds = leafletPolygonsRef.current
+        .filter(Boolean)
+        .map((p) => p.getBounds());
+      if (allBounds.length > 0) {
+        const combined = allBounds[0];
+        allBounds.forEach((b) => combined.extend(b));
+        leafletMapRef.current.flyToBounds(combined, { padding: [60, 60], maxZoom: 16, duration: 0.8 });
+      }
+    }
+  }, [mapProvider, mapsReady, leafletReady, plotsData, parseCoordinates]);
+
+  // ─── Update polygon highlight when selectedPlot changes ──────────────────
+  useEffect(() => {
+    if (mapProvider === "google" && googlePolygonsRef.current.length > 0) {
+      plotsData.forEach((plot, index) => {
+        const polygon = googlePolygonsRef.current[index];
+        if (polygon) {
+          const isSelected = selectedPlot?.id === plot.id;
+          polygon.setOptions({
+            strokeColor: isSelected ? "#EF4444" : "#4285F4",
+            fillColor: isSelected ? "#EF4444" : "#4285F4",
+            fillOpacity: isSelected ? 0.35 : 0.15,
+            strokeWeight: isSelected ? 3 : 2,
+            zIndex: isSelected ? 10 : 1,
+          });
+        }
+      });
+    } else if (mapProvider === "barikoi" && leafletPolygonsRef.current.length > 0) {
+      plotsData.forEach((plot, index) => {
+        const polygon = leafletPolygonsRef.current[index];
+        if (polygon) {
+          const isSelected = selectedPlot?.id === plot.id;
+          polygon.setStyle({
+            color: isSelected ? "#EF4444" : "#4285F4",
+            fillColor: isSelected ? "#EF4444" : "#4285F4",
+            fillOpacity: isSelected ? 0.35 : 0.15,
+            weight: isSelected ? 3 : 2,
+          });
+          if (isSelected) polygon.bringToFront();
+        }
+      });
+    }
+  }, [selectedPlot, mapProvider, plotsData]);
+
+  // ─── Debounce search ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // ─── Fetch plots ─────────────────────────────────────────────────────────
+  const fetchPlots = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const params = { page: currentPage, perPage: itemsPerPage };
+      if (debouncedSearchQuery?.trim()) params.search = debouncedSearchQuery.trim();
+      const response = await apiGetPlot(params);
+      if (response?.data?.success === 1) {
+        const listData = response?.data?.list;
+        setPlotsData(listData?.data || []);
+        setTotalItems(listData?.total || 0);
+        setTotalPages(listData?.last_page || 1);
+      }
+    } catch (error) {
+      console.error("Error fetching plots:", error);
+      setPlotsData([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => { fetchPlots(); }, [currentPage, itemsPerPage, debouncedSearchQuery, fetchPlots, refreshTrigger]);
+
+  // ─── Delete ───────────────────────────────────────────────────────────────
+  const handleDeletePlot = async () => {
+    if (!plotToDelete?.id) return;
+    setIsDeleting(true);
+    try {
+      const response = await apiDeletePlot(plotToDelete.id);
+      if (response?.data?.success === 1 || response?.status === 200) {
+        setDeleteModalOpen(false);
+        setPlotToDelete(null);
+        setRefreshTrigger(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error("Error deleting plot:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+  const handleItemsPerPageChange = (newItemsPerPage) => { setItemsPerPage(newItemsPerPage); setCurrentPage(1); };
+  const handleOnPlotsCreated = () => setRefreshTrigger(prev => prev + 1);
+
+  // ─── Load map scripts ─────────────────────────────────────────────────────
+  const loadGoogleMaps = useCallback((apiKey) => {
+    if (!apiKey) { setMapError(false); return; }
+    if (window.google && window.google.maps) { setMapsReady(true); setMapError(false); return; }
+    const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existing) {
+      if (window.google && window.google.maps) { setMapsReady(true); setMapError(false); }
+      else {
+        existing.addEventListener('load', () => { setMapsReady(true); setMapError(false); });
+        existing.addEventListener('error', () => setMapError(true));
+      }
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`;
+    script.async = true; script.defer = true;
+    script.onload = () => { setMapsReady(true); setMapError(false); };
+    script.onerror = () => setMapError(true);
+    window.gm_authFailure = () => setMapError(true);
+    document.body.appendChild(script);
+  }, []);
+
+  const loadLeaflet = useCallback(() => {
+    if (window.L) { setLeafletReady(true); setMapError(false); return; }
+    const existingScript = document.querySelector('script[src*="leaflet.js"]');
+    if (existingScript) {
+      if (window.L) { setLeafletReady(true); setMapError(false); }
+      else {
+        existingScript.addEventListener("load", () => { setLeafletReady(true); setMapError(false); });
+        existingScript.addEventListener("error", () => setMapError(true));
+      }
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";
+    document.head.appendChild(link);
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
+    script.async = true; script.defer = true;
+    script.onload = () => { setLeafletReady(true); setMapError(false); };
+    script.onerror = () => setMapError(true);
+    document.body.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (mapProvider === "google") { setLeafletReady(false); loadGoogleMaps(googleApiKey); }
+    else if (mapProvider === "barikoi") { setMapsReady(false); loadLeaflet(); }
+    return () => {
+      if (googleMapRef.current) googleMapRef.current = null;
+      googlePolygonsRef.current.forEach(p => { if (p) p.setMap(null); });
+      googlePolygonsRef.current = [];
+      if (leafletMapRef.current) { leafletMapRef.current.remove(); leafletMapRef.current = null; }
+      leafletPolygonsRef.current = [];
+    };
+  }, [mapProvider, googleApiKey, loadGoogleMaps, loadLeaflet]);
+
+  // ─── Render all polygons on map ───────────────────────────────────────────
+  const generatePlotColor = () => "#4285F4"; // always blue — highlight handled separately
 
   const renderAllPolygons = useCallback(() => {
     if (!plotsData || plotsData.length === 0) return;
-
-    // Use country-based center instead of hardcoded coordinates
     const center = getCountryCenter();
     const defaultCenter = { lat: center.lat, lng: center.lng };
 
     if (mapProvider === "google") {
       if (!mapsReady || !mapRef.current) return;
-
       if (!googleMapRef.current) {
         googleMapRef.current = new window.google.maps.Map(mapRef.current, {
-          center: defaultCenter,
-          zoom: 5,
+          center: defaultCenter, zoom: 5,
         });
       }
-
       googlePolygonsRef.current.forEach(p => { if (p) p.setMap(null); });
       googlePolygonsRef.current = [];
 
       const bounds = new window.google.maps.LatLngBounds();
       let hasValidCoords = false;
 
-      plotsData.forEach((plot, index) => {
+      plotsData.forEach((plot) => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
           hasValidCoords = true;
-          const color = generatePlotColor(index, plot);
+          const color = generatePlotColor();
 
           const polygon = new window.google.maps.Polygon({
             paths: coords,
-            strokeColor: color,
-            strokeOpacity: 0.9,
-            strokeWeight: 2,
-            fillColor: color,
-            fillOpacity: selectedPlot?.id === plot.id ? 0.35 : 0.15,
-            map: googleMapRef.current,
-            clickable: true,
+            strokeColor: color, strokeOpacity: 0.9, strokeWeight: 2,
+            fillColor: color, fillOpacity: 0.18,
+            map: googleMapRef.current, clickable: true,
+            zIndex: isSelected ? 10 : 1,
           });
 
           polygon.addListener('click', () => setSelectedPlot(plot));
 
           const infoWindow = new window.google.maps.InfoWindow({
-            content: `<div style="padding: 8px; font-weight: 600; color: #333;">${plot.name}</div>`,
+            content: `<div style="padding:8px;font-weight:600;color:#333;">${plot.name}</div>`,
           });
           polygon.addListener('mouseover', () => {
             const c = coords.reduce((acc, coord) => ({
@@ -317,7 +379,6 @@ const Plots = () => {
             infoWindow.open(googleMapRef.current);
           });
           polygon.addListener('mouseout', () => infoWindow.close());
-
           googlePolygonsRef.current.push(polygon);
           coords.forEach(coord => bounds.extend(coord));
         }
@@ -339,19 +400,12 @@ const Plots = () => {
 
     if (mapProvider === "barikoi") {
       if (!leafletReady || !mapRef.current) return;
-
       if (!leafletMapRef.current) {
-        leafletMapRef.current = window.L.map(mapRef.current).setView(
-          [defaultCenter.lat, defaultCenter.lng], 5
-        );
-
+        leafletMapRef.current = window.L.map(mapRef.current).setView([defaultCenter.lat, defaultCenter.lng], 5);
         const tileUrl = barikoiApiKey
           ? `https://map.barikoi.com/styles/osm-bright/{z}/{x}/{y}.png?key=${barikoiApiKey}`
           : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-        const tileLayer = window.L.tileLayer(tileUrl, {
-          attribution: "© OpenStreetMap contributors", maxZoom: 19,
-        });
+        const tileLayer = window.L.tileLayer(tileUrl, { attribution: "© OpenStreetMap contributors", maxZoom: 19 });
         tileLayer.on("tileerror", () => {
           if (!leafletMapRef.current) return;
           tileLayer.off("tileerror");
@@ -369,22 +423,20 @@ const Plots = () => {
       leafletPolygonsRef.current = [];
 
       const allBounds = [];
-
-      plotsData.forEach((plot, index) => {
+      plotsData.forEach((plot) => {
         const coords = parseCoordinates(plot);
         if (coords && coords.length >= 3) {
           const latLngs = coords.map(c => [c.lat, c.lng]);
-          const color = generatePlotColor(index, plot);
+          const color = generatePlotColor();
 
           const polygon = window.L.polygon(latLngs, {
             color, fillColor: color,
-            fillOpacity: selectedPlot?.id === plot.id ? 0.35 : 0.15,
+            fillOpacity: 0.18,
             weight: 2,
           }).addTo(leafletMapRef.current);
 
-          polygon.bindPopup(`<div style="padding: 8px; font-weight: 600; color: #333;">${plot.name}</div>`);
+          polygon.bindPopup(`<div style="padding:8px;font-weight:600;color:#333;">${plot.name}</div>`);
           polygon.on('click', () => setSelectedPlot(plot));
-
           leafletPolygonsRef.current.push(polygon);
           allBounds.push(polygon.getBounds());
         }
@@ -398,42 +450,14 @@ const Plots = () => {
         leafletMapRef.current.setView([defaultCenter.lat, defaultCenter.lng], 5);
       }
     }
-  }, [mapProvider, mapsReady, leafletReady, plotsData, parseCoordinates, barikoiApiKey, selectedPlot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapProvider, mapsReady, leafletReady, plotsData, parseCoordinates, barikoiApiKey]);
 
-  const handleDeleteClick = (plot) => {
-    setPlotToDelete(plot);
-    setDeleteModalOpen(true);
-  };
+  const handleDeleteClick = (plot) => { setPlotToDelete(plot); setDeleteModalOpen(true); };
 
-  useEffect(() => {
-    if (plotsData?.length && !selectedPlot) setSelectedPlot(plotsData[0]);
-  }, [plotsData, selectedPlot]);
+  // No auto-select — all plots shown by default, user clicks to zoom in
 
   useEffect(() => { renderAllPolygons(); }, [renderAllPolygons]);
-
-  useEffect(() => {
-    if (mapProvider === "google" && googlePolygonsRef.current.length > 0) {
-      plotsData.forEach((plot, index) => {
-        const polygon = googlePolygonsRef.current[index];
-        if (polygon) {
-          polygon.setOptions({
-            fillOpacity: selectedPlot?.id === plot.id ? 0.35 : 0.15,
-            strokeWeight: selectedPlot?.id === plot.id ? 3 : 2,
-          });
-        }
-      });
-    } else if (mapProvider === "barikoi" && leafletPolygonsRef.current.length > 0) {
-      plotsData.forEach((plot, index) => {
-        const polygon = leafletPolygonsRef.current[index];
-        if (polygon) {
-          polygon.setStyle({
-            fillOpacity: selectedPlot?.id === plot.id ? 0.35 : 0.15,
-            weight: selectedPlot?.id === plot.id ? 3 : 2,
-          });
-        }
-      });
-    }
-  }, [selectedPlot, mapProvider]);
 
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-7 2xl:p-10 min-h-[calc(100vh-64px)] sm:min-h-[calc(100vh-85px)]">
@@ -444,8 +468,7 @@ const Plots = () => {
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8">
           <Button
-            type="filled"
-            btnSize="2xl"
+            type="filled" btnSize="2xl"
             onClick={() => { lockBodyScroll(); setIsPlotsModelOpen({ isOpen: true, type: "new" }); }}
             className="w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
           >
@@ -457,75 +480,98 @@ const Plots = () => {
           </Button>
         </div>
       </div>
+
       <div>
         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
           <div className="flex flex-row items-stretch sm:items-center gap-3 sm:gap-5 justify-between mb-4 sm:mb-0">
             <div className="md:w-full w-[calc(100%-54px)] sm:flex-1">
               <SearchBar
-                value={searchQuery}
-                onSearchChange={setSearchQuery}
+                value={searchQuery} onSearchChange={setSearchQuery}
                 className="w-full md:max-w-[400px] max-w-full"
               />
             </div>
           </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
-            <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2">
+            {/* ── Plot List ── */}
+            <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2">
               {tableLoading ? (
                 <div className="flex items-center justify-center py-20"><AppLogoLoader /></div>
               ) : plotsData && plotsData.length > 0 ? (
                 plotsData.map((plot) => (
-                  <div key={plot.id || plot.name} className="relative">
-                    <PlotsCard
-                      plot={plot}
-                      isSelected={selectedPlot?.id === plot.id}
-                      onSelect={(p) => setSelectedPlot(p)}
-                      onEdit={(plotToEdit) => {
-                        lockBodyScroll();
-                        setIsPlotsModelOpen({ isOpen: true, type: "edit", data: plotToEdit });
-                      }}
-                      onDelete={handleDeleteClick}
-                    />
-                  </div>
+                  <PlotsCard
+                    key={plot.id || plot.name}
+                    plot={plot}
+                    onSelect={(p) => setSelectedPlot(p)}
+                    onEdit={(plotToEdit) => {
+                      lockBodyScroll();
+                      setIsPlotsModelOpen({ isOpen: true, type: "edit", data: plotToEdit });
+                    }}
+                    onDelete={handleDeleteClick}
+                  />
                 ))
               ) : (
                 <div className="flex items-center justify-center py-20 text-gray-500">No plots found</div>
               )}
             </div>
+
+            {/* ── Map ── */}
             <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-gray-200">
               <div ref={mapRef} className="w-full h-full" />
+
+              {/* Empty state */}
               {!plotsData || plotsData.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-gray-600">
                   No plots to display
                 </div>
               ) : (!mapsReady && !leafletReady) ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 text-gray-600">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3" />
                   <p>Loading map...</p>
                 </div>
               ) : null}
-              {selectedPlot && (mapsReady || leafletReady) && (
-                <div className="absolute top-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200">
-                  <div className="font-semibold text-gray-800">{selectedPlot.name}</div>
-                  <div className="text-xs text-gray-600 mt-1">{parseCoordinates(selectedPlot).length} coordinates</div>
+
+              {/* Map overlay — plot name + Show All button */}
+              {(mapsReady || leafletReady) && (
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  {/* Selected plot name badge */}
+                  {selectedPlot && (
+                    <div className="bg-white px-3 py-1.5 rounded-lg shadow-md border border-gray-200 flex items-center gap-2 pointer-events-none">
+                      <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                      <span className="font-semibold text-gray-800 text-xs">{selectedPlot.name}</span>
+                    </div>
+                  )}
+                  {/* Show All button — only visible when a plot is zoomed in */}
+                  {selectedPlot && (
+                    <button
+                      onClick={showAllPlots}
+                      className="bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md border border-gray-200 flex items-center gap-1.5 transition-all"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 3l7 7m0 0l7-7M10 10v10m4-10l7 7m-7-7l-7 7" />
+                      </svg>
+                      Show All
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           </div>
+
           {Array.isArray(plotsData) && plotsData.length > 0 ? (
             <div className="mt-4 sm:mt-4 border-t border-[#E9E9E9] pt-3 sm:pt-4">
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
+                currentPage={currentPage} totalPages={totalPages}
+                itemsPerPage={itemsPerPage} onPageChange={handlePageChange}
                 onItemsPerPageChange={handleItemsPerPageChange}
-                itemsPerPageOptions={PAGE_SIZE_OPTIONS}
-                pageKey="companies"
+                itemsPerPageOptions={PAGE_SIZE_OPTIONS} pageKey="companies"
               />
             </div>
           ) : null}
         </CardContainer>
       </div>
+
+      {/* Add/Edit Modal */}
       <Modal isOpen={isPlotsModelOpen.isOpen} className="p-4 sm:p-6 lg:p-10 w-full max-w-2xl">
         <AddPlotsModel
           initialValue={isPlotsModelOpen.type === "edit" ? {
@@ -534,26 +580,24 @@ const Plots = () => {
             coordinates: isPlotsModelOpen.data?.features ? (() => {
               try {
                 const features = typeof isPlotsModelOpen.data.features === 'string'
-                  ? JSON.parse(isPlotsModelOpen.data.features)
-                  : isPlotsModelOpen.data.features;
+                  ? JSON.parse(isPlotsModelOpen.data.features) : isPlotsModelOpen.data.features;
                 let coordinatesData = features?.geometry?.coordinates;
                 if (typeof coordinatesData === "string") coordinatesData = JSON.parse(coordinatesData);
                 const coords = Array.isArray(coordinatesData) ? coordinatesData[0] : coordinatesData;
                 return coords || [];
-              } catch (e) {
-                console.error('Error parsing features:', e);
-                return [];
-              }
+              } catch (e) { console.error('Error parsing features:', e); return []; }
             })() : [],
           } : {}}
           setIsOpen={setIsPlotsModelOpen}
           onPlotsCreated={handleOnPlotsCreated}
         />
       </Modal>
+
+      {/* Delete Modal */}
       <Modal isOpen={deleteModalOpen} className="p-10">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-3">Delete Plot?</h2>
-          <p className="text-gray-600 mb-6">Are you sure you want to delete {plotToDelete?.name}?</p>
+          <p className="text-gray-600 mb-6">Are you sure you want to delete <strong>{plotToDelete?.name}</strong>?</p>
           <div className="flex justify-center gap-4">
             <Button type="filledGray" onClick={() => { setDeleteModalOpen(false); setPlotToDelete(null); }} className="px-6 py-2 rounded-md">Cancel</Button>
             <Button type="filledRed" onClick={handleDeletePlot} disabled={isDeleting} className="px-6 py-2 rounded-md">

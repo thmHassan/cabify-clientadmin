@@ -561,7 +561,6 @@ const DriverDetails = () => {
         }
     };
 
-    // ── Save Bank Information (includes required driver fields to pass API validation) ──
     const handleSaveBank = async () => {
         setIsSavingBank(true);
         try {
@@ -653,6 +652,11 @@ const DriverDetails = () => {
 
     const hasVehicleChangeRequest =
         Number(driverData?.vehicle_change_request) === 1;
+
+    const getVehicleTypeLabel = (value) => {
+        const vehicle = vehicleList.find((v) => v.value === value);
+        return vehicle ? vehicle.label : "";
+    };
 
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -927,29 +931,17 @@ const DriverDetails = () => {
                             <label className="text-sm font-medium text-gray-700">
                                 Vehicle Type
                             </label>
-                            <select
-                                value={formData.vehicle_type}
-                                onChange={(e) =>
-                                    handleInputChange("vehicle_type", e.target.value)
-                                }
-                                disabled={loadingVehicles}
-                                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
-                            >
-                                <option value="">
-                                    {loadingVehicles ? "Loading..." : "Select Vehicle Type"}
-                                </option>
-                                {vehicleList.map((v) => (
-                                    <option key={v.value} value={v.value}>
-                                        {v.label}
-                                    </option>
-                                ))}
-                            </select>
+                            <input
+                                type="text"
+                                value={getVehicleTypeLabel(formData.vehicle_type)}
+                                placeholder="Vehicle Type"
+                                readOnly
+                                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none"
+                            />
                         </div>
                         <FormField
                             label="Vehicle Service"
-                            type="select"
                             placeholder="Select Vehicle Service"
-                            options={["local", "Taxi", "Rental", "Delivery"]}
                             value={formData.vehicle_service}
                             onChange={(e) =>
                                 handleInputChange("vehicle_service", e.target.value)
@@ -958,14 +950,11 @@ const DriverDetails = () => {
                         />
                         <FormField
                             label="Seats"
-                            type="select"
                             placeholder="Select Seats"
-                            options={["2", "4", "5", "7", "8"]}
                             value={formData.seats}
                             onChange={(e) => handleInputChange("seats", e.target.value)}
                             name="seats"
                         />
-                        {/* ── Color: free-text input (shows API value, user can type freely) ── */}
                         <FormField
                             label="Color"
                             placeholder="Enter Color"
@@ -973,13 +962,6 @@ const DriverDetails = () => {
                             onChange={(e) => handleInputChange("color", e.target.value)}
                             name="color"
                         />
-                        {/* <FormField
-                            label="Capacity"
-                            placeholder="Enter Capacity"
-                            value={formData.capacity}
-                            onChange={(e) => handleInputChange("capacity", e.target.value)}
-                            name="capacity"
-                        /> */}
                         <FormField
                             label="Plate Number"
                             placeholder="Enter Plate Number"

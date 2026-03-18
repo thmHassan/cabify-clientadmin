@@ -47,7 +47,7 @@ const clientRoute = [
     component: lazy(() => import("../../../views/client/pages/DriversManagement/components/DriverDetails")),
     authority: [],
   },
-    {
+  {
     key: KEY.DOCUMENT_REQUESTS_KEY,
     path: PATH.DOCUMENT_REQUESTS_PATH,
     component: lazy(() => import("../../../views/client/pages/DocumentRequest")),
@@ -159,6 +159,12 @@ const clientRoute = [
     key: KEY.APP_DISPLAY_CONTENT_KEY,
     path: PATH.APP_DISPLAY_CONTENT_PATH,
     component: lazy(() => import("../../../views/client/pages/AppDisplayContent")),
+    authority: [],
+  },
+  {
+    key: KEY.CONTACT_US_KEY,
+    path: PATH.CONTACT_US_PATH,
+    component: lazy(() => import("../../../views/client/pages/ContactUs")),
     authority: [],
   }
   // {

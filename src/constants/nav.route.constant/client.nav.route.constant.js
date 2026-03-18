@@ -151,7 +151,7 @@ const userNavRoutes = [
         subMenu: [],
         isStatic: false,
       },
-            {
+      {
         key: KEY.DOCUMENT_REQUESTS_KEY,
         title: "Document Request",
         icon: {
@@ -294,11 +294,11 @@ const userNavRoutes = [
       // {
       //   key: KEY.SOS_KEY,
       //   title: "SOS",
-      //   icon: {
-      //     active: SosIcon,
-      //     component: SosIcon,
-      //     size: 20,
-      //   },
+      // icon: {
+      //   active: SosIcon,
+      //   component: SosIcon,
+      //   size: 20,
+      // },
       //   route: PATH.SOS_PATH,
       //   active: [],
       //   isSubMenu: false,
@@ -323,11 +323,25 @@ const userNavRoutes = [
         key: KEY.APP_DISPLAY_CONTENT_KEY,
         title: "App Display Content",
         icon: {
-          active: LostFoundIcon,
-          component: LostFoundIcon,
+          active: SosIcon,
+          component: SosIcon,
           size: 20,
         },
         route: PATH.APP_DISPLAY_CONTENT_PATH,
+        active: [],
+        isSubMenu: false,
+        subMenu: [],
+        isStatic: false,
+      },
+      {
+        key: KEY.CONTACT_US_KEY,
+        title: "Contact Us",
+        icon: {
+          active: UsersIcon,
+          component: UsersIcon,
+          size: 20,
+        },
+        route: PATH.CONTACT_US_PATH,
         active: [],
         isSubMenu: false,
         subMenu: [],

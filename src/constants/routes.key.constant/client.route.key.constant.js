@@ -18,3 +18,4 @@ export const RIDES_MANAGEMENT_KEY = "rides-management";
 export const SETTINGS_CONFIGURATION_KEY = "settings-configuration";
 export const SOS_KEY = "sos";
 export const SUB_COMPANY_KEY = "sub-company";
+export const CONTACT_US_KEY = "contact-us";

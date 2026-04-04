@@ -931,13 +931,23 @@ const DriverDetails = () => {
                             <label className="text-sm font-medium text-gray-700">
                                 Vehicle Type
                             </label>
-                            <input
-                                type="text"
-                                value={getVehicleTypeLabel(formData.vehicle_type)}
-                                placeholder="Vehicle Type"
-                                readOnly
-                                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none"
-                            />
+                            <select
+                                value={formData.vehicle_type}
+                                onChange={(e) =>
+                                    handleInputChange("vehicle_type", e.target.value)
+                                }
+                                disabled={loadingVehicles}
+                                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
+                            >
+                                <option value="">
+                                    {loadingVehicles ? "Loading..." : "Select Vehicle Type"}
+                                </option>
+                                {vehicleList.map((vehicle) => (
+                                    <option key={vehicle.value} value={vehicle.value}>
+                                        {vehicle.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <FormField
                             label="Vehicle Service"

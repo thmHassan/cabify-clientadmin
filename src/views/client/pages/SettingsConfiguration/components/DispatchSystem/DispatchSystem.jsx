@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { apiGetBookingSystem } from "../../../../../../services/AddBookingServices";
 import {
     apiGetDispatchSystem,
@@ -153,6 +153,34 @@ const DispatchSystem = () => {
 
         setSystemStatus(newSystemStatus);
     }, [checkedState]);
+
+    const isAnyOptionConfigured = useMemo(() => {
+        const targetSystems = [
+            "auto_dispatch_plot_base",
+            "auto_dispatch_nearest_driver",
+            "manual_dispatch_only",
+        ];
+
+        return targetSystems.some((systemKey) => {
+            if (!systemStatus[systemKey]) return false;
+
+            if (systemKey === "manual_dispatch_only") {
+                return true; // Manual dispatch is configured simply by being enabled
+            }
+
+            // For auto dispatch options, check that at least one sub-option is selected
+            const dispatchItem = dispatchData.find((d) => d.systemKey === systemKey);
+            if (!dispatchItem) return false;
+
+            return dispatchItem.followUps.some((f) => {
+                if (checkedState[f.key]) return true;
+                if (f.children) {
+                    return f.children.some((c) => checkedState[c.key]);
+                }
+                return false;
+            });
+        });
+    }, [systemStatus, checkedState]);
 
     const fetchData = async () => {
         try {
@@ -489,7 +517,7 @@ const DispatchSystem = () => {
                     type="filled"
                     btnSize="md"
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || !isAnyOptionConfigured}
                 >
                     {saving ? "Saving..." : "Save"}
                 </Button>

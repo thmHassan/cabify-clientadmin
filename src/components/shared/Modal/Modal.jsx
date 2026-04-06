@@ -26,7 +26,19 @@ const ModalComponent = ({ size = "xl", children, className }) => {
   useEffect(() => {
     checkHeights();
     window.addEventListener("resize", checkHeights);
-    return () => window.removeEventListener("resize", checkHeights);
+
+    let observer;
+    if (childRef.current) {
+        observer = new ResizeObserver(() => checkHeights());
+        observer.observe(childRef.current);
+    }
+    
+    return () => {
+        window.removeEventListener("resize", checkHeights);
+        if (observer) {
+            observer.disconnect();
+        }
+    };
   }, [tabViewScreen]);
 
   return (

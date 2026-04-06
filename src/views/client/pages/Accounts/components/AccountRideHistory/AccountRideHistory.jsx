@@ -28,6 +28,11 @@ const AccountRideHistory = ({ account, handleClose }) => {
     };
 
     const handleCollectAmount = async () => {
+        if (!totalAmount || Number(totalAmount) <= 0) {
+            toast.error("No amount to collect");
+            return;
+        }
+
         try {
             setCollecting(true);
 
@@ -39,6 +44,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Amount collected successfully");
                 fetchRideHistory();
+
                 handleClose();
             } else {
                 toast.error(response?.data?.message || "Failed to collect amount");
@@ -120,9 +126,9 @@ const AccountRideHistory = ({ account, handleClose }) => {
     };
 
     return (
-        <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto">
+        <div className="bg-white rounded-2xl max-w-4xl w-full mx-auto flex flex-col max-h-[80vh] overflow-hidden">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-200 shrink-0">
                 <h2 className="text-xl sm:text-2xl font-semibold text-[#252525]">
                     {account?.name || "Account"}
                 </h2>
@@ -137,7 +143,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
                     <Button
                         type="filled"
                         onClick={handleCollectAmount}
-                        disabled={collecting || loading}
+                        disabled={collecting || loading || !totalAmount || Number(totalAmount) <= 0}
                         className="px-6 py-2 rounded-lg text-sm font-medium bg-[#4F46E5] hover:bg-[#4338CA] text-white disabled:opacity-50"
                     >
                         {collecting ? "Collecting..." : "Collect"}
@@ -146,7 +152,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
             </div>
 
             {/* Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
                 {loading ? (
                     <div className="flex justify-center items-center py-12">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F46E5]"></div>
@@ -258,25 +264,25 @@ const AccountRideHistory = ({ account, handleClose }) => {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Pagination */}
-                        {rideHistory.length > 0 && (
-                            <div className="border-t border-gray-200 pt-4">
-                                <Pagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    itemsPerPage={itemsPerPage}
-                                    onPageChange={handlePageChange}
-                                    onItemsPerPageChange={handleItemsPerPageChange}
-                                    itemsPerPageOptions={PAGE_SIZE_OPTIONS}
-                                />
-                            </div>
-                        )}
                     </>
                 )}
             </div>
 
-            <div className="flex justify-end">
+            {/* Pagination */}
+            {!loading && rideHistory.length > 0 && (
+                <div className="px-4 sm:px-6 border-t border-gray-200 pt-4 shrink-0">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handleItemsPerPageChange}
+                        itemsPerPageOptions={PAGE_SIZE_OPTIONS}
+                    />
+                </div>
+            )}
+
+            <div className="flex justify-end p-4 sm:px-6 sm:pb-6 pt-2 shrink-0">
                 <Button
                     type="filledGray"
                     onClick={handleClose}

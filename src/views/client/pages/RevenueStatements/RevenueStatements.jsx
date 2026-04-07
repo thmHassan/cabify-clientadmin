@@ -14,6 +14,9 @@ import JobsAcceptedIcon from '../../../../components/svg/JobsAcceptedIcon';
 import { apiGetSubCompany } from '../../../../services/SubCompanyServices';
 import { apiGetRevenueCard, apiGetRevenueHistory } from '../../../../services/RevenueStatementsService';
 import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
+import Button from '../../../../components/ui/Button/Button';
+import Modal from '../../../../components/shared/Modal/Modal';
+import DriverRidingDetails from './components/DriverRidingDetails/DriverRidingDetails';
 
 const RevenueStatements = () => {
   const [selectedCompany, setSelectedCompany] = useState();
@@ -34,6 +37,9 @@ const RevenueStatements = () => {
     jobAcceptedCount: 0
   });
   const [cardLoading, setCardLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedRevenueInfo, setSelectedRevenueInfo] = useState(null);
 
   const savedPagination = useAppSelector(
     (state) => state?.app?.app?.pagination?.companies
@@ -173,6 +179,11 @@ const RevenueStatements = () => {
     setCurrentPage(1);
   };
 
+  const handleViewDriver = (revenueInfo) => {
+    setSelectedRevenueInfo(revenueInfo);
+    setIsDetailsModalOpen(true);
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-8 min-h-[calc(100vh-85px)] bg-gray-50">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -237,6 +248,27 @@ const RevenueStatements = () => {
 
       <div>
         <h1 className='text-lg font-semibold pb-2'>Financial Summary</h1>
+        <div className="bg-[#006FFF1A] p-1 rounded-lg mb-6 inline-flex gap-1">
+        <Button
+          type="filled"
+          btnSize="2xl"
+          className={`${activeTab === "all" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"
+            }`}
+          onClick={() => setActiveTab("all")}
+        >
+          All
+        </Button>
+        <Button
+          type="filled"
+          btnSize="2xl"
+          className={`${activeTab === "drivers" ? "!bg-[#1F41BB] !text-white" : "!bg-transparent !text-black"
+            }`}
+          onClick={() => setActiveTab("drivers")}
+        >
+          Drivers
+        </Button>
+      </div>
+        {activeTab === "all" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 1.5xl:grid-cols-3 gap-4 sm:gap-5">
             {DASHBOARD_CARDS.map((card, index) => (
               <SnapshotCard
@@ -251,6 +283,7 @@ const RevenueStatements = () => {
               />
             ))}
           </div>
+        )}
       </div>
 
       <div>
@@ -269,6 +302,8 @@ const RevenueStatements = () => {
                 <RevenueStatementsCard
                   key={revenue.id}
                   revenue={revenue}
+                  showView={activeTab === 'drivers'}
+                  onView={handleViewDriver}
                 />
               ))
             )}
@@ -288,6 +323,15 @@ const RevenueStatements = () => {
           ) : null}
         </CardContainer>
       </div>
+
+      {isDetailsModalOpen && selectedRevenueInfo && (
+        <Modal isOpen={isDetailsModalOpen} size="xl">
+            <DriverRidingDetails
+                revenueInfo={selectedRevenueInfo} 
+                handleClose={() => setIsDetailsModalOpen(false)} 
+            />
+        </Modal>
+      )}
     </div>
   );
 };

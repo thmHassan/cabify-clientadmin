@@ -4,7 +4,7 @@ import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
-const RevenueStatementsCard = ({ revenue, onEdit }) => {
+const RevenueStatementsCard = ({ revenue, onEdit, showView, onView }) => {
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const tenant = getTenantData();
     const timeZone = tenant?.time_zone || "UTC";
@@ -132,6 +132,16 @@ const RevenueStatementsCard = ({ revenue, onEdit }) => {
                         <ThreeDotsIcon />
                     </Button>
                 </UserDropdown> */}
+                {showView && (
+                    <div className="ml-2">
+                        <Button 
+                            className="bg-[#1F41BB] text-white px-6 py-2 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity" 
+                            onClick={() => onView && onView(revenue)}
+                        >
+                            View
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );

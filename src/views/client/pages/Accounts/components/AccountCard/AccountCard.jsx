@@ -1,8 +1,13 @@
+import React, { useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
+import { apiSendAccountInvoice } from "../../../../../../services/AccountService";
+import toast from "react-hot-toast";
 
 const AccountCard = ({ account, onEdit, onView, onDelete }) => {
+    const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+
     const actionOptions = [
         {
             label: "View",
@@ -17,6 +22,30 @@ const AccountCard = ({ account, onEdit, onView, onDelete }) => {
             onClick: () => onDelete(account),
         },
     ];
+
+    const handleDownloadInvoice = async () => {
+        setIsInvoiceLoading(true);
+        try {
+            console.log("account.id---", account.id);
+            const response = await apiSendAccountInvoice(account.id);
+            console.log("response---", response);
+            if (response?.data?.success === 1 && response.data.pdf_base64) {
+                const linkSource = `data:application/pdf;base64,${response.data.pdf_base64}`;
+                const downloadLink = document.createElement("a");
+                downloadLink.href = linkSource;
+                downloadLink.download = `invoice-${account.id}.pdf`;
+                downloadLink.click();
+                console.log("account downloadLink---", downloadLink);
+                toast.success("Invoice downloaded and sent to account's email!");
+            } else {
+                toast.error(response?.data?.message || "Failed to generate invoice", { duration: 4000 });
+            }
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Something went wrong", { duration: 4000 });
+        } finally {
+            setIsInvoiceLoading(false);
+        }
+    };
     return (
 
         <div
@@ -26,11 +55,24 @@ const AccountCard = ({ account, onEdit, onView, onDelete }) => {
                 <p className="font-semibold text-xl">{account.name}</p>
             </div>
 
-            <UserDropdown options={actionOptions} itemData={account}>
-                <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
-                    <ThreeDotsIcon />
-                </Button>
-            </UserDropdown>
+            <div className="flex items-center gap-3">
+                <div>
+                    <Button
+                        type="filled"
+                        className="py-2 px-3 rounded-md w-full sm:w-auto bg-[#4CAF50] hover:bg-[#45a049] text-white h-full"
+                        onClick={handleDownloadInvoice}
+                        disabled={isInvoiceLoading}
+                    >
+                        {isInvoiceLoading ? "Sending..." : "Invoice"}
+                    </Button>
+                </div>
+
+                <UserDropdown options={actionOptions} itemData={account}>
+                    <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
+                        <ThreeDotsIcon />
+                    </Button>
+                </UserDropdown>
+            </div>
         </div>
     );
 };

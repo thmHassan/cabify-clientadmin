@@ -47,7 +47,6 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
         setIsInvoiceLoading(true);
         console.log("user.id---", user.id);
         try {
-            console.log("inside fun user.id---", user.id);
             const response = await apiSendUserInvoice(user.id);
             console.log("response---", response);
             if (response?.data?.success === 1 && response.data.pdf_base64) {

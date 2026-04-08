@@ -105,3 +105,9 @@ export async function apiEditAccount(data) {
         }),
     });
 }
+
+export async function apiSendAccountInvoice(account_id) {
+    return socketApi.post('/account/send-invoice', {
+        account_id: account_id
+    });
+}

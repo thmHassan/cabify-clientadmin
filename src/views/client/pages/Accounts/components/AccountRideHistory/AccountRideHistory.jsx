@@ -40,10 +40,8 @@ const AccountRideHistory = ({ account, handleClose }) => {
             const payload = {
                 account_id: account?.id,
             };
-            console.log("payload----->", payload);
 
             const response = await apiCollectAccountAndEmail(payload);
-            console.log("response----->", response);
 
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success(response?.data?.message || "Email sent successfully");

@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { apiSendUserInvoice } from "../../../../../../services/UserService";
+import toast from "react-hot-toast";
 
 const UserDetails = ({ user, onEdit, onDelete }) => {
     const tenantData = getTenantData();
     const timeZone = tenantData?.time_zone || "UTC";
+    const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
 
     const actionOptions = [
         {
@@ -39,6 +42,31 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
         if (!name) return "?";
         return name.charAt(0).toUpperCase();
     };
+
+    const handleDownloadInvoice = async () => {
+        setIsInvoiceLoading(true);
+        console.log("user.id---", user.id);
+        try {
+            console.log("inside fun user.id---", user.id);
+            const response = await apiSendUserInvoice(user.id);
+            console.log("response---", response);
+            if (response?.data?.success === 1 && response.data.pdf_base64) {
+                const linkSource = `data:application/pdf;base64,${response.data.pdf_base64}`;
+                const downloadLink = document.createElement("a");
+                downloadLink.href = linkSource;
+                downloadLink.download = `invoice-${user.id}.pdf`;
+                downloadLink.click();
+                toast.success("Invoice downloaded and sent to user's email!");
+            } else {
+                toast.error(response?.data?.message || "Failed to generate invoice", { duration: 4000 });
+            }
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Something went wrong", { duration: 4000 });
+        } finally {
+            setIsInvoiceLoading(false);
+        }
+    };
+
     return (
         <div
             className="bg-white rounded-[15px] p-4 gap-2 flex justify-between items-center hover:shadow-md overflow-x-auto"
@@ -83,6 +111,17 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
                         {formatDate(user.created_at)}
                         {/* {user?.createdAt ? formatDate(user.createdAt) : "12/12/2025"} */}
                     </p>
+                </div>
+
+                <div>
+                    <Button
+                        type="filled"
+                        className="py-2 px-3 rounded-md w-full sm:w-auto bg-[#4CAF50] hover:bg-[#45a049] text-white h-full"
+                        onClick={handleDownloadInvoice}
+                        disabled={isInvoiceLoading}
+                    >
+                        {isInvoiceLoading ? "Sending..." : "Invoice"}
+                    </Button>
                 </div>
 
                 <UserDropdown options={actionOptions} itemData={user}>

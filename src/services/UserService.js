@@ -1,7 +1,7 @@
-import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
+import socketApi from "./SocketApiService";
 import { CREATE_USER, DELETE_USER, EDIT_USER, GET_USER_BY_ID, GET_USER_LIST, POST_EDIT_USER_STATUS, RIDE_HISTORY, SEND_USER_NOTIFICATIONS } from "../constants/api.route.constant";
 
 export async function apiCreateUser(data) {
@@ -90,5 +90,11 @@ export async function apiSendUserNotifiction(data) {
                 'Content-Type': 'multipart/form-data',
             },
         }),
+    });
+}
+
+export async function apiSendUserInvoice(user_id) {
+    return socketApi.post("/user/send-invoice", {
+        user_id: user_id,
     });
 }

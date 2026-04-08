@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { apiCollectAccount, apiGetAccountRideHistory } from "../../../../../../services/AccountService";
+import { apiCollectAccountAndEmail, apiGetAccountRideHistory } from "../../../../../../services/AccountService";
 import Button from "../../../../../../components/ui/Button/Button";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
@@ -36,22 +36,26 @@ const AccountRideHistory = ({ account, handleClose }) => {
         try {
             setCollecting(true);
 
-            const formData = new FormData();
-            formData.append("account_id", account?.id);
+            // The backend calculation only requires account_id
+            const payload = {
+                account_id: account?.id,
+            };
+            console.log("payload----->", payload);
 
-            const response = await apiCollectAccount(formData);
+            const response = await apiCollectAccountAndEmail(payload);
+            console.log("response----->", response);
 
             if (response?.data?.success === 1 || response?.status === 200) {
-                toast.success("Amount collected successfully");
+                toast.success(response?.data?.message || "Email sent successfully");
                 fetchRideHistory();
 
                 handleClose();
             } else {
-                toast.error(response?.data?.message || "Failed to collect amount");
+                toast.error(response?.data?.message || "Failed to send email");
             }
         } catch (error) {
             console.error("Collect error:", error);
-            toast.error("Something went wrong while collecting");
+            toast.error(error?.response?.data?.message || "Something went wrong while sending email");
         } finally {
             setCollecting(false);
         }

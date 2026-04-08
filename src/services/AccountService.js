@@ -1,7 +1,8 @@
-import { ACCOUNT_RIDE_HISTORY, COLLECT_ACCOUNT, CREATE_ACCOUNT, DELETE_ACCOUNT, GET_ACCOUNT, GET_ACCOUNT_BY_ID, UPDATE_ACCOUNT } from "../constants/api.route.constant";
+import { ACCOUNT_RIDE_HISTORY, COLLECT_ACCOUNT, COLLECT_ACCOUNT_AND_EMAIL, CREATE_ACCOUNT, DELETE_ACCOUNT, GET_ACCOUNT, GET_ACCOUNT_BY_ID, UPDATE_ACCOUNT } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
+import socketApi from "./SocketApiService";
 
 export async function apiCreateAccount(data) {
     const isFormData = data instanceof FormData;
@@ -65,6 +66,21 @@ export async function apiCollectAccount(data) {
         ...(isFormData && {
             headers: {
                 'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiCollectAccountAndEmail(data) {
+    const isFormData = data instanceof FormData;
+
+    return socketApi({
+        url: COLLECT_ACCOUNT_AND_EMAIL,
+        method: METHOD_POST,
+        data,
+        ...(!isFormData && {
+            headers: {
+                'Content-Type': 'application/json',
             },
         }),
     });

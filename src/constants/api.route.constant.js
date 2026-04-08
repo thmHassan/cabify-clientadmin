@@ -121,7 +121,8 @@ export const CREATE_ACCOUNT = "/company/create-account";
 export const DELETE_ACCOUNT = "/company/delete-account";
 export const GET_ACCOUNT_BY_ID = "/company/edit-account";
 export const ACCOUNT_RIDE_HISTORY = "/company/account-ride-history";
-export const COLLECT_ACCOUNT = "/company/collect-account-amount"
+export const COLLECT_ACCOUNT = "/company/collect-account-amount";
+export const COLLECT_ACCOUNT_AND_EMAIL = "/account/collect-and-email";
 
 // api for tickets
 export const GET_TICKETS = "/company/list-ticket";

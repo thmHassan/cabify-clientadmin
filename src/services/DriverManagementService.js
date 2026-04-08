@@ -203,3 +203,9 @@ export async function apiCollectDriverCommission(driver_id) {
         driver_id: driver_id
     });
 }
+
+export async function apiSendDriverInvoice(driver_id) {
+    return socketApi.post('/driver/send-invoice', {
+        driver_id: driver_id
+    });
+}

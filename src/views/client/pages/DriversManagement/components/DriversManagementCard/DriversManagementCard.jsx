@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { apieditDriverStatus } from "../../../../../../services/DriverManagementService";
+import { apieditDriverStatus, apiSendDriverInvoice } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import SettlementAmountModel from "../SettlementAmountModel";
@@ -16,6 +16,28 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [isSettlementOpen, setIsSettlementOpen] = useState(false);
     const [showSettlementButton, setShowSettlementButton] = useState(false);
     const [commissionPackageType, setCommissionPackageType] = useState(null);
+    const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+
+    const handleDownloadInvoice = async () => {
+        setIsInvoiceLoading(true);
+        try {
+            const response = await apiSendDriverInvoice(driver.id);
+            if (response?.data?.success === 1 && response.data.pdf_base64) {
+                const linkSource = `data:application/pdf;base64,${response.data.pdf_base64}`;
+                const downloadLink = document.createElement("a");
+                downloadLink.href = linkSource;
+                downloadLink.download = `invoice-${driver.id}.pdf`;
+                downloadLink.click();
+                toast.success("Invoice downloaded and sent to driver's email!");
+            } else {
+                toast.error(response?.data?.message || "Failed to generate invoice", { duration: 4000 });
+            }
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Something went wrong", { duration: 4000 });
+        } finally {
+            setIsInvoiceLoading(false);
+        }
+    };
 
     const currencySymbols = {
         INR: "₹",
@@ -199,6 +221,17 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                         </Button>
                     </div>
                 )}
+
+                <div>
+                    <Button
+                        type="filled"
+                        className="py-2 px-3 rounded-md w-full sm:w-auto bg-[#4CAF50] hover:bg-[#45a049] text-white h-full"
+                        onClick={handleDownloadInvoice}
+                        disabled={isInvoiceLoading}
+                    >
+                        {isInvoiceLoading ? "Sending..." : "Invoice"}
+                    </Button>
+                </div>
 
                 <UserDropdown options={actionOptions} itemData={driver}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">

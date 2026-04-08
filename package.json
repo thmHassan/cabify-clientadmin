@@ -17,6 +17,7 @@
     "classnames": "^2.5.1",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.21",
+    "jspdf": "^4.2.1",
     "laravel-echo": "^2.2.7",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",

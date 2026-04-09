@@ -1,6 +1,7 @@
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
+import socketApi from "./SocketApiService";
 import { CREATE_SUB_COMPANY, EDIT_SUB_COMPANY, GET_SUB_COMPANY_BY_ID, GET_SUB_COMPANY_LIST, DELETE_SUB_COMPANY } from "../constants/api.route.constant";
 
 export async function apiCreateSubCompany(data) {
@@ -65,5 +66,11 @@ export async function apiEditSubCompany(data) {
                 'Content-Type': 'multipart/form-data',
             },
         }),
+    });
+}
+
+export async function apiSendSubCompanyInvoice(sub_company_id) {
+    return socketApi.post('/sub-company/send-invoice', {
+        sub_company_id: sub_company_id
     });
 }

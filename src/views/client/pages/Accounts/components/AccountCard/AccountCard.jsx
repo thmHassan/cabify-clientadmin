@@ -26,9 +26,7 @@ const AccountCard = ({ account, onEdit, onView, onDelete }) => {
     const handleDownloadInvoice = async () => {
         setIsInvoiceLoading(true);
         try {
-            console.log("account.id---", account.id);
             const response = await apiSendAccountInvoice(account.id);
-            console.log("response---", response);
             if (response?.data?.success === 1 && response.data.pdf_base64) {
                 const linkSource = `data:application/pdf;base64,${response.data.pdf_base64}`;
                 const downloadLink = document.createElement("a");

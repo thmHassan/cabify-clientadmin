@@ -48,6 +48,7 @@ export const APPROVE_VEHICLE = "/company/approv-vehicle-details"
 export const REJECT_VAHICLE = "/company/reject-vehicle-details"
 export const DRIVER_RIDE_HISTORY = "/company/driver-ride-history"
 export const SEND_DRIVER_NOTIFICATION = "/company/send-driver-notification"
+export const SEND_PACKAGE_HISTORY = "/driver/send-package-history"
 
 // api for driver's documents
 export const GET_DRIVERS_DOCUMENT = "/company/list-document-type";

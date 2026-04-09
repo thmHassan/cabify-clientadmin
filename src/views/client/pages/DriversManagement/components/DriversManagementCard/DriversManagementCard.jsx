@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { apieditDriverStatus, apiSendDriverInvoice } from "../../../../../../services/DriverManagementService";
+import { apieditDriverStatus, apiSendDriverInvoice, apiGetPackageHistory } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import SettlementAmountModel from "../SettlementAmountModel";
+import PackageHistoryModal from "../PackageHistoryModal/PackageHistoryModal";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import { apiGetCommissionData } from "../../../../../../services/SettingsConfigurationServices";
 
@@ -17,6 +18,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     const [showSettlementButton, setShowSettlementButton] = useState(false);
     const [commissionPackageType, setCommissionPackageType] = useState(null);
     const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+    const [isPackageHistoryOpen, setIsPackageHistoryOpen] = useState(false);
 
     const handleDownloadInvoice = async () => {
         setIsInvoiceLoading(true);
@@ -57,6 +59,10 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         {
             label: "Delete",
             onClick: () => onDelete(driver),
+        },
+        {
+            label: "Package History",
+            onClick: () => setIsPackageHistoryOpen(true),
         },
     ];
 
@@ -245,6 +251,13 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                     driver={driver}
                     packageType={commissionPackageType}
                     onClose={() => setIsSettlementOpen(false)}
+                />
+            </Modal>
+
+            <Modal isOpen={isPackageHistoryOpen} onClose={() => setIsPackageHistoryOpen(false)}>
+                <PackageHistoryModal
+                    driver={driver}
+                    onClose={() => setIsPackageHistoryOpen(false)}
                 />
             </Modal>
         </div>

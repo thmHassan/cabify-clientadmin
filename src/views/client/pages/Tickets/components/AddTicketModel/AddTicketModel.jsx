@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { apiReplyTicket } from "../../../../../../services/TicketsServices";
 import Button from "../../../../../../components/ui/Button/Button";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const AddTicketModel = ({ ticket, onClose, refreshList }) => {
+    const { formatDateOnly } = useTimezoneFormatting();
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -46,7 +48,7 @@ const AddTicketModel = ({ ticket, onClose, refreshList }) => {
             </p>
 
             <p className="text-gray-400 text-sm mb-5">
-                {new Date(ticket.created_at).toLocaleDateString("en-GB")}
+                {formatDateOnly(ticket.created_at)}
             </p>
 
             {/* Chat bubbles */}

@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { apiSaveCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
 import { apiGetCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
 import toast from "react-hot-toast";
+import { useTimezone } from "../../../../../../contexts/TimezoneContext";
 
 const CompanyProfile = () => {
+    const { updateTimezone } = useTimezone();
     const [companyProfileData, setCompanyProfileData] = useState({});
     const [tableLoading, setTableLoading] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -20,6 +22,15 @@ const CompanyProfile = () => {
         { value: "America/New_York", label: "America/New_York" },
         { value: "America/Los_Angeles", label: "America/Los_Angeles" },
     ];
+
+    // Check if timezone exists in options, otherwise add it
+    const getTimeZoneOptions = (currentTimezone) => {
+        const options = [...timeZoneOptions];
+        if (currentTimezone && !options.find(opt => opt.value === currentTimezone)) {
+            options.push({ value: currentTimezone, label: currentTimezone });
+        }
+        return options;
+    };
 
     // ✅ Phone number validation — only digits, 7 to 15 characters
     const phoneRegex = /^[0-9]{7,15}$/;
@@ -110,6 +121,10 @@ const CompanyProfile = () => {
 
             if (response?.data?.success === 1) {
                 toast.success("Company profile updated successfully");
+                // Update global timezone if company_timezone changed
+                if (companyProfileData.company_timezone) {
+                    updateTimezone(companyProfileData.company_timezone);
+                }
                 setRefreshTrigger((prev) => prev + 1);
             } else {
                 const msg = response?.data?.message || "Failed to save changes";
@@ -213,7 +228,7 @@ const CompanyProfile = () => {
                             className="sm:px-5 px-4 py-3 border border-[#8D8D8D] rounded-lg w-full shadow-[-4px_4px_6px_0px_#0000001F] text-sm font-semibold disabled:bg-gray-50"
                         >
                             <option value="">Select Time Zone</option>
-                            {timeZoneOptions.map((tz) => (
+                            {getTimeZoneOptions(companyProfileData?.company_timezone).map((tz) => (
                                 <option key={tz.value} value={tz.value}>
                                     {tz.label}
                                 </option>
@@ -221,7 +236,7 @@ const CompanyProfile = () => {
                         </select>
                     </div>
 
-                    {/* ✅ Support Contact Number with error */}
+                    {/* Support Contact Number with error */}
                     <div>
                         <label className="block text-sm font-medium mb-1">Support Contact Number</label>
                         <input

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
+    const { formatDateOnly } = useTimezoneFormatting();
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState(null);
 
@@ -53,7 +55,7 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                             {tickets.customer}
                         </p>
                         <p className="text-xs">
-                            {new Date(tickets.created_at).toLocaleDateString("en-GB")}
+                            {formatDateOnly(tickets.created_at)}
                         </p>
                     </div>
                 </div>

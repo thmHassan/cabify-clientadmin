@@ -6,11 +6,9 @@ import Button from "../../../../../../components/ui/Button/Button";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
 const PackageHistoryModal = ({ onClose, driver }) => {
-    console.log("PackageHistoryModal driver----", driver);
     const [loading, setLoading] = useState(true);
     const [packageHistoryData, setPackageHistoryData] = useState(null);
     const [packageType, setPackageType] = useState(null);
-    console.log("packageType----", packageType);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
 
     const currencySymbols = {
@@ -39,7 +37,6 @@ const PackageHistoryModal = ({ onClose, driver }) => {
         setLoading(true);
         try {
             const response = await apiGetPackageHistory(driver.id);
-            console.log("response response:----", response);
             if (response?.data?.success === 1) {
                 setPackageHistoryData(response.data.data);
                 setPackageType(response.data.package_type);

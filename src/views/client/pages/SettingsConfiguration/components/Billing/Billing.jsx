@@ -3,8 +3,10 @@ import { apiGetInvoiceHistory, apiGetStripeInformation, apiSaveStripeInformation
 import toast from 'react-hot-toast';
 import Button from "../../../../../../components/ui/Button/Button";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const Billing = () => {
+    const { formatDate, formatDateOnly } = useTimezoneFormatting();
     const [invoices, setInvoices] = useState([]);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [invoiceLoading, setInvoiceLoading] = useState(false);
@@ -155,26 +157,6 @@ const Billing = () => {
         }));
     };
 
-    const formatInvoiceDate = (dateString) => {
-        if (!dateString) return "N/A";
-
-        const date = new Date(dateString);
-
-        const datePart = date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        });
-
-        const timePart = date.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-
-        return `${datePart} @ ${timePart}`;
-    };
-
     return (
         <div className="">
             <div className="bg-white rounded-xl shadow p-6 border">
@@ -199,11 +181,7 @@ const Billing = () => {
                                     <div className="flex flex-col text-end">
                                         <span className="text-gray-500">Subscription End Date:</span>
                                         <span className="text-end text-sm">
-                                            {new Date(planDetails.subscription_end_date).toLocaleDateString('en-GB', {
-                                                day: 'numeric',
-                                                month: 'short',
-                                                year: 'numeric'
-                                            })}
+                                            {formatDateOnly(planDetails.subscription_end_date)}
                                         </span>
                                     </div>
                                 )}
@@ -248,7 +226,7 @@ const Billing = () => {
                                 <div className="flex gap-1">
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
                                         <p className="text-[#333333] text-center font-semibold text-sm">
-                                            {formatInvoiceDate(inv.date || inv.created_at)}
+                                            {formatDate(inv.date || inv.created_at)}
                                         </p>
                                     </div>
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">

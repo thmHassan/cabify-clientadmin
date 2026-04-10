@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { apiGetRideHistory, apiGetUser } from "../../../../../../services/UserService";
 import { debounce } from "lodash";
 import History from "./components/History";
+import successSound from "../../../../../../assets/audio/meldix-success-340660.mp3";
 
 const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
@@ -75,7 +76,7 @@ const AlertModal = ({ isOpen, message, onClose }) => {
 
 const playSuccessSound = () => {
     try {
-        const audio = new Audio('/src/assets/audio/meldix-success-340660.mp3');
+        const audio = new Audio(successSound);
         audio.volume = 0.3;
         audio.play().catch(error => {
             console.log('Audio play failed:', error);

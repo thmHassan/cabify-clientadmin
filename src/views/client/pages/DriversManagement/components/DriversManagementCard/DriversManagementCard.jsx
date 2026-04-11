@@ -231,7 +231,7 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                 <div>
                     <Button
                         type="filled"
-                        className="py-2 px-3 rounded-md w-full sm:w-auto bg-[#4CAF50] hover:bg-[#45a049] text-white h-full"
+                        className="py-2 px-3 rounded-md w-full sm:w-auto h-full"
                         onClick={handleDownloadInvoice}
                         disabled={isInvoiceLoading}
                     >

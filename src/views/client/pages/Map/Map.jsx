@@ -261,10 +261,20 @@ const getMapType = () => {
 
 const getApiKeysInternal = (stateApiKeys) => {
   const tenant = getTenantData();
-  return {
-    googleKey: stateApiKeys?.googleKey || tenant?.google_api_key || GOOGLE_KEY,
-    barikoiKey: stateApiKeys?.barikoiKey || tenant?.barikoi_api_key || BARIKOI_KEY,
-  };
+  
+  const googleKey = (stateApiKeys?.googleKey && stateApiKeys.googleKey.startsWith("AIza")) 
+    ? stateApiKeys.googleKey 
+    : (tenant?.google_api_key && tenant.google_api_key.startsWith("AIza"))
+    ? tenant.google_api_key
+    : GOOGLE_KEY;
+
+  const barikoiKey = (stateApiKeys?.barikoiKey && stateApiKeys.barikoiKey.startsWith("bkoi_"))
+    ? stateApiKeys.barikoiKey
+    : (tenant?.barikoi_api_key && tenant.barikoi_api_key.startsWith("bkoi_"))
+    ? tenant.barikoi_api_key
+    : BARIKOI_KEY;
+
+  return { googleKey, barikoiKey };
 };
 
 const COUNTRY_CENTERS = {
@@ -783,10 +793,17 @@ const Map = () => {
         const res = await apiGetCompanyApiKeys();
         if (res.data?.success) {
           const data = res.data.data;
-          setApiKeys({
-            googleKey: data.google_api_key || GOOGLE_KEY,
-            barikoiKey: data.barikoi_api_key || BARIKOI_KEY,
-          });
+
+          // Validate keys - fall back to defaults if they look like placeholders (e.g. "divonyx")
+          const googleKey = (data.google_api_key && data.google_api_key.startsWith("AIza"))
+            ? data.google_api_key
+            : GOOGLE_KEY;
+          const barikoiKey = (data.barikoi_api_key && data.barikoi_api_key.startsWith("bkoi_"))
+            ? data.barikoi_api_key
+            : BARIKOI_KEY;
+
+          setApiKeys({ googleKey, barikoiKey });
+
           if (data.maps_api) {
             setMapType(data.maps_api.toLowerCase());
           }

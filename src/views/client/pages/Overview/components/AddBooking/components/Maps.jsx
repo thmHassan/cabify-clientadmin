@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getTenantData } from "../../../../../../../utils/functions/tokenEncryption";
+import { apiGetCompanyApiKeys } from "../../../../../../../services/SettingsConfigurationServices";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COUNTRY_CENTERS = {
@@ -34,11 +35,11 @@ const getCountryCenter = () => {
     return COUNTRY_CENTERS[code] || COUNTRY_CENTERS.DEFAULT;
 };
 
-const getApiKeys = () => {
+const getApiKeysInternal = (stateApiKeys) => {
     const tenant = getTenantData();
     return {
-        googleKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || tenant?.google_api_key || null,
-        barikoiKey: import.meta.env.VITE_BARIKOI_API_KEY || tenant?.barikoi_api_key || null,
+        googleKey: stateApiKeys?.googleKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || tenant?.google_api_key || null,
+        barikoiKey: stateApiKeys?.barikoiKey || import.meta.env.VITE_BARIKOI_API_KEY || tenant?.barikoi_api_key || null,
     };
 };
 
@@ -76,12 +77,12 @@ const loadMaplibre = () => {
             const link = document.createElement("link");
             link.id = "maplibre-css";
             link.rel = "stylesheet";
-            link.href = "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css";
+            link.href = "https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.css";
             document.head.appendChild(link);
         }
         const s = document.createElement("script");
         s.id = "maplibre-script";
-        s.src = "https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js";
+        s.src = "https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.js";
         s.async = true;
         s.onload = resolve;
         s.onerror = () => { maplibrePromise = null; reject(); };
@@ -113,8 +114,9 @@ const GoogleMap = ({
     onPickupConfirmed,
     onDestinationConfirmed,
     SEARCH_API,
+    apiKeys,
 }) => {
-    const { googleKey } = getApiKeys();
+    const { googleKey } = getApiKeysInternal(apiKeys);
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const markersRef = useRef([]);
@@ -280,8 +282,9 @@ const BarikoiMap = ({
     setDestinationPlotData,
     onPickupConfirmed,
     onDestinationConfirmed,
+    apiKeys,
 }) => {
-    const { barikoiKey } = getApiKeys();
+    const { barikoiKey } = getApiKeysInternal(apiKeys);
     const containerRef = useRef(null);
     const wrapperRef = useRef(null);
     const mapRef = useRef(null);
@@ -542,12 +545,25 @@ export default function Maps({
     onPickupConfirmed,
     onDestinationConfirmed,
     SEARCH_API,
+    apiKeys,
 }) {
+
+
+    useEffect(() => {
+        const { googleKey, barikoiKey } = getApiKeysInternal(apiKeys);
+        if (mapsApi === "barikoi" && barikoiKey) {
+            loadMaplibre().catch(console.error);
+        } else if (mapsApi === "google" && googleKey) {
+            loadGoogleMaps(googleKey).catch(console.error);
+        }
+    }, [mapsApi, apiKeys]);
+
     const sharedProps = {
         pickupCoords, destinationCoords, viaCoords,
         setFieldValue, fetchPlotName,
         setPickupPlotData, setDestinationPlotData,
         onPickupConfirmed, onDestinationConfirmed,
+        apiKeys,
     };
     if (mapsApi === "barikoi") return <BarikoiMap {...sharedProps} />;
     return <GoogleMap {...sharedProps} SEARCH_API={SEARCH_API} />;

@@ -14,15 +14,16 @@ import { apiGetRideHistory, apiGetUser } from "../../../../../../services/UserSe
 import { debounce } from "lodash";
 import History from "./components/History";
 import successSound from "../../../../../../assets/audio/meldix-success-340660.mp3";
+import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
 
 const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
 
-const loadGoogleScript = () =>
+const loadGoogleScript = (apiKey) =>
     new Promise((resolve) => {
         if (window.google?.maps?.places) return resolve();
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey || GOOGLE_KEY}&libraries=places`;
         script.async = true;
         script.onload = resolve;
         document.head.appendChild(script);
@@ -93,7 +94,9 @@ const AddBooking = ({ setIsOpen }) => {
     const [driverList, setDriverList] = useState([]);
     const [accountList, setAccountList] = useState([]);
     const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
-    const [mapsApi, setMapsApi] = useState("google");
+    const [mapsApi, setMapsApi] = useState(null);
+    const [searchApi, setSearchApi] = useState(null);
+    const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
     const [googleService, setGoogleService] = useState(null);
     const [pickupSuggestions, setPickupSuggestions] = useState([]);
@@ -129,12 +132,54 @@ const AddBooking = ({ setIsOpen }) => {
     const [confirmedDestination, setConfirmedDestination] = useState(null);
     const [confirmedVia, setConfirmedVia] = useState([]);
 
+    const [apiKeys, setApiKeys] = useState({ googleKey: GOOGLE_KEY, barikoiKey: BARIKOI_KEY });
+
+    useEffect(() => {
+        const fetchApiKeys = async () => {
+            try {
+                const res = await apiGetCompanyApiKeys();
+                if (res.data?.success) {
+                    const data = res.data.data;
+                    
+                    // Validate keys - fall back to defaults if they look like placeholders (e.g. "divonyx2")
+                    const googleKey = (data.google_api_key && data.google_api_key.startsWith("AIza")) 
+                        ? data.google_api_key 
+                        : GOOGLE_KEY;
+                    const barikoiKey = (data.barikoi_api_key && data.barikoi_api_key.startsWith("bkoi_")) 
+                        ? data.barikoi_api_key 
+                        : BARIKOI_KEY;
+
+                    setApiKeys({ googleKey, barikoiKey });
+
+                    if (data.maps_api) {
+                        setMapsApi(data.maps_api.toLowerCase());
+                    }
+                    if (data.search_api) {
+                        setSearchApi(data.search_api.toLowerCase());
+                    }
+                    setIsConfigLoaded(true);
+                } else {
+                    // Fallback to defaults if API fails
+                    setMapsApi("google");
+                    setSearchApi("google");
+                    setIsConfigLoaded(true);
+                }
+            } catch (err) {
+                console.error("Fetch API keys error:", err);
+                // Fallback to defaults on error
+                setMapsApi("google");
+                setSearchApi("google");
+                setIsConfigLoaded(true);
+            }
+        };
+        fetchApiKeys();
+    }, []);
+
     const clearCalcError = (key) => setCalculateErrors(prev => ({ ...prev, [key]: undefined }));
     const clearBookingError = (key) => setBookingErrors(prev => ({ ...prev, [key]: undefined }));
     const clearFieldErrors = (key) => { clearCalcError(key); clearBookingError(key); };
 
     const tenant = getTenantData();
-    const SEARCH_API = tenant?.search_api;
     const COUNTRY_CODE = tenant?.country_of_use?.toLowerCase();
 
     const chargeFields = [
@@ -178,14 +223,6 @@ const AddBooking = ({ setIsOpen }) => {
         setShowUserSuggestions(false);
         setUserSuggestions([]);
     };
-
-    useEffect(() => {
-        const tenant = getTenantData();
-        if (tenant?.maps_api) {
-            const mapType = tenant.maps_api.toLowerCase();
-            setMapsApi(mapType === "google" ? "google" : mapType === "barikoi" ? "barikoi" : "google");
-        }
-    }, []);
 
     useEffect(() => {
         const fetchSubCompanies = async () => {
@@ -259,12 +296,12 @@ const AddBooking = ({ setIsOpen }) => {
     }, []);
 
     useEffect(() => {
-        if (SEARCH_API === "google" || SEARCH_API === "both") {
-            loadGoogleScript().then(() => {
+        if (searchApi === "google" || searchApi === "both") {
+            loadGoogleScript(apiKeys.googleKey).then(() => {
                 setGoogleService(new window.google.maps.places.AutocompleteService());
             });
         }
-    }, []);
+    }, [apiKeys.googleKey, searchApi]);
 
     const handleDriverSelect = (selectedDriverId, setFieldValue) => {
         setFieldValue("driver", selectedDriverId);
@@ -311,7 +348,7 @@ const AddBooking = ({ setIsOpen }) => {
         if (!query) return;
         let list = [];
 
-        if ((SEARCH_API === "google" || SEARCH_API === "both") && googleService) {
+        if ((searchApi === "google" || searchApi === "both") && googleService) {
             googleService.getPlacePredictions(
                 { input: query, componentRestrictions: { country: COUNTRY_CODE } },
                 (predictions, status) => {
@@ -323,11 +360,11 @@ const AddBooking = ({ setIsOpen }) => {
             );
         }
 
-        if (SEARCH_API === "barikoi" || SEARCH_API === "both") {
-            const res = await fetch(`https://barikoi.xyz/v1/api/search/autocomplete/${BARIKOI_KEY}/place?q=${encodeURIComponent(query)}`);
+        if (searchApi === "barikoi" || searchApi === "both") {
+            const res = await fetch(`https://barikoi.xyz/v1/api/search/autocomplete/${apiKeys.barikoiKey || BARIKOI_KEY}/place?q=${encodeURIComponent(query)}`);
             const json = await res.json();
             const barikoiList = (json.places || []).map((p) => ({ label: p.address || p.place_name, lat: p.latitude, lng: p.longitude, source: "barikoi" }));
-            list = SEARCH_API === "both" ? [...list, ...barikoiList] : barikoiList;
+            list = searchApi === "both" ? [...list, ...barikoiList] : barikoiList;
             updateSuggestions(list, type, index);
         }
     };
@@ -390,7 +427,7 @@ const AddBooking = ({ setIsOpen }) => {
                 setFieldValue(`via_latitude[${index}]`, latLng.lat);
                 setFieldValue(`via_longitude[${index}]`, latLng.lng);
                 setFieldValue(`via_plot_id[${index}]`, plotData.id);
-                setConfirmedVia(prev => {                                       // ✅ map update
+                setConfirmedVia(prev => {
                     const updated = [...prev];
                     updated[index] = { lat: latLng.lat, lng: latLng.lng };
                     return updated;
@@ -408,7 +445,7 @@ const AddBooking = ({ setIsOpen }) => {
     const getCoordinatesFromAddress = async (address) => {
         if (!address) return null;
         try {
-            if ((SEARCH_API === "google" || SEARCH_API === "both") && window.google?.maps) {
+            if ((searchApi === "google" || searchApi === "both") && window.google?.maps) {
                 const geocoder = new window.google.maps.Geocoder();
                 return new Promise((resolve) => {
                     geocoder.geocode({ address }, (results, status) => {
@@ -418,8 +455,8 @@ const AddBooking = ({ setIsOpen }) => {
                     });
                 });
             }
-            if (SEARCH_API === "barikoi" || SEARCH_API === "both") {
-                const res = await fetch(`https://barikoi.xyz/v1/api/search/autocomplete/${BARIKOI_KEY}/place?q=${encodeURIComponent(address)}`);
+            if (searchApi === "barikoi" || searchApi === "both") {
+                const res = await fetch(`https://barikoi.xyz/v1/api/search/autocomplete/${apiKeys.barikoiKey || BARIKOI_KEY}/place?q=${encodeURIComponent(address)}`);
                 const json = await res.json();
                 if (json.places?.length > 0) {
                     return { latitude: json.places[0].latitude, longitude: json.places[0].longitude };
@@ -1311,20 +1348,28 @@ const AddBooking = ({ setIsOpen }) => {
 
                                     {/* Map */}
                                     <div className="h-full">
-                                        <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4">
-                                            <Maps
-                                                mapsApi={mapsApi}
-                                                pickupCoords={confirmedPickup}           // ✅ stable coords
-                                                destinationCoords={confirmedDestination} // ✅ stable coords
-                                                viaCoords={confirmedVia}                 // ✅ stable coords
-                                                setFieldValue={setFieldValue}
-                                                fetchPlotName={fetchPlotName}
-                                                setPickupPlotData={setPickupPlotData}
-                                                setDestinationPlotData={setDestinationPlotData}
-                                                onPickupConfirmed={setConfirmedPickup}           // ✅ map click callback
-                                                onDestinationConfirmed={setConfirmedDestination} // ✅ map click callback
-                                                SEARCH_API={SEARCH_API}
-                                            />
+                                        <div className="md:w-full xl:w-96 lg:w-72 w-full h-full rounded-xl border mt-4 min-h-[400px] flex items-center justify-center bg-gray-50">
+                                            {isConfigLoaded ? (
+                                                <Maps
+                                                    mapsApi={mapsApi}
+                                                    apiKeys={apiKeys}
+                                                    pickupCoords={confirmedPickup}           // ✅ stable coords
+                                                    destinationCoords={confirmedDestination} // ✅ stable coords
+                                                    viaCoords={confirmedVia}                 // ✅ stable coords
+                                                    setFieldValue={setFieldValue}
+                                                    fetchPlotName={fetchPlotName}
+                                                    setPickupPlotData={setPickupPlotData}
+                                                    setDestinationPlotData={setDestinationPlotData}
+                                                    onPickupConfirmed={setConfirmedPickup}           // ✅ map click callback
+                                                    onDestinationConfirmed={setConfirmedDestination} // ✅ map click callback
+                                                    SEARCH_API={searchApi}
+                                                />
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    <p className="text-sm text-gray-500">Loading map configuration...</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="mt-4">
                                             <label className="text-sm font-semibold text-left md:w-16 w-16">Distance</label>

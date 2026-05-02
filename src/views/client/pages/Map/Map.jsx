@@ -9,6 +9,7 @@ import { renderToString } from "react-dom/server";
 import RedCarIcon from "../../../../components/svg/RedCarIcon";
 import GreenCarIcon from "../../../../components/svg/GreenCarIcon";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
+import { apiGetCompanyApiKeys } from "../../../../services/SettingsConfigurationServices";
 
 const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
@@ -56,7 +57,6 @@ const createSvgMarkerEl = (status) => {
   return el;
 };
 
-// ── Shared info popup HTML ────────────────────────────────────────────────────
 const buildInfoHTML = ({ name, phoneNo, vehiclePlateNo, driving_status }) => {
   const statusColor = driving_status === "busy" ? "#10B981" : "#EF4444";
   const statusLabel = driving_status === "busy" ? "Active" : "Idle";
@@ -164,7 +164,7 @@ const loadGoogleMaps = (apiKey) => {
 
     const script = document.createElement("script");
     script.id = "google-maps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey || GOOGLE_KEY}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.onload = resolve;
@@ -259,11 +259,11 @@ const getMapType = () => {
   return "google";
 };
 
-const getApiKeys = () => {
+const getApiKeysInternal = (stateApiKeys) => {
   const tenant = getTenantData();
   return {
-    googleKey: tenant?.google_api_key || GOOGLE_KEY,
-    barikoiKey: tenant?.barikoi_api_key || BARIKOI_KEY,
+    googleKey: stateApiKeys?.googleKey || tenant?.google_api_key || GOOGLE_KEY,
+    barikoiKey: stateApiKeys?.barikoiKey || tenant?.barikoi_api_key || BARIKOI_KEY,
   };
 };
 
@@ -335,8 +335,9 @@ const GoogleMapView = ({
   searchQuery,
   socket,
   setDriverData,
+  apiKeys,
 }) => {
-  const { googleKey } = getApiKeys();
+  const { googleKey } = getApiKeysInternal(apiKeys);
 
   const fitMapToMarkers = () => {
     if (!mapInstance.current || Object.keys(markers.current).length === 0)
@@ -384,6 +385,11 @@ const GoogleMapView = ({
 
     return () => {
       isMounted = false;
+      if (mapInstance.current) {
+        Object.values(markers.current).forEach((m) => m.setMap(null));
+        markers.current = {};
+        mapInstance.current = null;
+      }
     };
   }, []);
 
@@ -425,7 +431,6 @@ const GoogleMapView = ({
       }));
 
       const markerIcon = MARKER_ICONS[driving_status] || MARKER_ICONS.idle;
-      // ── Rich popup with name + phone + plate ──
       const infoContent = buildInfoHTML({ name, phoneNo, vehiclePlateNo, driving_status });
 
       if (markers.current[driver_id]) {
@@ -545,9 +550,10 @@ const BarikoiMapView = ({
   searchQuery,
   socket,
   setDriverData,
+  apiKeys,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { barikoiKey } = getApiKeys();
+  const { barikoiKey } = getApiKeysInternal(apiKeys);
 
   const fitMapToMarkers = () => {
     if (!mapInstance.current || Object.keys(markers.current).length === 0)
@@ -610,9 +616,13 @@ const BarikoiMapView = ({
     return () => {
       isMounted = false;
       if (mapInstance.current) {
-        Object.values(markers.current).forEach((m) => m.remove());
+        Object.values(markers.current).forEach((m) => {
+          if (m.remove) m.remove();
+        });
         markers.current = {};
-        mapInstance.current.remove();
+        if (typeof mapInstance.current.remove === 'function') {
+          mapInstance.current.remove();
+        }
         mapInstance.current = null;
       }
     };
@@ -760,11 +770,33 @@ const Map = () => {
     MAP_STATUS_OPTIONS.find((o) => o.value === "all") ?? MAP_STATUS_OPTIONS[0]
   );
   const [driverData, setDriverData] = useState({});
-  const [mapType] = useState(() => getMapType());
+  const [mapType, setMapType] = useState(() => getMapType());
   const socket = useSocket();
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markers = useRef({});
+  const [apiKeys, setApiKeys] = useState({ googleKey: GOOGLE_KEY, barikoiKey: BARIKOI_KEY });
+
+  useEffect(() => {
+    const fetchApiKeys = async () => {
+      try {
+        const res = await apiGetCompanyApiKeys();
+        if (res.data?.success) {
+          const data = res.data.data;
+          setApiKeys({
+            googleKey: data.google_api_key || GOOGLE_KEY,
+            barikoiKey: data.barikoi_api_key || BARIKOI_KEY,
+          });
+          if (data.maps_api) {
+            setMapType(data.maps_api.toLowerCase());
+          }
+        }
+      } catch (err) {
+        console.error("Fetch API keys error:", err);
+      }
+    };
+    fetchApiKeys();
+  }, []);
 
   const sharedProps = {
     mapRef,
@@ -775,6 +807,7 @@ const Map = () => {
     searchQuery,
     socket,
     setDriverData,
+    apiKeys,
   };
 
   return (

@@ -114,6 +114,7 @@ export const SAVE_THIRD_PARTY_INFORMATION = "/company/third-party-information"
 export const SAVE_DISPATCH_SYSTEM = "/company/set-dispatch-system"
 export const GATE_DISPATCH_SYSTEM = "/company/get-dispatch-system"
 export const MATCH_PASSWORD = "/company/match-password"
+export const GET_COMPANY_API_KEYS = "/company/get-api-keys"
 
 //api for account
 export const GET_ACCOUNT = "/company/list-account";

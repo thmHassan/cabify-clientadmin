@@ -70,26 +70,88 @@ const loadGoogleMaps = (apiKey) => {
 
 let maplibrePromise = null;
 const loadMaplibre = () => {
-    if (window.maplibregl) return Promise.resolve();
+    if (window.maplibregl?.Map) return Promise.resolve();
     if (maplibrePromise) return maplibrePromise;
     maplibrePromise = new Promise((resolve, reject) => {
         if (!document.getElementById("maplibre-css")) {
             const link = document.createElement("link");
             link.id = "maplibre-css";
             link.rel = "stylesheet";
-            link.href = "https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.css";
+            link.href = "https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css";
             document.head.appendChild(link);
         }
+
+        const existing = document.getElementById("maplibre-script");
+        if (existing) {
+            const check = setInterval(() => {
+                if (window.maplibregl?.Map) { clearInterval(check); resolve(); }
+            }, 100);
+            return;
+        }
+
         const s = document.createElement("script");
         s.id = "maplibre-script";
-        s.src = "https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.js";
+        s.src = "https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js";
         s.async = true;
-        s.onload = resolve;
+        s.onload = () => {
+            setTimeout(() => {
+                if (window.maplibregl?.Map) resolve();
+                else reject(new Error("MapLibre not available after load"));
+            }, 150);
+        };
         s.onerror = () => { maplibrePromise = null; reject(); };
         document.head.appendChild(s);
     });
     return maplibrePromise;
 };
+
+const buildBarikoiRasterStyle = (barikoiKey) => ({
+    version: 8,
+    name: "Barikoi",
+    glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
+    sources: {
+        "barikoi-tiles": {
+            type: "raster",
+            tiles: [
+                `https://tile.barikoi.com/styles/barikoi/tiles/{z}/{x}/{y}.png?key=${barikoiKey}`,
+            ],
+            tileSize: 256,
+            attribution: "© Barikoi | © OpenStreetMap contributors",
+            maxzoom: 19,
+        },
+    },
+    layers: [
+        {
+            id: "barikoi-tiles",
+            type: "raster",
+            source: "barikoi-tiles",
+            minzoom: 0,
+            maxzoom: 22,
+        },
+    ],
+});
+
+const buildOsmFallbackStyle = () => ({
+    version: 8,
+    name: "OSM Fallback",
+    glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
+    sources: {
+        "osm-tiles": {
+            type: "raster",
+            tiles: [
+                "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            ],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors",
+            maxzoom: 19,
+        },
+    },
+    layers: [
+        { id: "osm-tiles", type: "raster", source: "osm-tiles", minzoom: 0, maxzoom: 22 },
+    ],
+});
 
 // ─── Loading placeholder ──────────────────────────────────────────────────────
 const LoadingPlaceholder = () => (
@@ -329,44 +391,68 @@ const BarikoiMap = ({
         if (!isLoaded || !containerRef.current || mapRef.current || !barikoiKey) return;
         try {
             const center = getCountryCenter();
-            mapRef.current = new window.maplibregl.Map({
-                container: containerRef.current,
-                style: `https://map.barikoi.com/styles/osm-liberty/style.json?key=${barikoiKey}`,
-                center: [center.lng, center.lat],
-                zoom: 5,
-                attributionControl: false,
-            });
-            mapRef.current.addControl(
-                new window.maplibregl.NavigationControl({ showCompass: true }),
-                "bottom-right"
-            );
-            mapRef.current.on("error", (e) => {
-                // Only log — don't block the map for tile/style errors
-                console.warn("Barikoi map error:", e?.error?.message || e);
-            });
-            mapRef.current.on("click", async (e) => {
-                const lat = e.lngLat.lat;
-                const lng = e.lngLat.lng;
-                clickCountRef.current += 1;
-                const address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                const plotData = await fetchPlotName(lat, lng);
-                if (clickCountRef.current === 1) {
-                    setFieldValue("pickup_point", address);
-                    setFieldValue("pickup_latitude", lat);
-                    setFieldValue("pickup_longitude", lng);
-                    setFieldValue("pickup_plot_id", plotData.id);
-                    setPickupPlotData(plotData);
-                    onPickupConfirmed?.({ lat, lng });
-                } else if (clickCountRef.current === 2) {
-                    setFieldValue("destination", address);
-                    setFieldValue("destination_latitude", lat);
-                    setFieldValue("destination_longitude", lng);
-                    setFieldValue("destination_plot_id", plotData.id);
-                    setDestinationPlotData(plotData);
-                    onDestinationConfirmed?.({ lat, lng });
-                    clickCountRef.current = 0;
+            const tryInit = (style, isFallback = false) => {
+                try {
+                    const map = new window.maplibregl.Map({
+                        container: containerRef.current,
+                        style,
+                        center: [center.lng, center.lat],
+                        zoom: 12,
+                        attributionControl: false,
+                    });
+                    map.addControl(
+                        new window.maplibregl.NavigationControl({ showCompass: true }),
+                        "bottom-right"
+                    );
+
+                    map.on("error", (e) => {
+                        const msg = e?.error?.message || String(e);
+                        if (!isFallback && (msg.includes("403") || msg.includes("401") || msg.includes("Failed to fetch"))) {
+                            if (!map._usingFallback) {
+                                map._usingFallback = true;
+                                console.warn("Barikoi tiles unavailable, switching to OSM fallback");
+                                map.setStyle(buildOsmFallbackStyle());
+                            }
+                        }
+                    });
+
+                    map.on("click", async (e) => {
+                        const lat = e.lngLat.lat;
+                        const lng = e.lngLat.lng;
+                        clickCountRef.current += 1;
+                        const address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        const plotData = await fetchPlotName(lat, lng);
+                        if (clickCountRef.current === 1) {
+                            setFieldValue("pickup_point", address);
+                            setFieldValue("pickup_latitude", lat);
+                            setFieldValue("pickup_longitude", lng);
+                            setFieldValue("pickup_plot_id", plotData.id);
+                            setPickupPlotData(plotData);
+                            onPickupConfirmed?.({ lat, lng });
+                        } else if (clickCountRef.current === 2) {
+                            setFieldValue("destination", address);
+                            setFieldValue("destination_latitude", lat);
+                            setFieldValue("destination_longitude", lng);
+                            setFieldValue("destination_plot_id", plotData.id);
+                            setDestinationPlotData(plotData);
+                            onDestinationConfirmed?.({ lat, lng });
+                            clickCountRef.current = 0;
+                        }
+                    });
+
+                    mapRef.current = map;
+                } catch (err) {
+                    console.error("Map init failed:", err);
+                    if (!isFallback) {
+                        console.warn("Retrying with OSM fallback...");
+                        tryInit(buildOsmFallbackStyle(), true);
+                    } else {
+                        setLoadError(true);
+                    }
                 }
-            });
+            };
+
+            tryInit(buildBarikoiRasterStyle(barikoiKey));
         } catch (err) {
             console.error("Barikoi map init error:", err);
             setLoadError(true);

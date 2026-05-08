@@ -416,26 +416,22 @@ const AddVehicleType = () => {
               )}
 
               {/* Basic Details Section */}
-              <div>
+              <div className="w-full">
                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
-                  <div className="w-full">
-                    <div className="max-w-6xl mx-auto">
-                      <BasicDetails
-                        values={values}
-                        setFieldValue={setFieldValue}
-                        errors={errors}
-                        touched={touched}
-                        distanceUnit={distanceUnit}
-                        backupBidTypes={backupBidTypes}
-                        handleBackupBidTypeChange={handleBackupBidTypeChange}
-                        allVehicleType={allVehicleType}
-                        vehicleImage={vehicleImage}
-                        setVehicleImage={setVehicleImage}
-                        existingVehicleImageUrl={existingVehicleImageUrl}
-                        setExistingVehicleImageUrl={setExistingVehicleImageUrl}
-                      />
-                    </div>
-                  </div>
+                  <BasicDetails
+                    values={values}
+                    setFieldValue={setFieldValue}
+                    errors={errors}
+                    touched={touched}
+                    distanceUnit={distanceUnit}
+                    backupBidTypes={backupBidTypes}
+                    handleBackupBidTypeChange={handleBackupBidTypeChange}
+                    allVehicleType={allVehicleType}
+                    vehicleImage={vehicleImage}
+                    setVehicleImage={setVehicleImage}
+                    existingVehicleImageUrl={existingVehicleImageUrl}
+                    setExistingVehicleImageUrl={setExistingVehicleImageUrl}
+                  />
                 </CardContainer>
               </div>
 

@@ -16,40 +16,33 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
             // Update map if coordinates are available
             if (initialValue.pickup_point && initialValue.destination_point) {
-                const pickup = initialValue.pickup_point.split(',');
-                const destination = initialValue.destination_point.split(',');
+                const pickup = initialValue.pickup_point.split(',').map(v => v.trim());
+                const destination = initialValue.destination_point.split(',').map(v => v.trim());
 
                 if (pickup.length === 2 && destination.length === 2) {
-                    const newMapUrl = `https://www.google.com/maps/embed/v1/directions?key=YOUR_GOOGLE_MAPS_API_KEY&origin=${pickup[0].trim()},${pickup[1].trim()}&destination=${destination[0].trim()},${destination[1].trim()}`;
-                    setMapUrl(newMapUrl);
+                    let waypointsStr = "";
+                    if (initialValue.via_point) {
+                        try {
+                            const vias = typeof initialValue.via_point === 'string' ? JSON.parse(initialValue.via_point) : initialValue.via_point;
+                            if (Array.isArray(vias) && vias.length > 0) {
+                                waypointsStr = "&waypoints=" + vias.map(v => `${v.latitude},${v.longitude}`).join('|');
+                            }
+                        } catch (e) {
+                            console.error("Error parsing via_point", e);
+                        }
+                    }
+
+                    const url = `https://www.google.com/maps/embed/v1/directions
+                    ?key=AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU
+                    &origin=${pickup[0]},${pickup[1]}
+                    &destination=${destination[0]},${destination[1]}${waypointsStr}
+                    &zoom=12`;
+
+                    setMapUrl(url.replace(/\s/g, ""));
                 }
             }
         }
     }, [initialValue]);
-
-    useEffect(() => {
-        if (initialValue?.pickup_point && initialValue?.destination_point) {
-
-            const [pickupLat, pickupLng] = initialValue.pickup_point
-                .split(",")
-                .map(val => val.trim());
-
-            const [destLat, destLng] = initialValue.destination_point
-                .split(",")
-                .map(val => val.trim());
-
-            if (pickupLat && pickupLng && destLat && destLng) {
-                const url = `https://www.google.com/maps/embed/v1/directions
-                ?key=AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU
-                &origin=${pickupLat},${pickupLng}
-                &destination=${destLat},${destLng}
-                &zoom=12`;
-
-                setMapUrl(url.replace(/\s/g, ""));
-            }
-        }
-    }, [initialValue]);
-
 
     const chargeFields = [
         "fares",
@@ -64,8 +57,27 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
         "congestion_toll",
         "ac_waiting_charges",
     ];
+
+    const parseViaLocations = (val) => {
+        if (!val) return [];
+        try {
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        } catch (e) {
+            return [];
+        }
+    };
+
+    const parseViaPoints = (val) => {
+        if (!val) return [];
+        try {
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        } catch (e) {
+            return [];
+        }
+    };
+
     return (
-        <div>
+        <div className="w-full">
             <Formik
                 initialValues={{
                     sub_company: rideData?.sub_company || "",
@@ -82,6 +94,8 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                     booking_type: rideData?.booking_type || "local",
                     pickup_point: rideData?.pickup_location || "",
                     destination: rideData?.destination_location || "",
+                    via_locations: parseViaLocations(rideData?.via_location),
+                    via_points: parseViaPoints(rideData?.via_point),
                     name: rideData?.name || "",
                     email: rideData?.email || "",
                     phone_no: rideData?.phone_no || "",
@@ -95,7 +109,6 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                     hand_luggage: rideData?.hand_luggage || 0,
                     special_request: rideData?.special_request || "",
                     payment_reference: rideData?.payment_reference || "",
-                    // quoted: false,
                     payment_method: rideData?.payment_method || "Cash",
                     booking_fee_charges: 0,
                     fares: parseFloat(rideData?.booking_amount) || 0,
@@ -116,470 +129,361 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                 {({ values, setFieldValue }) => {
                     return (
                         <Form>
-                            <div className="w-full">
-                                <div className="space-y-4 w-full">
-                                    <div className="w-full flex max-sm:flex-col md:items-center gap-4">
-                                        <h2 className="text-xl font-semibold">View Booking - #{rideData?.booking_id || 'N/A'}</h2>
+                            <div className="w-full flex flex-col gap-6 p-4 md:p-8">
+                                <div className="w-full flex max-sm:flex-col md:items-center gap-4">
+                                    <h2 className="text-xl font-semibold whitespace-nowrap">View Booking - #{rideData?.booking_id || 'N/A'}</h2>
 
-                                        {rideData?.booking_status && (
-                                            <span className={`px-3 py-1 rounded-full w-fit h-fit text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                rideData.booking_status === 'pending' ? 'bg-[#F5C60B] text-white' :
-                                                    rideData.booking_status === 'cancelled' ? 'bg-[#FF4747] text-white' :
-                                                        rideData.booking_status === 'waiting' ? 'bg-[#1F41BB] text-white' :
-                                                            rideData.booking_status === 'arrived' ? 'bg-purple-100 text-white' :
-                                                                'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {rideData.booking_status.toUpperCase()}
-                                            </span>
-                                        )}
+                                    {rideData?.booking_status && (
+                                        <span className={`px-3 py-1 rounded-full w-fit h-fit text-sm font-medium ${rideData.booking_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            rideData.booking_status === 'pending' ? 'bg-[#F5C60B] text-white' :
+                                                rideData.booking_status === 'cancelled' ? 'bg-[#FF4747] text-white' :
+                                                    rideData.booking_status === 'waiting' ? 'bg-[#1F41BB] text-white' :
+                                                        rideData.booking_status === 'arrived' ? 'bg-purple-100 text-white' :
+                                                            'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {rideData.booking_status.toUpperCase()}
+                                        </span>
+                                    )}
 
-                                        <div className="flex md:flex-row flex-col md:gap-4 gap-0 md:items-center">
-                                            <div className="md:w-72 w-full">
-                                                <input
-                                                    type="text"
-                                                    name="sub_company"
-                                                    value={rideData?.sub_company_detail?.name || ""}
-                                                    className="w-full border-[1.5px] border-[#8D8D8D] px-3 py-2 rounded-[8px]"
-                                                    disabled
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex max-sm:justify-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D]">
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={values.multi_booking === "yes"}
-                                                    disabled
-                                                />
-                                            </label>
-
-                                            <span className="text-sm ml-2">
-                                                {values.multi_booking === "yes" ? "Multi Booking" : "Single Booking"}
-                                            </span>
+                                    <div className="flex md:flex-row flex-col md:gap-4 gap-0 md:items-center flex-1">
+                                        <div className="md:w-72 w-full">
+                                            <input
+                                                type="text"
+                                                name="sub_company"
+                                                value={rideData?.sub_company_detail?.name || "Select Sub Company"}
+                                                className="w-full border-[1.5px] border-[#8D8D8D] px-3 py-2 rounded-[8px] bg-gray-50"
+                                                disabled
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="w-full bg-white">
-                                        <div className="flex lg:flex-row md:flex-col flex-col gap-4">
-                                            <div className="lg:col-span-3 space-y-4 flex-1">
-                                                {values.multi_booking === "yes" && (
-                                                    <div className="w-full space-y-3">
-                                                        <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
-                                                            <span className="font-semibold text-sm sm:text-base">
-                                                                Select day of the week
-                                                            </span>
-                                                            <div className="flex flex-wrap max-sm:grid max-sm:grid-cols-4 gap-2">
-                                                                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
-                                                                    const isChecked = values.multi_days.includes(day.toLowerCase());
-                                                                    return (
-                                                                        <label
-                                                                            key={day}
-                                                                            className="flex items-center gap-2 text-sm sm:text-base cursor-pointer"
-                                                                        >
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={isChecked}
-                                                                                // disabled
-                                                                                className="w-4 h-4 accent-[#1F41BB]"
-                                                                            />
-                                                                            {day}
-                                                                        </label>
+                                    <div className="flex items-center rounded-[8px] px-3 py-2 border-[1.5px] shadow-lg border-[#8D8D8D] bg-white">
+                                        <span className="text-sm mr-2">
+                                            {values.multi_booking === "yes" ? "Multi Booking" : "Single Booking"}
+                                        </span>
+                                    </div>
+                                </div>
 
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid md:grid-cols-3 grid-cols-1 items-center gap-4">
-                                                            <div className="flex gap-2">
-                                                                <label className="text-sm font-semibold mb-1 block">Week</label>
-                                                                <select
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.week_pattern}
-                                                                    disabled
-                                                                >
-                                                                    <option value="">Every 1st Days of Week</option>
-                                                                    <option value="every">Every Week</option>
-                                                                    <option value="alternate">Alternate Weeks</option>
-                                                                </select>
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <label className="text-sm font-semibold mb-1 block">Start At</label>
-                                                                <input
-                                                                    type="date"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.multi_start_at || ""}
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <label className="text-sm font-semibold mb-1 block">End At</label>
-                                                                <input
-                                                                    type="date"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                    value={values.multi_end_at || ""}
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-                                                    <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold md:text-center w-20">Pick up Time</label>
-                                                        <div className="w-full flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                                value={values.pickup_time || "asap"}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex w-full items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 w-20 md:w-auto">Date</label>
-                                                        <input
-                                                            type="date"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                            value={values.booking_date || ""}
-                                                            disabled
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex w-full items-center gap-2 md:text-center">
-                                                        <label className="text-sm font-semibold mb-1 w-20">Booking Type</label>
-                                                        <input
-                                                            type="text"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full"
-                                                            value={values.booking_date || ""}
-                                                            onChange={(e) => setFieldValue("booking_date", e.target.value)}
-                                                        />
+                                <div className="flex xl:flex-row lg:flex-row md:flex-col flex-col gap-4 mb-2">
+                                    <div className="flex-1 space-y-4">
+                                        {values.multi_booking === "yes" && (
+                                            <div className="w-full space-y-3 p-3 border rounded-lg bg-gray-50">
+                                                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
+                                                    <span className="font-semibold text-sm">
+                                                        Select day of the week
+                                                    </span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
+                                                            const isChecked = values.multi_days.includes(day.toLowerCase());
+                                                            return (
+                                                                <label key={day} className="flex items-center gap-2 text-sm cursor-pointer opacity-70">
+                                                                    <input type="checkbox" checked={isChecked} disabled className="w-4 h-4 accent-[#1F41BB]" />
+                                                                    {day}
+                                                                </label>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
-
-                                                <div className="relative flex gap-2 w-full flex-col md:flex-row">
-                                                    <InputBox
-                                                        label="Pick up Point"
-                                                        type="text"
-                                                        name="pickup_point"
-                                                        value={values.pickup_point || ''}
-                                                        placeholder="Search location..."
-
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Plot"
-                                                        value={rideData?.pickup_point || ""}
-                                                        readOnly
-                                                        className="max-sm:ml-[75px] border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2" />
-
-                                                </div>
-                                                <div className="relative flex gap-2 w-full flex-col md:flex-row">
-                                                    <InputBox
-                                                        label="Desti-nation"
-                                                        type="text"
-                                                        name="pickup_point"
-                                                        value={values.destination || ''}
-                                                        placeholder="Search location..."
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Plot"
-                                                        value={rideData?.destination_point || destinationPlotData}
-                                                        readOnly
-                                                        className="max-sm:ml-[75px] border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2" />
-                                                </div>
-
-                                                <div className="flex md:flex-row flex-col">
-                                                    <div className="w-full gap-3 grid">
-                                                        {/* name, email */}
-                                                        <div className="flex md:flex-row flex-col gap-2">
-                                                            <div className="text-left flex">
-                                                                <label className="text-sm font-semibold mb-1 md:w-28 w-20">Name</label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Enter Name"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                                    value={values.name || ""}
-                                                                    disabled
-                                                                />
-                                                            </div>
-
-                                                            <div className="text-left flex items-center md:gap-2">
-                                                                <label className="text-sm font-semibold mb-1 md:w-11 w-20">Email</label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Enter Email"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                                    value={values.email}
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex md:flex-row flex-col gap-2">
-                                                            <div className="text-left flex">
-                                                                <label className="text-sm font-semibold mb-1 md:w-28 w-20">Mobile No</label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Enter Mobile No"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full md:w-full"
-                                                                    value={values.phone_no || ""}
-                                                                    disabled
-                                                                />
-                                                            </div>
-
-                                                            <div className="flex md:flex-row flex-col gap-2">
-                                                                <div className="flex w-full md:gap-2">
-                                                                    <label className="text-sm font-semibold mb-1 max-sm:w-20">Tel No.</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder="Enter Telephone no"
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                                        value={values.tel_no}
-                                                                        disabled
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="w-full">
-                                                            <div className="md:flex-row flex-col flex gap-2 w-full">
-                                                                <div className="text-left flex items-center gap-2">
-                                                                    <label className="text-sm font-semibold md:w-16">Journey</label>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="flex items-center gap-1">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="journey"
-                                                                                checked={values.journey_type === "one_way"}
-                                                                            // disabled
-                                                                            />
-                                                                            One Way
-                                                                        </label>
-
-                                                                        <label className="flex items-center gap-1">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="journey"
-                                                                                checked={values.journey_type === "return"}
-                                                                            // disabled
-                                                                            />
-                                                                            Return
-                                                                        </label>
-
-                                                                        <label className="flex items-center gap-1">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="journey"
-                                                                                checked={values.journey_type === "wr"}
-                                                                            // disabled
-                                                                            />
-                                                                            W/R
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex-1">
-                                                                    <div className="text-center flex items-center gap-2">
-                                                                        <label className="text-sm md:text-right text-left font-semibold mb-1 md:w-24 w-14">Accounts</label>
-                                                                        <div className="w-full">
-                                                                            <input
-                                                                                name="account"
-                                                                                value={rideData?.account_detail?.name || ""}
-                                                                                className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-2 py-2 w-full"
-                                                                                disabled
-                                                                            />
-                                                                        </div>
-
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex gap-2 w-full md:flex-row flex-col">
-                                                            <div className="flex md:flex-row items-center flex-row gap-2 w-full">
-                                                                <label className="text-sm font-semibold md:w-24 w-16">Vehicle</label>
-                                                                <input
-                                                                    type="text"
-                                                                    name="vehicle"
-                                                                    value={rideData?.vehicle_detail?.vehicle_type_name}
-                                                                    placeholder="Select Vehicle"
-                                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
-                                                                    disabled
-                                                                />
-                                                            </div>
-
-                                                            <div className="flex md:flex-row items-center flex-row gap-2 w-full text-right">
-                                                                <label className="text-sm font-semibold text-left md:w-16 w-16">Driver</label>
-                                                                <div className="w-full">
-                                                                    <input
-                                                                        type="text"
-                                                                        name="driver"
-                                                                        placeholder="Driver Name"
-                                                                        value={rideData?.driver_detail?.name || ""}
-                                                                        readOnly
-                                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="border mt-2 max-sm:w-full rounded-lg h-28 md:mt-0 px-4 py-4 bg-white shadow-sm">
-                                                        <div className="flex flex-col gap-3">
-                                                            <label className="flex items-center gap-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={rideData?.booking_system === 'auto_dispatch'}
-                                                                    className="w-4 h-4 accent-[#1F41BB]"
-                                                                // disabled
-                                                                />
-                                                                Auto Dispatch
-                                                            </label>
-
-                                                            <label className="flex items-center gap-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={rideData?.booking_system === 'bidding'}
-                                                                    className="w-4 h-4 accent-[#1F41BB]"
-                                                                // disabled
-                                                                />
-                                                                Bidding
-                                                            </label>
-                                                        </div>
-                                                    </div>
-
-                                                </div>
-
-                                                <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
-                                                    <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Passenger</label>
+                                                <div className="grid md:grid-cols-3 grid-cols-1 items-center gap-4">
+                                                    <div className="flex gap-2">
+                                                        <label className="text-sm font-semibold mb-1 block whitespace-nowrap">Week</label>
                                                         <input
-                                                            type="number"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                            value={values.passenger}
-                                                            disabled
+                                                            readOnly
+                                                            className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-white"
+                                                            value={values.week_pattern === "every" ? "Every Week" : values.week_pattern === "alternate" ? "Alternate Weeks" : "Every 1st Days of Week"}
                                                         />
                                                     </div>
-
-                                                    <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Luggage</label>
-                                                        <input
-                                                            type="number"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                            value={values.luggage}
-                                                            disabled
-                                                        />
+                                                    <div className="flex gap-2">
+                                                        <label className="text-sm font-semibold mb-1 block whitespace-nowrap">Start At</label>
+                                                        <input type="date" className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-white" value={values.multi_start_at || ""} disabled />
                                                     </div>
-
-                                                    <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Hand Luggage</label>
-                                                        <input
-                                                            type="number"
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                            value={values.hand_luggage}
-                                                            disabled
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-                                                    <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Special Req</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Write here..."
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                            value={values.special_request}
-                                                            disabled
-                                                        />
-                                                    </div>
-                                                    <div className="text-center flex items-center gap-2">
-                                                        <label className="text-sm font-semibold mb-1 md:w-20 w-20">Payment Ref</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Write here..."
-                                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full"
-                                                            value={values.payment_reference}
-                                                            disabled
-                                                        />
+                                                    <div className="flex gap-2">
+                                                        <label className="text-sm font-semibold mb-1 block whitespace-nowrap">End At</label>
+                                                        <input type="date" className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-white" value={values.multi_end_at || ""} disabled />
                                                     </div>
                                                 </div>
                                             </div>
+                                        )}
 
-                                            <div>
-                                                <div className="w-full h-full rounded-xl overflow-hidden border" style={{ minHeight: '400px' }}>
-                                                    <iframe
-                                                        title="map"
-                                                        width="100%"
-                                                        height="100%"
-                                                        loading="lazy"
-                                                        allowFullScreen
-                                                        referrerPolicy="no-referrer-when-downgrade"
-                                                        src={mapUrl}
-                                                        style={{ minHeight: "400px" }}
-                                                    />
-                                                </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                                            <div className="flex w-full items-center gap-2">
+                                                <label className="text-sm font-semibold w-24">Pick up Time</label>
+                                                <input
+                                                    type="text"
+                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-gray-50"
+                                                    value={values.pickup_time || "asap"}
+                                                    readOnly
+                                                />
+                                            </div>
+                                            <div className="flex w-full items-center gap-2">
+                                                <label className="text-sm font-semibold w-20">Date</label>
+                                                <input
+                                                    type="date"
+                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-gray-50"
+                                                    value={values.booking_date || ""}
+                                                    disabled
+                                                />
+                                            </div>
+
+                                            <div className="flex w-full items-center gap-2">
+                                                <label className="text-sm font-semibold w-24">Booking Type</label>
+                                                <input
+                                                    type="text"
+                                                    className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 text-sm w-full bg-gray-50 capitalize"
+                                                    value={values.booking_type || ""}
+                                                    readOnly
+                                                />
                                             </div>
                                         </div>
 
-                                        <div className="bg-blue-50 p-4 rounded-lg space-y-4 mt-7">
-                                            <div className="flex md:justify-between max-sm:flex-col md:items-center">
-                                                <h3 className="font-semibold text-xl">Charges</h3>
+                                        <div className="space-y-4">
+                                            {/* Pickup Point */}
+                                            <div className="relative flex gap-2 w-full flex-col md:flex-row">
+                                                <InputBox
+                                                    label="Pick up Point"
+                                                    type="text"
+                                                    name="pickup_point"
+                                                    value={values.pickup_point || ''}
+                                                    placeholder="Pickup location"
+                                                    readOnly
+                                                    plot={rideData?.pickup_point || ""}
+                                                />
                                             </div>
 
-                                            <div className="flex justify-between max-sm:flex-col gap-2">
-                                                <div className="flex gap-4 items-center">
+                                            {/* Via Points */}
+                                            {values.via_locations && values.via_locations.map((loc, i) => (
+                                                <div key={i} className="relative flex gap-2 w-full flex-col md:flex-row">
+                                                    <InputBox
+                                                        label={`Via Point ${i + 1}`}
+                                                        type="text"
+                                                        name={`via_points[${i}]`}
+                                                        value={loc || ''}
+                                                        placeholder="Via location"
+                                                        readOnly
+                                                        plot={values.via_points[i] ? `${values.via_points[i].latitude}, ${values.via_points[i].longitude}` : ""}
+                                                    />
+                                                </div>
+                                            ))}
 
-                                                    <label className="flex items-center gap-2 text-sm">
-                                                        {/* <input
-                                                            type="checkbox"
-                                                            checked={values.quoted || false}
-                                                            disabled
-                                                        /> */}
-                                                        Quoted
-                                                    </label>
+                                            {/* Destination */}
+                                            <div className="relative flex gap-2 w-full flex-col md:flex-row">
+                                                <InputBox
+                                                    label="Desti-nation"
+                                                    type="text"
+                                                    name="destination"
+                                                    value={values.destination || ''}
+                                                    placeholder="Destination location"
+                                                    readOnly
+                                                    plot={rideData?.destination_point || ""}
+                                                />
+                                            </div>
+                                        </div>
 
+                                        <div className="w-full gap-3 grid">
+                                            <div className="flex md:flex-row flex-col gap-2">
+                                                <div className="text-left flex flex-1 items-center gap-2">
+                                                    <label className="text-sm font-semibold md:w-28 w-24">Name</label>
                                                     <input
-                                                        value={values.payment_method}
-                                                        className="border rounded px-2 py-1 w-48"
-                                                        // disabled
-                                                    >
-                                                       
-                                                    </input>
+                                                        type="text"
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        value={values.name || ""}
+                                                        disabled
+                                                    />
                                                 </div>
 
-                                                <div className="md:w-60">
-                                                    <ChargeInput label="Booking Fees Charges" name="booking_fee_charges" values={values} readOnly />
+                                                <div className="text-left flex flex-1 items-center gap-2">
+                                                    <label className="text-sm font-semibold md:w-16 w-24">Email</label>
+                                                    <input
+                                                        type="text"
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        value={values.email || ""}
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex md:flex-row flex-col gap-2">
+                                                <div className="text-left flex flex-1 items-center gap-2">
+                                                    <label className="text-sm font-semibold md:w-28 w-24">Mobile No</label>
+                                                    <input
+                                                        type="text"
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        value={values.phone_no || ""}
+                                                        disabled
+                                                    />
+                                                </div>
+
+                                                <div className="text-left flex flex-1 items-center gap-2">
+                                                    <label className="text-sm font-semibold md:w-16 w-24">Tel No.</label>
+                                                    <input
+                                                        type="text"
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        value={values.tel_no || ""}
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="md:flex-row flex-col flex gap-2 w-full">
+                                                <div className="text-left flex items-center gap-2">
+                                                    <label className="text-sm font-semibold w-24 md:w-20">Journey</label>
+                                                    <div className="flex items-center gap-2">
+                                                        {[{ val: "one_way", label: "One Way" }, { val: "return", label: "Return" }, { val: "wr", label: "W/R" }].map(({ val, label }) => (
+                                                            <label key={val} className="flex items-center gap-1 text-sm opacity-80">
+                                                                <input type="radio" name="journey" checked={values.journey_type === val} disabled />
+                                                                {label}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm font-semibold md:w-24 w-24">Accounts</label>
+                                                        <input
+                                                            value={rideData?.account_detail?.name || ""}
+                                                            className="border-[1.5px] border-[#8D8D8D] rounded-[8px] px-2 py-2 w-full bg-gray-50"
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2 w-full md:flex-row flex-col">
+                                                <div className="flex md:flex-row items-center flex-row gap-2 w-full">
+                                                    <label className="text-sm font-semibold md:w-24 w-24">Vehicle</label>
+                                                    <input
+                                                        type="text"
+                                                        value={rideData?.vehicle_detail?.vehicle_type_name || ""}
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        disabled
+                                                    />
+                                                </div>
+
+                                                <div className="flex md:flex-row items-center flex-row gap-2 w-full">
+                                                    <label className="text-sm font-semibold md:w-16 w-24">Driver</label>
+                                                    <input
+                                                        type="text"
+                                                        value={rideData?.driver_detail?.name || "N/A"}
+                                                        className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
+                                                        disabled
+                                                    />
                                                 </div>
                                             </div>
 
                                             <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
-                                                {chargeFields.map((field) => (
+                                                <div className="flex items-center gap-2 md:col-span-1">
+                                                    <div className="border rounded-lg px-4 py-3 bg-white shadow-sm flex flex-col gap-2 w-full">
+                                                        <label className="flex items-center gap-2 text-sm opacity-80">
+                                                            <input type="checkbox" checked={rideData?.booking_system === 'auto_dispatch'} disabled />
+                                                            Auto Dispatch
+                                                        </label>
+                                                        <label className="flex items-center gap-2 text-sm opacity-80">
+                                                            <input type="checkbox" checked={rideData?.booking_system === 'bidding'} disabled />
+                                                            Bidding
+                                                        </label>
+                                                    </div>
+                                                </div>
 
-                                                    <ChargeInput label={field.replaceAll("_", " ").toUpperCase()} name={field} values={values} readOnly />
-                                                ))}
-
-                                                <div className="font-bold text-[#10B981]">
-                                                    <ChargeInput
-                                                        label="TOTAL CHARGES"
-                                                        name="total_charges"
-                                                        values={values} readOnly
-                                                    // readOnly
-                                                    />
+                                                <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm font-semibold w-24">Passenger</label>
+                                                        <input type="number" className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50" value={values.passenger} disabled />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm font-semibold w-24">Luggage</label>
+                                                        <input type="number" className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50" value={values.luggage} disabled />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm font-semibold w-24 whitespace-nowrap">Hand Luggage</label>
+                                                        <input type="number" className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50" value={values.hand_luggage} disabled />
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            {/* Empty div to close the space-y-4 if needed, but the grid was the last element */}
+                                        </div>
+                                    </div>
+
+                                    {/* Map Section */}
+                                    <div className="xl:w-96 lg:w-80 w-full flex flex-col gap-4">
+                                        <div className="w-full h-[400px] rounded-xl overflow-hidden border shadow-sm relative">
+                                            <iframe
+                                                title="map"
+                                                width="100%"
+                                                height="100%"
+                                                loading="lazy"
+                                                allowFullScreen
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                                src={mapUrl}
+                                                className="absolute inset-0"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm font-semibold w-24">Special Req</label>
+                                        <input type="text" className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50" value={values.special_request || ""} disabled />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm font-semibold w-24 whitespace-nowrap">Payment Ref</label>
+                                        <input type="text" className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50" value={values.payment_reference || ""} disabled />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm font-semibold w-24">Distance</label>
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={rideData?.distance ? `${rideData.distance} km` : "N/A"}
+                                            className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50 font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Charges Section */}
+                                <div className="bg-blue-50 p-6 rounded-xl space-y-4">
+                                    <h3 className="font-semibold text-xl border-b border-blue-100 pb-2">Charges</h3>
+
+                                    <div className="flex justify-between items-center max-sm:flex-col gap-4">
+                                        <div className="flex gap-4 items-center w-full md:w-auto">
+                                            <label className="text-sm font-semibold">Payment Method</label>
+                                            <input
+                                                value={values.payment_method}
+                                                className="border border-[#8D8D8D] rounded-[8px] px-3 py-2 w-48 bg-white shadow-sm capitalize"
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        <div className="w-full md:w-72">
+                                            <ChargeInput label="Booking Fees Charges" name="booking_fee_charges" values={values} readOnly />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-x-6 gap-y-4">
+                                        {chargeFields.map((field) => (
+                                            <ChargeInput key={field} label={field.replaceAll("_", " ").toUpperCase()} name={field} values={values} readOnly />
+                                        ))}
+
+                                        <div className="font-bold text-[#10B981] md:col-span-1">
+                                            <ChargeInput
+                                                label="TOTAL CHARGES"
+                                                name="total_charges"
+                                                values={values}
+                                                readOnly
+                                                isTotal
+                                            />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-3">
+
+                            <div className="flex justify-end mb-3 mr-6">
                                 <Button
                                     btnSize="md"
                                     type="filledGray"
-                                    className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                                    className="!px-12 py-2 leading-[25px] w-full sm:w-auto !rounded-lg !bg-gray-200 !text-black !border-none hover:!bg-gray-300"
                                     onClick={() => {
                                         unlockBodyScroll();
                                         setIsOpen({ type: "new", isOpen: false });
@@ -598,16 +502,15 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
 
 export default ViewBookingModel;
 
-const ChargeInput = ({ label, name, values, onChange, readOnly = false }) => (
+const ChargeInput = ({ label, name, values, readOnly = false, isTotal = false }) => (
     <div className="flex items-center gap-2">
-        <label className="text-sm font-semibold w-40">{label}</label>
+        <label className={`text-sm font-semibold whitespace-nowrap ${isTotal ? 'w-32' : 'w-40'}`}>{label}</label>
         <input
-            type="number"
+            type="text"
             value={values[name] || 0}
-            onChange={(e) => onChange && onChange(e.target.value)}
             readOnly={readOnly}
             disabled={readOnly}
-            className="rounded-[8px] px-5 py-2 w-full bg-gray-50"
+            className={`rounded-[8px] px-4 py-2 w-full shadow-sm ${isTotal ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-[#8D8D8D] border-[1.5px]'}`}
         />
     </div>
 )
@@ -615,21 +518,25 @@ const ChargeInput = ({ label, name, values, onChange, readOnly = false }) => (
 const InputBox = ({
     label,
     value,
-    onChange,
-    suggestions,
-    show,
-    onSelect,
+    readOnly = false,
     plot,
     placeholder
 }) => (
-    <div className="relative flex md:flex-row max-sm:w-full gap-2">
-        <label className="font-semibold text-sm md:w-20 w-20 text-left">{label}</label>
-        <div className="flex max-sm:flex-col gap-2 w-full">
+    <div className="relative flex flex-col md:flex-row w-full gap-2 items-start md:items-center">
+        <label className="font-semibold text-sm w-24 text-left whitespace-nowrap">{label}</label>
+        <div className="flex flex-col md:flex-row gap-2 w-full">
             <input
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                readOnly={readOnly}
                 placeholder={placeholder}
-                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2"
+                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 flex-1 bg-gray-50"
+            />
+            <input
+                type="text"
+                placeholder="Plot"
+                value={plot || ""}
+                readOnly
+                className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full md:w-60 bg-gray-50 text-xs text-gray-500"
             />
         </div>
     </div>

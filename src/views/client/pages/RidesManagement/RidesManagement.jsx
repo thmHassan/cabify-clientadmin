@@ -120,7 +120,6 @@ const RidesManagement = () => {
     }
   };
 
-  // ✅ Step 1: Open modal and store the ride to delete
   const openDeleteModal = (ride) => {
     setRideToDelete(ride);
     setDeleteModalOpen(true);

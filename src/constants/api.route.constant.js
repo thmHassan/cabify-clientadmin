@@ -14,6 +14,7 @@ export const CALCULATE_FARES = "/company/calculate-fares"
 export const CANCELLED_BOOKING = "/company/cancelled-booking"
 export const UPDATE_BOOKING_SYSTEM = "/company/update-company-booking-system"
 export const GATE_BOOKING_SYSTEM = "/company/get-company-booking-system"
+export const DELETE_BOOKING = "/company/delete-booking"
 
 //api for dispatcher
 export const CREATE_DISPATCHER = "/company/create-dispatcher";

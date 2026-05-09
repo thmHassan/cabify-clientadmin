@@ -1,5 +1,5 @@
-import { GET_RIDE_BY_ID, GET_RIDE_MANAGEMENT } from "../constants/api.route.constant";
-import { METHOD_GET } from "../constants/method.constant";
+import { DELETE_BOOKING, GET_RIDE_BY_ID, GET_RIDE_MANAGEMENT } from "../constants/api.route.constant";
+import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import ApiService from "./ApiService";
 
 export async function apiGetRidesManagement(params) {
@@ -18,6 +18,13 @@ export async function apiGetRidesManagement(params) {
 export async function apiGetRideById(id) {
     return ApiService.fetchData({
         url: `${GET_RIDE_BY_ID}?ride_id=${id}`,
+        method: METHOD_GET,
+    });
+}
+
+export async function apiDeleteRide(id) {
+    return ApiService.fetchData({
+        url: `${DELETE_BOOKING}?id=${id}`,
         method: METHOD_GET,
     });
 }

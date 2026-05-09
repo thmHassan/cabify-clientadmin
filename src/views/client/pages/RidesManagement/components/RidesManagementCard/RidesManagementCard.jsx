@@ -4,7 +4,7 @@ import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 
-const RidesManagementCard = ({ ride, onView }) => {
+const RidesManagementCard = ({ ride, onView, onDelete }) => {
 
     const statusColors = {
         pending: "bg-[#F5C60B] text-white",
@@ -57,6 +57,13 @@ const RidesManagementCard = ({ ride, onView }) => {
             onClick: () => onView(ride),
         },
     ];
+
+    if (ride.booking_status?.toLowerCase() === "pending" && onDelete) {
+        actionOptions.push({
+            label: "Delete",
+            onClick: () => onDelete(ride),
+        });
+    }
 
     const capitalizeFirst = (value) => {
         if (!value) return "-";

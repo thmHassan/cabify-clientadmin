@@ -328,6 +328,44 @@ const Commission = ({ isSidebarOpen }) => {
                                     )}
                                 </div>
                             </label>
+
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`border rounded-2xl h-full p-3 flex flex-col gap-4 shadow-sm hover:shadow-md transition ${commissionForm.package_type === "ride_count_price" ? "bg-blue-50" : ""}`}>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="radio"
+                                            name="commission"
+                                            className="w-4 h-4 text-blue-600"
+                                            checked={commissionForm.package_type === "ride_count_price"}
+                                            onChange={() => handleCommissionFormChange("package_type", "ride_count_price")}
+                                        />
+                                        <p className="font-medium text-sm text-gray-800">
+                                            Ride Count based on price
+                                        </p>
+                                    </div>
+                                    {commissionForm.package_type === "ride_count_price" && (
+                                        <div className="flex gap-3">
+                                            <input
+                                                type="number"
+                                                placeholder="Days"
+                                                value={commissionForm.package_days}
+                                                onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
+                                                disabled={commissionForm.package_type !== "ride_count_price"}
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Amount"
+                                                value={commissionForm.package_amount}
+                                                onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
+                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
+                                                disabled={commissionForm.package_type !== "ride_count_price"}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </label>
                         </div>
                         {/* <div className="flex justify-end">
                             <Button

@@ -347,7 +347,7 @@ const Commission = ({ isSidebarOpen }) => {
                                         <div className="flex gap-3">
                                             <input
                                                 type="number"
-                                                placeholder="Days"
+                                                placeholder="Ride"
                                                 value={commissionForm.package_days}
                                                 onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
                                                 className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"

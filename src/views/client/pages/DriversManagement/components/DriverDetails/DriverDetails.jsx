@@ -141,6 +141,7 @@ const DriverDetails = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingBank, setIsSavingBank] = useState(false); // NEW
+    const [isSavingVehicle, setIsSavingVehicle] = useState(false);
     const [driverData, setDriverData] = useState(null);
     const [documents, setDocuments] = useState([]);
     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
@@ -152,7 +153,7 @@ const DriverDetails = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const getVehicleFormData = (data) => {
-        const hasChangeRequest = Number(data?.vehicle_change_request) > 0;
+        const hasChangeRequest = Number(data?.vehicle_change_request) === 1;
         return {
             vehicle_name: hasChangeRequest
                 ? data?.change_vehicle_name || data?.vehicle_name || ""
@@ -601,6 +602,58 @@ const DriverDetails = () => {
         }
     };
 
+    const handleSaveVehicle = async () => {
+        setIsSavingVehicle(true);
+        try {
+            const formDataObj = new FormData();
+            formDataObj.append("id", driverId);
+            // Required driver fields
+            formDataObj.append("name", formData.name || "");
+            formDataObj.append("email", formData.email || "");
+            formDataObj.append("country_code", formData.country_code || "");
+            formDataObj.append("phone_no", formData.phone_no || "");
+            formDataObj.append("address", formData.address || "");
+            formDataObj.append("driver_license", formData.driver_license || "");
+            formDataObj.append("assigned_vehicle", formData.assigned_vehicle || "");
+            formDataObj.append(
+                "joined_date",
+                formData.joined_date ? `${formData.joined_date} 00:00:00` : ""
+            );
+            formDataObj.append("sub_company", formData.sub_company || "");
+
+            // Vehicle fields
+            formDataObj.append("vehicle_name", formData.vehicle_name || "");
+            formDataObj.append("vehicle_type", formData.vehicle_type || "");
+            formDataObj.append("vehicle_service", formData.vehicle_service || "");
+            formDataObj.append("seats", formData.seats || "");
+            formDataObj.append("color", formData.color || "");
+            formDataObj.append("plate_no", formData.plate_no || "");
+            formDataObj.append(
+                "vehicle_registration_date",
+                formData.vehicle_registration_date || ""
+            );
+            formDataObj.append("capacity", formData.capacity || "");
+
+            const response = await apiEditDriverManagement(formDataObj);
+            if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success("Vehicle information updated successfully");
+                await loadDriverData();
+            } else {
+                toast.error(
+                    response?.data?.message || "Failed to update vehicle information"
+                );
+            }
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Error saving vehicle information"
+            );
+        } finally {
+            setIsSavingVehicle(false);
+        }
+    };
+
     const loadRideHistory = useCallback(async () => {
         if (!driverId) return;
         setTableLoading(true);
@@ -988,6 +1041,27 @@ const DriverDetails = () => {
                             }
                             name="vehicle_registration_date"
                         />
+                    </div>
+
+                    {/* Save / Cancel buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-end mt-6">
+                        <Button
+                            btnSize="md"
+                            type="filledGray"
+                            className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                            onClick={() => loadDriverData()}
+                        >
+                            <span>Cancel</span>
+                        </Button>
+                        <Button
+                            btnSize="md"
+                            type="filled"
+                            className="!px-10 pt-4 pb-[15px] leading-[25px] w-full sm:w-auto"
+                            onClick={handleSaveVehicle}
+                            disabled={isSavingVehicle}
+                        >
+                            {isSavingVehicle ? "Saving..." : "Save"}
+                        </Button>
                     </div>
 
                     {hasVehicleChangeRequest && (

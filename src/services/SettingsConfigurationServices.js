@@ -1,5 +1,5 @@
 
-import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GATE_DISPATCH_SYSTEM, GATE_INVOICE_HISTORY, GATE_PLAN_DETAILS, GATE_STRIPE_INFORMATION, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, GET_THIRD_PARTY_INFORMATION, MATCH_PASSWORD, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_DISPATCH_SYSTEM, SAVE_MOBILE_APP_SETTINGS, SAVE_STRIPE_INFORMATION, SAVE_THIRD_PARTY_INFORMATION, UPDATE_PASWORD, GET_COMPANY_API_KEYS } from "../constants/api.route.constant";
+import { CREATE_PACKAGE_TOPUP, DELETE_PACKAGE_TOPUPS, EDIT_PACKAGE_TOPUP, GATE_DISPATCH_SYSTEM, GATE_INVOICE_HISTORY, GATE_PLAN_DETAILS, GATE_STRIPE_INFORMATION, GET_COMMISSION, GET_COMPANY_PROFILE, GET_MOBILE_APP_SETTINGS, GET_THIRD_PARTY_INFORMATION, MATCH_PASSWORD, SAVE_COMMISSION, SAVE_COMPANY_PROFILE, SAVE_DISPATCH_SYSTEM, SAVE_MOBILE_APP_SETTINGS, SAVE_STRIPE_INFORMATION, SAVE_THIRD_PARTY_INFORMATION, UPDATE_PASWORD, GET_COMPANY_API_KEYS, CREATE_RIDE_COUNT, EDIT_RIDE_COUNT, DELETE_RIDE_COUNT } from "../constants/api.route.constant";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import ApiService from "./ApiService";
 
@@ -133,7 +133,49 @@ export async function apiEditPackageToPup(data) {
     }
 
     return ApiService.fetchData({
-        url: plotId ? `${EDIT_PACKAGE_TOPUP}?id=${plotId}` : EDIT,
+        url: plotId ? `${EDIT_PACKAGE_TOPUP}?id=${plotId}` : EDIT_PACKAGE_TOPUP,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiCreateRideCount(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: CREATE_RIDE_COUNT,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiDeleteRideCount(id) {
+    return ApiService.fetchData({
+        url: `${DELETE_RIDE_COUNT}?id=${id}`,
+        method: METHOD_GET,
+    });
+}
+
+export async function apiEditRideCount(data) {
+    const isFormData = data instanceof FormData;
+    let plotId = null;
+
+    if (isFormData) {
+        plotId = data.get('id');
+    }
+
+    return ApiService.fetchData({
+        url: plotId ? `${EDIT_RIDE_COUNT}?id=${plotId}` : EDIT_RIDE_COUNT,
         method: METHOD_POST,
         data,
         ...(isFormData && {

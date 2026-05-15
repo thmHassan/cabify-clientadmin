@@ -10,7 +10,9 @@ import PlusIcon from "../../../../../../components/svg/PlusIcon";
 import CommissionCard from "./components/CommssionCard";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import AddPackageModel from "./components/AddPackegModel";
-import { apiDeletePackageToPup, apiGetCommissionData, apiSaveCommissionData } from "../../../../../../services/SettingsConfigurationServices";
+import AddRideCountModel from "./components/AddRideCountModel";
+import RideCountCard from "./components/RideCountCard";
+import { apiDeletePackageToPup, apiDeleteRideCount, apiGetCommissionData, apiSaveCommissionData } from "../../../../../../services/SettingsConfigurationServices";
 import toast from 'react-hot-toast';
 
 const Commission = ({ isSidebarOpen }) => {
@@ -23,9 +25,14 @@ const Commission = ({ isSidebarOpen }) => {
     const [commissionData, setCommissionData] = useState({});
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRideCountModelOpen, setIsRideCountModelOpen] = useState({
+        type: "new",
+        isOpen: false,
+    });
     const [error, setError] = useState(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [packageToPupToDatale, setPackageToPupToDatale] = useState(null);
+    const [deleteType, setDeleteType] = useState("package");
     const [isDeleting, setIsDeleting] = useState(false);
     const [commissionForm, setCommissionForm] = useState({
         package_type: "packages_topup",
@@ -56,6 +63,7 @@ const Commission = ({ isSidebarOpen }) => {
     }, [fetchCommmissionData, refreshTrigger]);
 
     const packageTopups = commissionData?.packageTopups || [];
+    const packageRideCounts = commissionData?.packageRideCount || [];
     const mainCommission = commissionData?.main_commission || {};
 
     useEffect(() => {
@@ -72,15 +80,24 @@ const Commission = ({ isSidebarOpen }) => {
     }, [mainCommission]);
 
     const handleEdit = (commission) => {
-        setIsCommissionModelOpen({
-            type: "edit",
-            isOpen: true,
-            initialValue: commission,
-        });
+        if (commissionForm.package_type === "ride_count_price") {
+            setIsRideCountModelOpen({
+                type: "edit",
+                isOpen: true,
+                initialValue: commission,
+            });
+        } else {
+            setIsCommissionModelOpen({
+                type: "edit",
+                isOpen: true,
+                initialValue: commission,
+            });
+        }
     };
 
-    const handleDeleteClick = (company) => {
+    const handleDeleteClick = (company, type = "package") => {
         setPackageToPupToDatale(company);
+        setDeleteType(type);
         setDeleteModalOpen(true);
     };
 
@@ -89,18 +106,20 @@ const Commission = ({ isSidebarOpen }) => {
 
         setIsDeleting(true);
         try {
-            const response = await apiDeletePackageToPup(packageToPupToDatale.id);
+            const response = deleteType === "ride_count"
+                ? await apiDeleteRideCount(packageToPupToDatale.id)
+                : await apiDeletePackageToPup(packageToPupToDatale.id);
 
             if (response?.data?.success === 1 || response?.status === 200) {
-                toast.success("package delete successfully")
+                toast.success(`${deleteType === "ride_count" ? "Ride count" : "Package"} delete successfully`)
                 setDeleteModalOpen(false);
                 setPackageToPupToDatale(null);
                 setRefreshTrigger(prev => prev + 1);
             } else {
-                console.error("Failed to delete sub-company");
+                console.error("Failed to delete");
             }
         } catch (error) {
-            console.error("Error deleting sub-company:", error);
+            console.error("Error deleting:", error);
         } finally {
             setIsDeleting(false);
         }
@@ -125,8 +144,6 @@ const Commission = ({ isSidebarOpen }) => {
             cancellation_per_day,
             waiting_time_charge,
         } = commissionForm;
-
-        /* ---------------- VALIDATION ---------------- */
 
         if (
             package_type === "per_ride_commission_topup" &&
@@ -154,8 +171,6 @@ const Commission = ({ isSidebarOpen }) => {
             setIsSubmitting(false);
             return;
         }
-
-        /* ---------------- API CALL ---------------- */
 
         const toastId = toast.loading("Saving commission settings...");
 
@@ -343,40 +358,9 @@ const Commission = ({ isSidebarOpen }) => {
                                             Ride Count based on price
                                         </p>
                                     </div>
-                                    {commissionForm.package_type === "ride_count_price" && (
-                                        <div className="flex gap-3">
-                                            <input
-                                                type="number"
-                                                placeholder="Ride"
-                                                value={commissionForm.package_days}
-                                                onChange={(e) => handleCommissionFormChange("package_days", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
-                                                disabled={commissionForm.package_type !== "ride_count_price"}
-                                            />
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="Amount"
-                                                value={commissionForm.package_amount}
-                                                onChange={(e) => handleCommissionFormChange("package_amount", e.target.value)}
-                                                className="border rounded-lg px-4 py-1 shadow-sm bg-white w-full max-w-[120px]"
-                                                disabled={commissionForm.package_type !== "ride_count_price"}
-                                            />
-                                        </div>
-                                    )}
                                 </div>
                             </label>
                         </div>
-                        {/* <div className="flex justify-end">
-                            <Button
-                                type="filled"
-                                onClick={handleSaveCommission}
-                                disabled={isSubmitting}
-                                className="px-3 py-3 rounded-md"
-                            >
-                                {isSubmitting ? "Saving..." : "Save Packages (Top Up)"}
-                            </Button>
-                        </div> */}
                     </div>
                 </CardContainer>
 
@@ -426,6 +410,7 @@ const Commission = ({ isSidebarOpen }) => {
                         </div>
                     </div>
                 </CardContainer>
+
                 {commissionForm.package_type === "packages_topup" && (
                     <div className="overflow-hidden">
                         <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
@@ -454,7 +439,7 @@ const Commission = ({ isSidebarOpen }) => {
                                             <span className="sm:hidden">
                                                 <PlusIcon height={12} width={12} />
                                             </span>
-                                            <span>Add Packge</span>
+                                            <span>Add Package</span>
                                         </div>
                                     </Button>
                                 </div>
@@ -465,10 +450,7 @@ const Commission = ({ isSidebarOpen }) => {
                                     <div
                                         className={`
                                           grid gap-4 pt-4 transition-all duration-300 ease-in-out
-                                         ${isSidebarOpen
-                                                ? ""
-                                                : ""
-                                            }
+                                          grid-cols-1
                                            `}
                                     >
                                         {packageTopups.length === 0 ? (
@@ -479,7 +461,69 @@ const Commission = ({ isSidebarOpen }) => {
                                                     key={commission.id}
                                                     commission={commission}
                                                     onEdit={handleEdit}
-                                                    onDelete={handleDeleteClick}
+                                                    onDelete={(item) => handleDeleteClick(item, "package")}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </Loading>
+                            </div>
+
+                        </CardContainer>
+                    </div>
+                )}
+
+                {commissionForm.package_type === "ride_count_price" && (
+                    <div className="overflow-hidden">
+                        <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
+                            <div className="flex xl:flex-row lg:flex-row md:flex-row flex-col items-stretch sm:items-center gap-3 sm:gap-5 justify-between sm:mb-0 pb-5">
+                                <div className="w-full sm:flex-1">
+                                    {/* <SearchBar
+                                        value={_searchQuery}
+                                        className="w-full"
+                                    /> */}
+                                </div>
+                                <div className="md:flex flex-row gap-3 sm:gap-5 flex w-full sm:w-auto justify-end">
+                                    <Button
+                                        type="filled"
+                                        btnSize="2xl"
+                                        onClick={() => {
+                                            lockBodyScroll();
+                                            setIsRideCountModelOpen({ isOpen: true, type: "new" });
+
+                                        }}
+                                        className="w-auto -mb-2 sm:-mb-3 lg:-mb-3 !py-3.5 sm:!py-3 lg:!py-3"
+                                    >
+                                        <div className="flex gap-2 sm:gap-[15px] items-center whitespace-nowrap">
+                                            <span className="hidden sm:inline-block">
+                                                <PlusIcon />
+                                            </span>
+                                            <span className="sm:hidden">
+                                                <PlusIcon height={12} width={12} />
+                                            </span>
+                                            <span>Add Ride Count</span>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="overflow-hidden w-full">
+                                <Loading loading={tableLoading} type="cover">
+                                    <div
+                                        className={`
+                                          grid gap-4 pt-4 transition-all duration-300 ease-in-out
+                                          grid-cols-1
+                                           `}
+                                    >
+                                        {packageRideCounts.length === 0 ? (
+                                            <p>No ride count packages available</p>
+                                        ) : (
+                                            packageRideCounts.map((commission) => (
+                                                <RideCountCard
+                                                    key={commission.id}
+                                                    commission={commission}
+                                                    onEdit={handleEdit}
+                                                    onDelete={(item) => handleDeleteClick(item, "ride_count")}
                                                 />
                                             ))
                                         )}
@@ -501,11 +545,21 @@ const Commission = ({ isSidebarOpen }) => {
                     onPackageCreated={() => setRefreshTrigger(prev => prev + 1)}
                 />
             </Modal>
+            <Modal
+                isOpen={isRideCountModelOpen.isOpen}
+                className="p-4 sm:p-6 lg:p-10"
+            >
+                <AddRideCountModel
+                    setIsOpen={setIsRideCountModelOpen}
+                    initialValue={isRideCountModelOpen.initialValue || {}}
+                    onPackageCreated={() => setRefreshTrigger(prev => prev + 1)}
+                />
+            </Modal>
             <Modal isOpen={deleteModalOpen} className="p-10">
                 <div className="text-center">
-                    <h2 className="text-xl font-semibold mb-3">Delete Package?</h2>
+                    <h2 className="text-xl font-semibold mb-3">Delete {deleteType === "ride_count" ? "Ride Count" : "Package"}?</h2>
                     <p className="text-gray-600 mb-6">
-                        Are you sure you want to delete {packageToPupToDatale?.name}?
+                        Are you sure you want to delete this {deleteType === "ride_count" ? "ride count package" : "package"}?
                     </p>
 
                     <div className="flex justify-center gap-4">

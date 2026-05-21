@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
 
-const DriverRideHistory = ({ driver }) => {
+const DriverRideHistory = ({ driver, distanceUnit }) => {
 
     const currencySymbols = {
         INR: "₹",
@@ -13,16 +13,10 @@ const DriverRideHistory = ({ driver }) => {
         AED: "د.إ",
     };
 
-    const [distanceUnit, setDistanceUnit] = useState("Miles");
     const [currencySymbol, setCurrencySymbol] = useState("₹");
 
     useEffect(() => {
         const tenant = getTenantData();
-
-        if (tenant?.units) {
-            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-            setDistanceUnit(unit);
-        }
 
         if (tenant?.currency) {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
@@ -31,6 +25,8 @@ const DriverRideHistory = ({ driver }) => {
 
     const formatDistance = (distanceInMeters) => {
         if (!distanceInMeters) return "-";
+
+        if (!distanceUnit) return "...";
 
         if (distanceUnit === "Km") {
             return `${(distanceInMeters / 1000).toFixed(2)} Km`;

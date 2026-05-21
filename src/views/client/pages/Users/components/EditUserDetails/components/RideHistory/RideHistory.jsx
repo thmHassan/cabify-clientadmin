@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
+import { apiGetCompanyApiKeys } from "../../../../../../../../services/SettingsConfigurationServices";
 
 const RideHistory = ({ user }) => {
 
@@ -13,24 +14,41 @@ const RideHistory = ({ user }) => {
         AED: "د.إ",
     };
 
-    const [distanceUnit, setDistanceUnit] = useState("Miles");
+    const [distanceUnit, setDistanceUnit] = useState("Km");
     const [currencySymbol, setCurrencySymbol] = useState("₹");
 
     useEffect(() => {
         const tenant = getTenantData();
-
-        if (tenant?.units) {
-            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-            setDistanceUnit(unit);
-        }
 
         if (tenant?.currency) {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
         }
     }, []);
 
+    useEffect(() => {
+        const fetchApiKeys = async () => {
+            try {
+                const res = await apiGetCompanyApiKeys();
+
+                if (res.data?.success) {
+                    setDistanceUnit(
+                        res.data.data.units.toLowerCase() === "km"
+                            ? "Km"
+                            : "Miles"
+                    );
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchApiKeys();
+    }, []);
+
     const formatDistance = (distanceInMeters) => {
         if (!distanceInMeters) return "-";
+
+        if (!distanceUnit) return "...";
 
         if (distanceUnit === "Km") {
             return `${(distanceInMeters / 1000).toFixed(2)} Km`;

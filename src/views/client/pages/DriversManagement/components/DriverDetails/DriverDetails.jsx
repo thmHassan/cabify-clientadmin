@@ -19,6 +19,7 @@ import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
+import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
 
 const FormField = ({
     label,
@@ -711,6 +712,24 @@ const DriverDetails = () => {
         return vehicle ? vehicle.label : "";
     };
 
+    const [distanceUnit, setDistanceUnit] = useState("Km");
+
+    useEffect(() => {
+        const fetchApiKeys = async () => {
+            const res = await apiGetCompanyApiKeys();
+
+            if (res.data?.success) {
+                setDistanceUnit(
+                    res.data.data.units.toLowerCase() === "km"
+                        ? "Km"
+                        : "Miles"
+                );
+            }
+        };
+
+        fetchApiKeys();
+    }, []);
+
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
             <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0">
@@ -765,7 +784,6 @@ const DriverDetails = () => {
                         Driver Details
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                        {/* Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Name
@@ -778,7 +796,6 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
-                        {/* Email */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Email
@@ -791,7 +808,6 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
-                        {/* Phone Number */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Phone Number
@@ -815,7 +831,6 @@ const DriverDetails = () => {
                             </div>
                         </div>
 
-                        {/* Password */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Password
@@ -847,8 +862,6 @@ const DriverDetails = () => {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Assigned Vehicle */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Assigned Vehicle
@@ -871,7 +884,6 @@ const DriverDetails = () => {
                                 ))}
                             </select>
                         </div>
-                        {/* Joined Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Joined Date
@@ -885,7 +897,7 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             />
                         </div>
-                        {/* Wallet Balance */}
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Wallet Balance
@@ -901,7 +913,6 @@ const DriverDetails = () => {
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm bg-gray-100 text-gray-600"
                             />
                         </div>
-                        {/* Sub Company */}
                         <div className="flex flex-col gap-8">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -926,7 +937,6 @@ const DriverDetails = () => {
                                 </select>
                             </div>
                         </div>
-                        {/* Add Wallet Balance Button */}
                         <div className="flex items-start justify-end md:col-start-3 mt-4">
                             <Button
                                 btnSize="md"
@@ -939,6 +949,42 @@ const DriverDetails = () => {
                             >
                                 <span>Add Wallet Balance</span>
                             </Button>
+                        </div>
+
+                        <div className="md:col-span-3 flex items-center gap-6 mb-4">
+                            <div className="w-20 h-20 overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
+                                {profileImage ? (
+                                    <img
+                                        src={
+                                            profileImage?.startsWith("data:")
+                                                ? profileImage
+                                                : `${import.meta.env.VITE_BACKEND_URL}${profileImage}`
+                                        }
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-sm text-gray-400">No Image</span>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Upload Profile Image
+                                </label>
+
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-lg file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -1279,7 +1325,7 @@ const DriverDetails = () => {
                     <Loading loading={tableLoading} type="cover">
                         <div className="flex flex-col gap-4 pt-4">
                             {rideHistory.map((driver) => (
-                                <DriverRideHistory key={driver.id} driver={driver} />
+                                <DriverRideHistory key={driver.id} driver={driver} distanceUnit={distanceUnit} />
                             ))}
                         </div>
                     </Loading>

@@ -5,6 +5,7 @@ import Button from "../../../../../../components/ui/Button/Button";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
 
 const AccountRideHistory = ({ account, handleClose }) => {
     const [rideHistory, setRideHistory] = useState([]);
@@ -91,14 +92,32 @@ const AccountRideHistory = ({ account, handleClose }) => {
     useEffect(() => {
         const tenant = getTenantData();
 
-        if (tenant?.units) {
-            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-            setDistanceUnit(unit);
-        }
+        // if (tenant?.units) {
+        //     const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
+        //     setDistanceUnit(unit);
+        // }
 
         if (tenant?.currency) {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchApiKeys = async () => {
+            try {
+                const res = await apiGetCompanyApiKeys();
+                if (res.data?.success) {
+                    const data = res.data.data;
+
+                    const unit = data.units.toLowerCase() === "km" ? "Km" : "Miles";
+
+                    setDistanceUnit(unit);
+                }
+            } catch (err) {
+                console.error("Fetch API keys error:", err);
+            }
+        };
+        fetchApiKeys();
     }, []);
 
     const formatDistance = (distanceInMeters) => {

@@ -21,6 +21,7 @@ import AttributesSection from "./AttributesSection";
 import { getValidationSchema } from "../../../../validators/pages/vehicle.validation";
 import toast from 'react-hot-toast';
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
+import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
 
 const AddVehicleType = () => {
   const [searchParams] = useSearchParams();
@@ -42,7 +43,23 @@ const AddVehicleType = () => {
   ]);
   const [attributes, setAttributes] = useState({});
   const [attributesEnabled, setAttributesEnabled] = useState(true);
-  const [distanceUnit, setDistanceUnit] = useState("Miles");
+  const [distanceUnit, setDistanceUnit] = useState("Km");
+
+  useEffect(() => {
+    const fetchApiKeys = async () => {
+      const res = await apiGetCompanyApiKeys();
+
+      if (res.data?.success) {
+        setDistanceUnit(
+          res.data.data.units.toLowerCase() === "km"
+            ? "Km"
+            : "Miles"
+        );
+      }
+    };
+
+    fetchApiKeys();
+  }, []);
 
   const [formData, setFormData] = useState({
     vehicle_type_name: "",
@@ -66,13 +83,13 @@ const AddVehicleType = () => {
     vehicle_image: null,
   });
 
-  useEffect(() => {
-    const tenant = getTenantData();
-    if (tenant?.units) {
-      const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-      setDistanceUnit(unit);
-    }
-  }, []);
+  // useEffect(() => {
+  //   const tenant = getTenantData();
+  //   if (tenant?.units) {
+  //     const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
+  //     setDistanceUnit(unit);
+  //   }
+  // }, []);
 
   useEffect(() => {
     const fetchAllVehicleType = async () => {

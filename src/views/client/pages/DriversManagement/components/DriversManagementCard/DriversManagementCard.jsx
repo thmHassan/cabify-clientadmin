@@ -154,9 +154,28 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
         return value.charAt(0).toUpperCase() + value.slice(1);
     };
 
+    const getFirstLetter = (name) => {
+        if (!name) return "?";
+        return name.charAt(0).toUpperCase();
+    };
+
     return (
         <div className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto">
+
             <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EFEFEF] flex items-center justify-center">
+                    {driver?.profile_image ? (
+                        <img
+                            src={`${import.meta.env.VITE_BACKEND_URL}${driver.profile_image}`}
+                            alt={driver?.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <span className="text-[#333333] font-semibold text-xl">
+                            {getFirstLetter(driver.name)}
+                        </span>
+                    )}
+                </div>
                 <div className="w-60">
                     <p className="font-semibold text-xl">{driver.name}</p>
                     <p className="text-[10px]">{driver.email}</p>
@@ -189,10 +208,10 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                 <UserDropdown options={getStatusOptions()} itemData={driver}>
                     <div
                         className={`${status === "accepted"
-                                ? "bg-[#10B981] text-white"
-                                : status === "rejected"
-                                    ? "bg-[#FF4747] text-white"
-                                    : "bg-[#F5C60B] text-white"
+                            ? "bg-[#10B981] text-white"
+                            : status === "rejected"
+                                ? "bg-[#FF4747] text-white"
+                                : "bg-[#F5C60B] text-white"
                             } text-center xl:h-10 lg:h-10 md:h-10 h-10 w-28 xl:py-3 lg:py-3 md:py-3 py-1 rounded-full flex items-center justify-center cursor-pointer`}
                     >
                         <p className="font-semibold text-sm">

@@ -21,6 +21,7 @@ const CompanyProfile = () => {
         { value: "Europe/Paris", label: "Europe/Paris" },
         { value: "America/New_York", label: "America/New_York" },
         { value: "America/Los_Angeles", label: "America/Los_Angeles" },
+        { value: "Asia/Bangkok", label: "Asia/Bangkok" },
     ];
 
     // Check if timezone exists in options, otherwise add it

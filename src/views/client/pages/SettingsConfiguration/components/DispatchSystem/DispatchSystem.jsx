@@ -412,6 +412,34 @@ const DispatchSystem = () => {
                         <div className="flex flex-row gap-3 items-start">
                             <div className="flex gap-3 mt-1.5">
                                 <input
+                                    type="radio"
+                                    name="dispatch_system"
+                                    checked={Object.keys(systemStatus).find(
+                                        (key) => systemStatus[key]
+                                    ) === p.systemKey}
+                                    className="h-4 w-4"
+                                    onChange={() => {
+                                        const resetSystems = {};
+                                        dispatchData.forEach((item) => {
+                                            resetSystems[item.systemKey] = false;
+                                        });
+                                        resetSystems[p.systemKey] = true;
+
+                                        setSystemStatus(resetSystems);
+                                        const newState = {};
+                                        dispatchData.forEach((item) => {
+                                            item.followUps.forEach((f) => {
+                                                newState[f.key] = false;
+                                                f.children?.forEach((c) => {
+                                                    newState[c.key] = false;
+                                                });
+                                            });
+                                        });
+
+                                        setCheckedState(newState);
+                                    }}
+                                />
+                                {/* <input
                                     type="checkbox"
                                     checked={!!systemStatus[p.systemKey]}
                                     className="h-4 w-4"
@@ -433,7 +461,7 @@ const DispatchSystem = () => {
                                             setCheckedState(newState);
                                         }
                                     }}
-                                />
+                                /> */}
                             </div>
                             <div className="flex-1">
                                 <h2 className="font-semibold pb-3">

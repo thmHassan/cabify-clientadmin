@@ -116,6 +116,7 @@ const CompanyProfile = () => {
         formData.append("support_rescue_number", companyProfileData.support_rescue_number || "");
         formData.append("support_emergency_no", companyProfileData.support_emergency_no || "");
         formData.append("support_contact_no", companyProfileData.support_contact_no || "");
+        formData.append("search_radius", companyProfileData.search_radius || "");
 
         try {
             const response = await apiSaveCompanyProfile(formData);
@@ -279,6 +280,19 @@ const CompanyProfile = () => {
                         />
                         {fieldErrors.support_rescue_number && (
                             <p className="text-red-500 text-xs mt-1">{fieldErrors.support_rescue_number}</p>
+                        )}
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium mb-1">Search Radius</label>
+                        <input
+                            type="number"
+                            value={companyProfileData?.search_radius || ""}
+                            placeholder="Enter Search Radius"
+                            className={inputClass("search_radius")}
+                            onChange={(e) => handleChange("search_radius", e.target.value)}
+                        />
+                        {fieldErrors.search_radius && (
+                            <p className="text-red-500 text-xs mt-1">{fieldErrors.search_radius}</p>
                         )}
                     </div>
                 </div>

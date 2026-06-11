@@ -16,6 +16,7 @@ const ManageZones = () => {
     const backupByPlotId = new Map(
       backupList.map((item) => [normalizeId(item.id), item])
     );
+    const columnCount = Math.max(plotList.length - 1, 0);
 
     return plotList.map((plot) => {
       const backupItem = backupByPlotId.get(normalizeId(plot.id));
@@ -23,12 +24,16 @@ const ManageZones = () => {
         .map((backupId) => normalizeId(backupId))
         .filter(Boolean);
 
+      const selectedBackups = Array.from({ length: columnCount }, (_, index) =>
+        backupIds[index] || DEFAULT_BACKUP_OPTION
+      );
+
       return {
         selectedPlot: {
           id: plot.id,
           name: plot.name,
         },
-        selectedBackups: backupIds,
+        selectedBackups,
       };
     });
   }, []);
@@ -72,9 +77,13 @@ const ManageZones = () => {
 
     const form = new FormData();
     form.append("id", row.selectedPlot.id);
-    row.selectedBackups.forEach((backupId) => {
-      if (backupId) form.append("backup_plot_array[]", backupId);
-    });
+
+    row.selectedBackups
+      .slice(0, backupColumnCount)
+      .filter(Boolean)
+      .forEach((backupId) => {
+        form.append("backup_plot_array[]", backupId);
+      });
 
     try {
       await apiAssignBackupPlot(form);
@@ -91,9 +100,16 @@ const ManageZones = () => {
     const selectedBackups = [...updatedRows[rowIndex].selectedBackups];
 
     if (value === DEFAULT_BACKUP_OPTION) {
-      updatedRows[rowIndex].selectedBackups = selectedBackups.slice(0, colIndex);
+      const trimmed = selectedBackups.slice(0, colIndex);
+      updatedRows[rowIndex].selectedBackups = Array.from(
+        { length: backupColumnCount },
+        (_, index) => trimmed[index] || DEFAULT_BACKUP_OPTION
+      );
     } else {
-      const nextBackups = [...selectedBackups];
+      const nextBackups = Array.from(
+        { length: backupColumnCount },
+        (_, index) => selectedBackups[index] || DEFAULT_BACKUP_OPTION
+      );
       nextBackups[colIndex] = normalizeId(value);
       updatedRows[rowIndex].selectedBackups = nextBackups;
     }
@@ -117,16 +133,9 @@ const ManageZones = () => {
     });
   };
 
-  const canSelectBackup = (row, colIndex) =>
-    colIndex === 0 || Boolean(row.selectedBackups[colIndex - 1]);
-
   const renderBackupCell = (row, rowIndex, colIndex) => {
     if (!row.selectedPlot) {
       return <span className="text-gray-400">Select Backup Plot</span>;
-    }
-
-    if (!canSelectBackup(row, colIndex)) {
-      return <span className="text-gray-400">Select previous backup</span>;
     }
 
     const selectedBackupId = row.selectedBackups[colIndex] || DEFAULT_BACKUP_OPTION;

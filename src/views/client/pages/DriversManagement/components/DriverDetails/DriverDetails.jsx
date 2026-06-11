@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
+import appConfig from "../../../../../../components/configs/app.config";
 import { useParams } from "react-router-dom";
 import CardContainer from "../../../../../../components/shared/CardContainer";
 import Button from "../../../../../../components/ui/Button/Button";
@@ -12,14 +13,15 @@ import Loading from "../../../../../../components/shared/Loading/Loading";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../../../constants/selectOptions";
 import { useAppSelector } from "../../../../../../store";
-import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocumentList, apiChangeDriverDocument, apiDeleteDriverDocument, apiApproveVehicle, apiGetDriverRideHistory, apiRejectVehicle, apiGetDriverDocumentById, apieditDriverStatus, apiGetDriverRevenue } from "../../../../../../services/DriverManagementService";
+import { apiGetDriverManagementById, apiEditDriverManagement, apiGetDriverDocumentList, apiChangeDriverDocument, apiDeleteDriverDocument, apiApproveVehicle, apiGetDriverRideHistory, apiRejectVehicle, apiGetDriverDocumentById, apieditDriverStatus, apiGetDriverRevenue, apiRequestDriverProfileImageApproval, apiGetDriverProfileImageApprovalStatus } from "../../../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import DriverRideHistory from "./component/DriverRideHistory";
 import RejectModel from "./component/RejectModel";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { getDefaultDialCode, normalizeDialCode } from "../../../../../../utils/tenantFormatUtils";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
 import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
-import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
 
 const FormField = ({
     label,
@@ -152,6 +154,37 @@ const DriverDetails = () => {
     const [vehicleList, setVehicleList] = useState([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [profileImageApprovalStatus, setProfileImageApprovalStatus] = useState(null);
+    const [loadingApprovalStatus, setLoadingApprovalStatus] = useState(false);
+    const [requestingApproval, setRequestingApproval] = useState(false);
+    const [approvalRequestDescription, setApprovalRequestDescription] = useState("");
+
+    const parseProfileImageApprovalStatus = (payload) => {
+        const data = payload?.data ?? payload;
+        const status =
+            data?.approval_status ??
+            data?.status ??
+            data?.profile_image_approval_status ??
+            null;
+
+        if (
+            data?.can_update === true ||
+            data?.can_update === 1 ||
+            data?.is_approved === true ||
+            data?.is_approved === 1 ||
+            status === "approved"
+        ) {
+            return "approved";
+        }
+        if (status === "pending") return "pending";
+        if (status === "rejected") return "rejected";
+        return null;
+    };
+
+    const hasExistingProfileImage = Boolean(driverData?.profile_image);
+
+    const canUploadProfileImage =
+        !hasExistingProfileImage || profileImageApprovalStatus === "approved";
 
     const getVehicleFormData = (data) => {
         const hasChangeRequest = Number(data?.vehicle_change_request) === 1;
@@ -281,14 +314,15 @@ const DriverDetails = () => {
                     {};
                 setDriverData(data);
 
+              
                 const vehicleData = getVehicleFormData(data);
                 setFormData({
                     name: data.name || "",
                     email: data.email || "",
                     phone_no: data.phone_no || "",
                     country_code: data.country_code
-                        ? `+${data.country_code.replace("+", "")}`
-                        : "",
+                        ? normalizeDialCode(data.country_code)
+                        : getDefaultDialCode(),
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: data.assigned_vehicle || "",
@@ -330,6 +364,25 @@ const DriverDetails = () => {
     useEffect(() => {
         loadDriverData();
     }, [loadDriverData]);
+
+    const loadProfileImageApprovalStatus = useCallback(async () => {
+        if (!driverId) return;
+        setLoadingApprovalStatus(true);
+        try {
+            const response = await apiGetDriverProfileImageApprovalStatus({ id: driverId });
+            if (response?.data?.success === 1 || response?.status === 200) {
+                setProfileImageApprovalStatus(parseProfileImageApprovalStatus(response.data));
+            }
+        } catch (error) {
+            console.error("Error loading profile image approval status:", error);
+        } finally {
+            setLoadingApprovalStatus(false);
+        }
+    }, [driverId]);
+
+    useEffect(() => {
+        loadProfileImageApprovalStatus();
+    }, [loadProfileImageApprovalStatus]);
 
     const loadDriverDocuments = useCallback(async () => {
         if (!driverId) return;
@@ -380,12 +433,53 @@ const DriverDetails = () => {
     };
 
     const handleFileChange = (e) => {
+        if (!canUploadProfileImage) {
+            toast.error("Profile image update requires admin approval first.");
+            e.target.value = "";
+            return;
+        }
+
         const file = e.target.files[0];
         if (file) {
             setProfileImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => setProfileImage(reader.result);
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRequestProfileImageApproval = async () => {
+        if (!driverId) return;
+
+        setRequestingApproval(true);
+        try {
+            const formDataObj = new FormData();
+            formDataObj.append("id", driverId);
+            if (approvalRequestDescription.trim()) {
+                formDataObj.append("description", approvalRequestDescription.trim());
+            }
+
+            const response = await apiRequestDriverProfileImageApproval(formDataObj);
+            if (response?.data?.success === 1 || response?.status === 200) {
+                toast.success(
+                    response?.data?.message ||
+                        "Profile image update request sent for approval"
+                );
+                setApprovalRequestDescription("");
+                await loadProfileImageApprovalStatus();
+            } else {
+                toast.error(
+                    response?.data?.message || "Failed to send update request"
+                );
+            }
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    "Error sending update request"
+            );
+        } finally {
+            setRequestingApproval(false);
         }
     };
 
@@ -545,12 +639,19 @@ const DriverDetails = () => {
                 formDataObj.append("password", formData.password.trim());
             }
             if (profileImageFile) {
+                if (!canUploadProfileImage) {
+                    toast.error("Profile image update requires admin approval first.");
+                    setIsSaving(false);
+                    return;
+                }
                 formDataObj.append("profile_image", profileImageFile);
             }
             const response = await apiEditDriverManagement(formDataObj);
             if (response?.data?.success === 1 || response?.status === 200) {
                 toast.success("Driver details updated successfully");
+                setProfileImageFile(null);
                 await loadDriverData();
+                await loadProfileImageApprovalStatus();
             } else {
                 toast.error(response?.data?.message || "Failed to update driver");
             }
@@ -712,23 +813,7 @@ const DriverDetails = () => {
         return vehicle ? vehicle.label : "";
     };
 
-    const [distanceUnit, setDistanceUnit] = useState("Km");
-
-    useEffect(() => {
-        const fetchApiKeys = async () => {
-            const res = await apiGetCompanyApiKeys();
-
-            if (res.data?.success) {
-                setDistanceUnit(
-                    res.data.data.units.toLowerCase() === "km"
-                        ? "Km"
-                        : "Miles"
-                );
-            }
-        };
-
-        fetchApiKeys();
-    }, []);
+    const distanceUnit = useDistanceUnit();
 
     return (
         <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
@@ -958,7 +1043,7 @@ const DriverDetails = () => {
                                         src={
                                             profileImage?.startsWith("data:")
                                                 ? profileImage
-                                                : `${import.meta.env.VITE_BACKEND_URL}${profileImage}`
+                                                : appConfig.getAssetUrl(profileImage)
                                         }
                                         alt="Profile"
                                         className="w-full h-full object-cover"
@@ -973,17 +1058,75 @@ const DriverDetails = () => {
                                     Upload Profile Image
                                 </label>
 
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="block w-full text-sm text-gray-500
+                                {loadingApprovalStatus ? (
+                                    <p className="text-sm text-gray-500">Checking approval status...</p>
+                                ) : canUploadProfileImage ? (
+                                    <>
+                                        {hasExistingProfileImage &&
+                                            profileImageApprovalStatus === "approved" && (
+                                                <p className="text-xs text-green-600">
+                                                    Update approved — you may upload a new image once.
+                                                </p>
+                                            )}
+                                        {!hasExistingProfileImage && (
+                                            <p className="text-xs text-gray-500">
+                                                You can upload a profile image once.
+                                            </p>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="block w-full text-sm text-gray-500
             file:mr-4 file:py-2 file:px-4
             file:rounded-lg file:border-0
             file:text-sm file:font-semibold
             file:bg-blue-50 file:text-blue-700
             hover:file:bg-blue-100"
-                                />
+                                        />
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        {profileImageApprovalStatus === "pending" ? (
+                                            <p className="text-sm text-amber-600">
+                                                Profile image update request is pending admin approval.
+                                            </p>
+                                        ) : profileImageApprovalStatus === "rejected" ? (
+                                            <p className="text-sm text-red-600">
+                                                Previous update request was rejected. You may request again.
+                                            </p>
+                                        ) : (
+                                            <p className="text-sm text-gray-600">
+                                                Profile image can only be uploaded once. Request approval to update it.
+                                            </p>
+                                        )}
+                                        {profileImageApprovalStatus !== "pending" && (
+                                            <>
+                                                <textarea
+                                                    value={approvalRequestDescription}
+                                                    onChange={(e) =>
+                                                        setApprovalRequestDescription(e.target.value)
+                                                    }
+                                                    placeholder="Short description (optional)"
+                                                    rows={2}
+                                                    maxLength={255}
+                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-600 resize-none"
+                                                />
+                                                <Button
+                                                    type="filled"
+                                                    btnSize="md"
+                                                    className="w-fit"
+                                                    onClick={handleRequestProfileImageApproval}
+                                                    disabled={requestingApproval}
+                                                >
+                                                    {requestingApproval
+                                                        ? "Sending Request..."
+                                                        : "Request to Update Profile Image"}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

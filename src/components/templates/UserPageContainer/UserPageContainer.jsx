@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import appConfig from "../../configs/app.config";
 import useAuth from "../../../utils/hooks/useAuth";
 import SettingIcon from "../../svg/SettingIcon";
 import NotificationIcon from "../../svg/NotificationIcon";
@@ -617,7 +618,7 @@ const renderBookingSystemUI = () => {
                   <img
                     src={
                       tenantData?.picture
-                        ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
+                        ? `${appConfig.backendUrl}/${tenantData.picture}`
                         : "/default-avatar.png"
                     }
                     alt="Profile"

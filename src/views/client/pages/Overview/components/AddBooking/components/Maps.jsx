@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getTenantData } from "../../../../../../../utils/functions/tokenEncryption";
+import { getTenantCountryIso } from "../../../../../../../utils/tenantFormatUtils";
 import { apiGetCompanyApiKeys } from "../../../../../../../services/SettingsConfigurationServices";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -30,8 +31,7 @@ const COUNTRY_CENTERS = {
 };
 
 const getCountryCenter = () => {
-    const tenant = getTenantData();
-    const code = (tenant?.country_of_use || tenant?.data?.country_of_use)?.trim().toUpperCase();
+    const code = getTenantCountryIso();
     return COUNTRY_CENTERS[code] || COUNTRY_CENTERS.DEFAULT;
 };
 

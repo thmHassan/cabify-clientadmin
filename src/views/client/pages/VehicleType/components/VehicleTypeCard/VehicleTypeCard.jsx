@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import appConfig from "../../../../../../components/configs/app.config";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
+import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 
 const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
     const actionOptions = [
@@ -16,27 +18,10 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         },
     ];
 
-    const [distanceUnit, setDistanceUnit] = useState("Miles");
+    const distanceUnit = useDistanceUnit();
 
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.units) {
-            const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-            setDistanceUnit(unit);
-        }
-
-    }, []);
-
-    const formatDistance = (distanceInMeters) => {
-        if (!distanceInMeters) return "-";
-
-        if (distanceUnit === "Km") {
-            return `${(distanceInMeters / 1000).toFixed(2)} Km`;
-        }
-
-        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
-    };
+    const formatDistance = (distanceInMeters) =>
+        formatDistanceFromMeters(distanceInMeters, distanceUnit);
 
     const capitalizeFirst = (value) => {
         if (!value) return "-";
@@ -50,7 +35,7 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
             <div className="flex gap-2">
                 <div className="w-[100px] h-[60px]">
                     <img
-                        src={`${import.meta.env.VITE_BACKEND_URL}${vehicle.vehicle_image}`}
+                        src={`${appConfig.backendUrl}${vehicle.vehicle_image}`}
                         className="w-full h-full rounded-md border-[1px] border-[#D7D7D7]"
                         alt="vehicle"
                     />

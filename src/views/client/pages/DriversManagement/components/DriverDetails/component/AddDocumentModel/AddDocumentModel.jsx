@@ -1,5 +1,6 @@
 import { Field, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
+import appConfig from "../../../../../../../../components/configs/app.config";
 import FormLabel from "../../../../../../../../components/ui/FormLabel";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import { unlockBodyScroll } from "../../../../../../../../utils/functions/common.function";
@@ -128,7 +129,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Front Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${import.meta.env.VITE_BACKEND_URL}${values.frontPhoto}`}
+                                                            src={`${appConfig.backendUrl}${values.frontPhoto}`}
                                                             className="w-full h-48 object-cover"
                                                             alt="Front"
                                                         />
@@ -141,7 +142,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Back Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${import.meta.env.VITE_BACKEND_URL}${values.backPhoto}`}
+                                                            src={`${appConfig.backendUrl}${values.backPhoto}`}
                                                             className="w-full h-48 object-cover"
                                                             alt="Back"
                                                         />
@@ -154,7 +155,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Profile Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${import.meta.env.VITE_BACKEND_URL}${values.profilePhoto}`}
+                                                            src={`${appConfig.backendUrl}${values.profilePhoto}`}
                                                             className="w-full h-48 object-cover"
                                                             alt="Profile"
                                                         />

@@ -5,13 +5,14 @@ import Button from "../../../../components/ui/Button/Button";
 import PlusIcon from "../../../../components/svg/PlusIcon";
 import Modal from "../../../../components/shared/Modal/Modal";
 import AddDriversManagementModal from "./components/AddDriversManagementModal";
-import { lockBodyScroll } from "../../../../utils/functions/common.function";
+import { lockBodyScroll, unlockBodyScroll } from "../../../../utils/functions/common.function";
 import { useAppSelector } from "../../../../store";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS, STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import DriverManagementCard from "./components/DriversManagementCard";
+import DriverDetailsModal from "./components/DriverDetailsModal";
 import { apiDeleteDriverManagement, apiGetDriverManagement } from "../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../services/SubCompanyServices";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,10 @@ const DriversManagement = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [driverToDelete, setDriverToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewDriverModal, setViewDriverModal] = useState({
+    isOpen: false,
+    driverId: null,
+  });
 
   // Sub-company filter states
   const [subCompanyList, setSubCompanyList] = useState([]);
@@ -179,6 +184,21 @@ const DriversManagement = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleViewDriverDetails = (driver) => {
+    lockBodyScroll();
+    setViewDriverModal({ isOpen: true, driverId: driver.id });
+  };
+
+  const handleCloseDriverDetailsModal = () => {
+    unlockBodyScroll();
+    setViewDriverModal({ isOpen: false, driverId: null });
+  };
+
+  const handleEditDriverFromModal = (driverId) => {
+    handleCloseDriverDetailsModal();
+    navigate(`/driver-management/${driverId}`);
+  };
+
   return (
     <div className="px-4 py-5 sm:p-6 lg:p-10 min-h-[calc(100vh-85px)]">
       <div className="flex justify-between sm:flex-row flex-col items-start sm:items-center gap-3 sm:gap-0 2xl:mb-6 1.5xl:mb-10 mb-0">
@@ -279,6 +299,7 @@ const DriversManagement = () => {
                     onDelete={handleDeleteClick}
                     onEdit={(d) => navigate(`/driver-management/${d.id}`)}
                     onStatusChange={handleDriverStatusChange}
+                    onViewDetails={handleViewDriverDetails}
                   />
                 ))}
               </div>
@@ -310,6 +331,14 @@ const DriversManagement = () => {
           }
           setIsOpen={setIsDriversManagementModalOpen}
           onDriverCreated={handleOnDriverCreated}
+        />
+      </Modal>
+
+      <Modal isOpen={viewDriverModal.isOpen} size="2xl" className="p-4 sm:p-6 lg:p-10">
+        <DriverDetailsModal
+          driverId={viewDriverModal.driverId}
+          onClose={handleCloseDriverDetailsModal}
+          onEdit={handleEditDriverFromModal}
         />
       </Modal>
 

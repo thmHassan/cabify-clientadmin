@@ -4,6 +4,7 @@ import { apiGetPackageHistory } from "../../../../../../services/DriverManagemen
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
 import Button from "../../../../../../components/ui/Button/Button";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 
 const PackageHistoryModal = ({ onClose, driver }) => {
     const [loading, setLoading] = useState(true);
@@ -88,7 +89,8 @@ const PackageHistoryModal = ({ onClose, driver }) => {
                                 <span className="font-medium">Email:</span> {driver?.email || 'N/A'}
                             </p>
                             <p className="text-xs text-gray-600">
-                                <span className="font-medium">Phone:</span> {driver?.phone_no || driver?.phone || 'N/A'}
+                                <span className="font-medium">Phone:</span>{" "}
+                                {formatPhoneNumber(driver?.country_code, driver?.phone_no || driver?.phone)}
                             </p>
                             {packageType && (
                                 <p className="text-xs text-gray-600">

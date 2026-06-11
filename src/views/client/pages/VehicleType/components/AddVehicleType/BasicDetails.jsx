@@ -1,4 +1,5 @@
 import { Field, ErrorMessage } from "formik";
+import appConfig from "../../../../../../components/configs/app.config";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
 
@@ -145,7 +146,7 @@ const BasicDetails = ({
                         <div className="mb-3">
                             {/* <p className="text-sm text-gray-600 mb-2">Current Image:</p> */}
                             <img
-                                src={`${import.meta.env.VITE_BACKEND_URL}${existingVehicleImageUrl}`}
+                                src={`${appConfig.backendUrl}${existingVehicleImageUrl}`}
                                 alt="Current vehicle type"
                                 className="w-12 h-12 object-contain border border-gray-300 rounded-lg bg-white"
                             />

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
 
+import { formatDistanceFromMeters } from "../../../../../../../../utils/tenantFormatUtils";
+
 const DriverRideHistory = ({ driver, distanceUnit }) => {
 
     const currencySymbols = {
@@ -23,17 +25,8 @@ const DriverRideHistory = ({ driver, distanceUnit }) => {
         }
     }, []);
 
-    const formatDistance = (distanceInMeters) => {
-        if (!distanceInMeters) return "-";
-
-        if (!distanceUnit) return "...";
-
-        if (distanceUnit === "Km") {
-            return `${(distanceInMeters / 1000).toFixed(2)} Km`;
-        }
-
-        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
-    };
+    const formatDistance = (distanceInMeters) =>
+        formatDistanceFromMeters(distanceInMeters, distanceUnit);
 
     const statusColors = {
         pending: "bg-[#F59E0B] text-white",

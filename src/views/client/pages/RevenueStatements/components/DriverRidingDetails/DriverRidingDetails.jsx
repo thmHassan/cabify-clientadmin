@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Button from "../../../../../../components/ui/Button/Button";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
+import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 import { apiGetDriverRidingDetails } from "../../../../../../services/RevenueStatementsService";
 
 const DriverRidingDetails = ({ revenueInfo, handleClose }) => {
   const [loading, setLoading] = useState(false);
   const [driverDetails, setDriverDetails] = useState(null);
   const [currencySymbol, setCurrencySymbol] = useState("₹");
-  const [distanceUnit, setDistanceUnit] = useState("Miles");
+  const distanceUnit = useDistanceUnit();
 
   const currencySymbols = {
     INR: "₹",
@@ -56,23 +58,12 @@ const DriverRidingDetails = ({ revenueInfo, handleClose }) => {
   useEffect(() => {
     const tenant = getTenantData();
 
-    if (tenant?.units) {
-      const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-      setDistanceUnit(unit);
-    }
-
     if (tenant?.currency) {
       setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
     }
   }, []);
 
-  const formatDistance = (dist) => {
-    if (!dist) return "-";
-    if (distanceUnit === "Km") {
-      return `${(dist / 1000).toFixed(2)}km`;
-    }
-    return `${(dist / 1609.34).toFixed(2)} Miles`;
-  };
+  const formatDistance = (dist) => formatDistanceFromMeters(dist, distanceUnit);
 
   return (
     <div className="bg-white rounded-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[85vh] overflow-hidden">

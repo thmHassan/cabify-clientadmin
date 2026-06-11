@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const LostFoundCard = ({ lostfound, onView, onStatusChange }) => {
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
     const statusBtnRef = useRef(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -89,7 +89,12 @@ const LostFoundCard = ({ lostfound, onView, onStatusChange }) => {
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[175px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Phone No</p>
-                    <p className="text-[#333333] text-center font-semibold text-sm">{lostfound?.booking_details?.user_detail?.country_code || "+91"} {lostfound?.booking_details?.phone_no}</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">
+                        {formatPhoneNumber(
+                            lostfound?.booking_details?.user_detail?.country_code,
+                            lostfound?.booking_details?.phone_no
+                        )}
+                    </p>
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[130px]">

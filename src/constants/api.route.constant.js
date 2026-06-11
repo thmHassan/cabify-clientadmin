@@ -37,6 +37,11 @@ export const GET_DRIVERS_MANAGEMENT = "/company/list-driver";
 export const GET_DRIVER_BY_ID = "/company/edit-driver";
 export const CREATE_DRIVER = "/company/create-driver";
 export const EDIT_DRIVER = "/company/edit-driver";
+export const DRIVER_PROFILE_IMAGE_APPROVAL = "/company/edit-driver/driver-profile-image-approval";
+export const DRIVER_PROFILE_IMAGE_APPROVAL_STATUS = "/company/edit-driver/driver-profile-image-approval-status";
+export const DRIVER_PROFILE_IMAGE_APPROVAL_LIST = "/company/edit-driver/driver-profile-image-approval-list";
+export const APPROVE_DRIVER_PROFILE_IMAGE_APPROVAL = "/company/edit-driver/approve-driver-profile-image-approval";
+export const REJECT_DRIVER_PROFILE_IMAGE_APPROVAL = "/company/edit-driver/reject-driver-profile-image-approval";
 export const DELETE_DRIVER = "/company/delete-driver";
 export const POST_EDIT_DRIVER_STATUS = "/company/change-driver-status";
 export const GET_DRIVER_REVENUE = "/company/driver/total-earnings"
@@ -158,7 +163,13 @@ export const CHANGE_PASSWORD = "/super-admin/change-password";
 export const UPDATE_PROFILE = "/super-admin/update-profile";
 
 //api for General Notification
+export const GET_NOTIFICATION_RECIPIENTS = "/company/notification-recipients";
 export const SEND_NOTIFICATION = "/company/send-notification"
+
+// api for contact us
+export const GET_CONTACT_US_LIST = "/company/contact-us-list";
+export const GET_CONTACT_US = "/company/contact-us";
+export const POST_CONTACT_US_RESPONSE = "/company/contact-us-response";
 
 // api for get-app-content
 export const GET_APP_CONTENT = "/company/get-app-content"

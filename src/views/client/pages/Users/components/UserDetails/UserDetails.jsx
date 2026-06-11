@@ -3,6 +3,7 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 import { apiSendUserInvoice } from "../../../../../../services/UserService";
 import toast from "react-hot-toast";
 
@@ -81,7 +82,7 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
                     <p className="font-semibold text-xl">{user.name}</p>
                     <p className="text-[10px]">{user.email}</p>
                     <p className="text-xs">
-                        {user?.country_code || "+91"} {user.phone_no}
+                        {formatPhoneNumber(user?.country_code, user.phone_no)}
                     </p>
                 </div>
             </div>

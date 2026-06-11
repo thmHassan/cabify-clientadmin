@@ -3,7 +3,7 @@ import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
+import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 
 const RidesManagementCard = ({ ride, onView, onDelete, distanceUnit }) => {
 
@@ -36,15 +36,8 @@ const RidesManagementCard = ({ ride, onView, onDelete, distanceUnit }) => {
         }
     }, []);
 
-    const formatDistance = (distanceInMeters) => {
-        if (!distanceInMeters) return "-";
-
-        if (distanceUnit === "Km") {
-            return `${(distanceInMeters / 1000).toFixed(2)} Km`;
-        }
-
-        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
-    };
+    const formatDistance = (distanceInMeters) =>
+        formatDistanceFromMeters(distanceInMeters, distanceUnit);
 
     const actionOptions = [
         {

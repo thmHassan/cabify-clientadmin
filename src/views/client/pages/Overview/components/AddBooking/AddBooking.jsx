@@ -2,6 +2,7 @@ import { ErrorMessage, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
 import Maps from "./components/Maps";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { getTenantCountryIso } from "../../../../../../utils/tenantFormatUtils";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import { apiGetAccount } from "../../../../../../services/AccountService";
 import { apiGetDriverManagement } from "../../../../../../services/DriverManagementService";
@@ -177,7 +178,7 @@ const AddBooking = ({ setIsOpen }) => {
     const clearFieldErrors = (key) => { clearCalcError(key); clearBookingError(key); };
 
     const tenant = getTenantData();
-    const COUNTRY_CODE = tenant?.country_of_use?.toLowerCase();
+    const COUNTRY_CODE = getTenantCountryIso(tenant)?.toLowerCase();
 
     const chargeFields = [
         "fares", "return_fares", "waiting_time", "parking_charges", "ac_fares",
@@ -813,6 +814,7 @@ const AddBooking = ({ setIsOpen }) => {
 
                     const handleChargeChange = (name, value) => {
                         setFieldValue(name, Number(value) || 0);
+                        if (name === "total_charges") return;
                         setTimeout(() => {
                             const additionalCharges = chargeFields.reduce((sum, key) => sum + Number(values[key] || 0), 0);
                             const baseFare = Number(values.base_fare || 0);
@@ -1439,7 +1441,12 @@ const AddBooking = ({ setIsOpen }) => {
                                             />
                                         ))}
                                         <div className="font-bold text-[#10B981]">
-                                            <ChargeInput label="TOTAL CHARGES" name="total_charges" value={values.total_charges} readOnly />
+                                            <ChargeInput
+                                                label="TOTAL CHARGES"
+                                                name="total_charges"
+                                                value={values.total_charges}
+                                                onChange={handleChargeChange}
+                                            />
                                         </div>
                                     </div>
 

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
+import appConfig from "../../../../../../components/configs/app.config";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { apieditDriverStatus, apiSendDriverInvoice, apiGetPackageHistory } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 import SettlementAmountModel from "../SettlementAmountModel";
 import PackageHistoryModal from "../PackageHistoryModal/PackageHistoryModal";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import { apiGetCommissionData } from "../../../../../../services/SettingsConfigurationServices";
 
-const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
+const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange, onViewDetails }) => {
     const [status, setStatus] = useState(driver?.status || "pending");
     const [loading, setLoading] = useState(false);
     const [currencySymbol, setCurrencySymbol] = useState("₹");
@@ -160,13 +162,23 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
     };
 
     return (
-        <div className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto">
-
+        <div
+            className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-x-auto cursor-pointer"
+            onClick={() => onViewDetails?.(driver)}
+            onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onViewDetails?.(driver);
+                }
+            }}
+            role="button"
+            tabIndex={0}
+        >
             <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EFEFEF] flex items-center justify-center">
                     {driver?.profile_image ? (
                         <img
-                            src={`${import.meta.env.VITE_BACKEND_URL}${driver.profile_image}`}
+                            src={appConfig.getAssetUrl(driver.profile_image)}
                             alt={driver?.name}
                             className="w-full h-full object-cover"
                         />
@@ -179,11 +191,17 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange }) => {
                 <div className="w-60">
                     <p className="font-semibold text-xl">{driver.name}</p>
                     <p className="text-[10px]">{driver.email}</p>
-                    <p className="text-xs">{driver.phone}</p>
+                    <p className="text-xs">
+                        {formatPhoneNumber(driver.country_code, driver.phone_no || driver.phone)}
+                    </p>
                 </div>
             </div>
 
-            <div className="flex items-center justify-center gap-3">
+            <div
+                className="flex items-center justify-center gap-3"
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+            >
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-gray-100 text-left whitespace-nowrap">
                     <p className="text-xs text-center text-gray-500">Vehicle Type</p>
                     <p className="text-black text-center font-semibold text-sm">

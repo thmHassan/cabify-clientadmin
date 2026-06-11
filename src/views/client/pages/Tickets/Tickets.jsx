@@ -9,6 +9,8 @@ import CustomSelect from '../../../../components/ui/CustomSelect';
 import TicketsCard from './components/TicketsCard';
 import Modal from '../../../../components/shared/Modal/Modal';
 import AddTicketModel from './components/AddTicketModel';
+import TicketUserDetailModal from './components/TicketUserDetailModal';
+import { lockBodyScroll, unlockBodyScroll } from '../../../../utils/functions/common.function';
 import { apiChangeTicketStatus, apiGetTicketList } from '../../../../services/TicketsServices';
 import AppLogoLoader from '../../../../components/shared/AppLogoLoader';
 
@@ -18,6 +20,8 @@ const Tickets = () => {
     isOpen: false,
   });
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [selectedTicketForUser, setSelectedTicketForUser] = useState(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [_searchQuery, setSearchQuery] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
   const [_selectedStatus, setSelectedStatus] = useState(
@@ -104,6 +108,18 @@ const Tickets = () => {
     setIsTicketsModelOpen({ isOpen: true });
   };
 
+  const handleUserClick = (ticket) => {
+    lockBodyScroll();
+    setSelectedTicketForUser(ticket);
+    setIsUserModalOpen(true);
+  };
+
+  const handleCloseUserModal = () => {
+    unlockBodyScroll();
+    setIsUserModalOpen(false);
+    setSelectedTicketForUser(null);
+  };
+
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
@@ -165,6 +181,7 @@ const Tickets = () => {
                 tickets={ticket}
                 onReplyClick={handleReplyClick}
                 onStatusChange={handleStatusChange}
+                onUserClick={handleUserClick}
               />
             ))
           ) : (
@@ -194,6 +211,17 @@ const Tickets = () => {
           ticket={selectedTicket}
           onClose={() => setIsTicketsModelOpen({ isOpen: false })}
           refreshList={() => setRefreshTrigger(prev => prev + 1)}
+          onUserClick={(ticket) => {
+            setIsTicketsModelOpen({ isOpen: false });
+            handleUserClick(ticket);
+          }}
+        />
+      </Modal>
+
+      <Modal isOpen={isUserModalOpen} className="p-4 sm:p-6 lg:p-10">
+        <TicketUserDetailModal
+          ticket={selectedTicketForUser}
+          onClose={handleCloseUserModal}
         />
       </Modal>
     </div>

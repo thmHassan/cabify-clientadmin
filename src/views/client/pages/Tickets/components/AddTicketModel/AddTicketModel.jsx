@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { apiReplyTicket } from "../../../../../../services/TicketsServices";
 import Button from "../../../../../../components/ui/Button/Button";
 import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { getTicketCreatorInfo } from "../TicketUserDetailModal";
 
-const AddTicketModel = ({ ticket, onClose, refreshList }) => {
+const AddTicketModel = ({ ticket, onClose, refreshList, onUserClick }) => {
     const { formatDateOnly } = useTimezoneFormatting();
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
     const isViewOnly = ticket.reply_message !== null && ticket.reply_message !== "";
+    const { displayName } = getTicketCreatorInfo(ticket);
 
     const handleReplySubmit = async () => {
         if (!message.trim()) return alert("Please enter a reply message");
@@ -44,7 +46,14 @@ const AddTicketModel = ({ ticket, onClose, refreshList }) => {
             <h2 className="text-xl font-semibold mb-1">#{ticket.ticket_id}</h2>
 
             <p className="text-gray-600 text-sm">
-                Customer - {ticket.customer ?? "Unknown"}
+                Raised by{" "}
+                <button
+                    type="button"
+                    onClick={() => onUserClick?.(ticket)}
+                    className="text-[#1F41BB] font-medium hover:underline"
+                >
+                    {displayName}
+                </button>
             </p>
 
             <p className="text-gray-400 text-sm mb-5">

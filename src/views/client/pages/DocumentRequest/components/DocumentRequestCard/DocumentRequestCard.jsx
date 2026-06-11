@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import { lockBodyScroll, unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import DocumentRequestModel from "../DocumentRequestModel";
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 
 const DocumentRequestCard = ({ document, onStatusChange }) => {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -55,7 +56,10 @@ const DocumentRequestCard = ({ document, onStatusChange }) => {
                         <p className="font-semibold text-xl">{document?.driver_detail?.name || "N/A"}</p>
                         <p className="text-[10px]">{document?.driver_detail?.email || "N/A"}</p>
                         <p className="text-xs">
-                            {document?.driver_detail?.country_code || "+91"} {document?.driver_detail?.phone_no || "N/A"}
+                            {formatPhoneNumber(
+                                document?.driver_detail?.country_code,
+                                document?.driver_detail?.phone_no
+                            )}
                         </p>
                     </div>
                 </div>

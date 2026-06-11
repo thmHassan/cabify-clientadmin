@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
-const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
+const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => {
     const { formatDateOnly } = useTimezoneFormatting();
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState(null);
@@ -51,9 +51,14 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange }) => {
                         <p className="font-semibold text-xl">
                             {tickets.ticket_id}
                         </p>
-                        <p className="text-[10px]">
-                            {tickets.customer}
-                        </p>
+                        <p className="text-[10px] text-[#6C6C6C]">Raised by</p>
+                        <button
+                            type="button"
+                            onClick={() => onUserClick?.(tickets)}
+                            className="text-sm font-medium text-[#1F41BB] hover:underline text-left"
+                        >
+                            {tickets.customer || "Unknown"}
+                        </button>
                         <p className="text-xs">
                             {formatDateOnly(tickets.created_at)}
                         </p>

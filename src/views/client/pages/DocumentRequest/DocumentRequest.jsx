@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { PAGE_SIZE_OPTIONS, DOCUMENT_OPTIONS } from "../../../../constants/selectOptions";
 import { useAppSelector } from "../../../../store";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
@@ -8,7 +8,9 @@ import CardContainer from "../../../../components/shared/CardContainer";
 import SearchBar from "../../../../components/shared/SearchBar/SearchBar";
 import Pagination from "../../../../components/ui/Pagination/Pagination";
 import { apiGetDocumentRequests } from "../../../../services/DocumentRequestServices";
+import { apiGetDriverProfileImageApprovalList } from "../../../../services/DriverManagementService";
 import DocumentRequestCard from "./components/DocumentRequestCard";
+import ProfileImageRequestCard from "../DriverDocuments/components/ProfileImageRequestCard";
 
 const DocumentRequest = () => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +33,39 @@ const DocumentRequest = () => {
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [profileImageRequests, setProfileImageRequests] = useState([]);
+    const [loadingProfileImageRequests, setLoadingProfileImageRequests] = useState(false);
+
+    const fetchProfileImageRequests = useCallback(async () => {
+        setLoadingProfileImageRequests(true);
+        try {
+            const response = await apiGetDriverProfileImageApprovalList({
+                page: 1,
+                perPage: 50,
+            });
+
+            if (response?.data?.success === 1 || response?.status === 200) {
+                const list =
+                    response?.data?.list?.data ??
+                    response?.data?.data?.data ??
+                    response?.data?.data ??
+                    response?.data?.list ??
+                    [];
+                setProfileImageRequests(Array.isArray(list) ? list : []);
+            } else {
+                setProfileImageRequests([]);
+            }
+        } catch (error) {
+            console.error("Error fetching profile image requests:", error);
+            setProfileImageRequests([]);
+        } finally {
+            setLoadingProfileImageRequests(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProfileImageRequests();
+    }, [fetchProfileImageRequests, refreshTrigger]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -103,6 +138,41 @@ const DocumentRequest = () => {
                         <PageSubTitle title="Manage documents added by drivers" />
                     </div>
                 </div>
+            </div>
+            <div className="mb-6">
+                <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
+                    <div className="mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Profile Image Update Requests
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                            Driver requests to change their profile image
+                        </p>
+                    </div>
+
+                    {loadingProfileImageRequests ? (
+                        <div className="flex justify-center py-8">
+                            <AppLogoLoader />
+                        </div>
+                    ) : profileImageRequests.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            {profileImageRequests.map((request) => (
+                                <ProfileImageRequestCard
+                                    key={request.id ?? request.driver_id}
+                                    request={request}
+                                    onStatusChange={() => {
+                                        fetchProfileImageRequests();
+                                        setRefreshTrigger((prev) => prev + 1);
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            No profile image update requests found
+                        </div>
+                    )}
+                </CardContainer>
             </div>
             <div>
                 <CardContainer className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">

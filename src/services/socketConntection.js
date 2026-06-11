@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import appConfig from "../components/configs/app.config";
 import { getCompanyId, getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
 
 let socket = null;
@@ -19,7 +20,7 @@ const initSocket = () => {
     return null;
   }
 
-  socket = io("https://backend.cabifyit.com", {
+  socket = io(appConfig.backendUrl, {
     path: "/socket.io",
     transports: ["polling", "websocket"],
     reconnection: true,

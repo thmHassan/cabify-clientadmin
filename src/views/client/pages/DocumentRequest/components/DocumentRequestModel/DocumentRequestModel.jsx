@@ -1,6 +1,7 @@
 import { Field, Form, Formik } from "formik";
 import Button from "../../../../../../components/ui/Button/Button";
 import FormLabel from "../../../../../../components/ui/FormLabel";
+import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 
 const DocumentRequestModel = ({ document, handleCloseModal }) => {
     return (
@@ -9,7 +10,10 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                 initialValues={{
                     name: document?.driver_detail?.name || "",
                     email: document?.driver_detail?.email || "",
-                    phone: `${document?.driver_detail?.country_code || "+91"} ${document?.driver_detail?.phone_no || ""}`,
+                    phone: formatPhoneNumber(
+                        document?.driver_detail?.country_code,
+                        document?.driver_detail?.phone_no
+                    ),
                     driverStatus: document?.driver_detail?.status || "",
                     documentId: document?.document_id || "",
                     documentStatus: document?.status || "",

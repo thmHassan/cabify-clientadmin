@@ -9,6 +9,7 @@ import { MAP_STATUS_OPTIONS } from "../../../../constants/selectOptions";
 import RedCarIcon from "../../../../components/svg/RedCarIcon";
 import GreenCarIcon from "../../../../components/svg/GreenCarIcon";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
+import { getTenantCountryIso } from "../../../../utils/tenantFormatUtils";
 import { apiGetCompanyApiKeys } from "../../../../services/SettingsConfigurationServices";
 
 const GOOGLE_KEY =
@@ -248,8 +249,7 @@ const COUNTRY_CENTERS = {
 };
 
 const getCountryCenter = () => {
-  const tenant = getTenantData();
-  const code = tenant?.country_of_use?.trim().toUpperCase();
+  const code = getTenantCountryIso();
   return COUNTRY_CENTERS[code] || COUNTRY_CENTERS.DEFAULT;
 };
 

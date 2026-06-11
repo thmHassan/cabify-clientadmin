@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import appConfig from "../../../../components/configs/app.config";
 import CompaniesIcon from "../../../../components/svg/CompaniesIcon";
 import SystemUptimeIcon from "../../../../components/svg/SystemUptimeIcon";
 import SubscriptionIcon from "../../../../components/svg/SubscriptionIcon";
@@ -380,7 +381,7 @@ const Overview = () => {
             <img
               src={
                 tenantData?.picture
-                  ? `${import.meta.env.VITE_BACKEND_URL}/${tenantData.picture}`
+                  ? `${appConfig.backendUrl}/${tenantData.picture}`
                   : "/default-avatar.png"
               }
               alt="Profile"

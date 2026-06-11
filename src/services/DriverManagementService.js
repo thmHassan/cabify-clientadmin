@@ -2,7 +2,7 @@ import { method } from "lodash";
 import { METHOD_GET, METHOD_POST } from "../constants/method.constant";
 import { replaceSlash } from "../utils/functions/common.function";
 import ApiService from "./ApiService";
-import { ADD_WALLET_BALANCE, APPROVE_VEHICLE, CHANGE_DRIVER_DOCUMENT_STATUS, CREATE_DRIVER, DELETE_DRIVER, DELETE_DRIVER_DOCUMENT, DELETE_DRIVERS_DOCUMENT, DRIVER_DOCUMENT_LIST, DRIVER_RIDE_HISTORY, EDIT_DRIVER, GET_BY_ID_DRIVER_DOCUMENT, GET_DRIVER_BY_ID, GET_DRIVER_REVENUE, GET_DRIVERS_MANAGEMENT, POST_EDIT_DRIVER_STATUS, REJECT_VAHICLE, SEND_DRIVER_NOTIFICATION, SEND_PACKAGE_HISTORY } from "../constants/api.route.constant";
+import { ADD_WALLET_BALANCE, APPROVE_DRIVER_PROFILE_IMAGE_APPROVAL, APPROVE_VEHICLE, CHANGE_DRIVER_DOCUMENT_STATUS, CREATE_DRIVER, DELETE_DRIVER, DELETE_DRIVER_DOCUMENT, DELETE_DRIVERS_DOCUMENT, DRIVER_DOCUMENT_LIST, DRIVER_PROFILE_IMAGE_APPROVAL, DRIVER_PROFILE_IMAGE_APPROVAL_LIST, DRIVER_PROFILE_IMAGE_APPROVAL_STATUS, DRIVER_RIDE_HISTORY, EDIT_DRIVER, GET_BY_ID_DRIVER_DOCUMENT, GET_DRIVER_BY_ID, GET_DRIVER_REVENUE, GET_DRIVERS_MANAGEMENT, POST_EDIT_DRIVER_STATUS, REJECT_DRIVER_PROFILE_IMAGE_APPROVAL, REJECT_VAHICLE, SEND_DRIVER_NOTIFICATION, SEND_PACKAGE_HISTORY } from "../constants/api.route.constant";
 import socketApi from "./SocketApiService";
 
 export async function apiCreateDriveManagement(data) {
@@ -61,6 +61,67 @@ export async function apiEditDriverManagement(data) {
 
     return ApiService.fetchData({
         url: EDIT_DRIVER,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiRequestDriverProfileImageApproval(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: DRIVER_PROFILE_IMAGE_APPROVAL,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiGetDriverProfileImageApprovalStatus(params) {
+    return ApiService.fetchData({
+        url: DRIVER_PROFILE_IMAGE_APPROVAL_STATUS,
+        method: METHOD_GET,
+        params,
+    });
+}
+
+export async function apiGetDriverProfileImageApprovalList(params) {
+    return ApiService.fetchData({
+        url: DRIVER_PROFILE_IMAGE_APPROVAL_LIST,
+        method: METHOD_GET,
+        params,
+    });
+}
+
+export async function apiApproveDriverProfileImageApproval(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: APPROVE_DRIVER_PROFILE_IMAGE_APPROVAL,
+        method: METHOD_POST,
+        data,
+        ...(isFormData && {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }),
+    });
+}
+
+export async function apiRejectDriverProfileImageApproval(data) {
+    const isFormData = data instanceof FormData;
+
+    return ApiService.fetchData({
+        url: REJECT_DRIVER_PROFILE_IMAGE_APPROVAL,
         method: METHOD_POST,
         data,
         ...(isFormData && {

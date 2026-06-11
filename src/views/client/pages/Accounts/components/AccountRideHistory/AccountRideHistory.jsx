@@ -5,7 +5,8 @@ import Button from "../../../../../../components/ui/Button/Button";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
+import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 
 const AccountRideHistory = ({ account, handleClose }) => {
     const [rideHistory, setRideHistory] = useState([]);
@@ -13,7 +14,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [collecting, setCollecting] = useState(false);
-    const [distanceUnit, setDistanceUnit] = useState("Miles");
+    const distanceUnit = useDistanceUnit();
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [totalAmount, setTotalAmount] = useState(0);
 
@@ -92,43 +93,13 @@ const AccountRideHistory = ({ account, handleClose }) => {
     useEffect(() => {
         const tenant = getTenantData();
 
-        // if (tenant?.units) {
-        //     const unit = tenant.units.toLowerCase() === "km" ? "Km" : "Miles";
-        //     setDistanceUnit(unit);
-        // }
-
         if (tenant?.currency) {
             setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
         }
     }, []);
 
-    useEffect(() => {
-        const fetchApiKeys = async () => {
-            try {
-                const res = await apiGetCompanyApiKeys();
-                if (res.data?.success) {
-                    const data = res.data.data;
-
-                    const unit = data.units.toLowerCase() === "km" ? "Km" : "Miles";
-
-                    setDistanceUnit(unit);
-                }
-            } catch (err) {
-                console.error("Fetch API keys error:", err);
-            }
-        };
-        fetchApiKeys();
-    }, []);
-
-    const formatDistance = (distanceInMeters) => {
-        if (!distanceInMeters) return "-";
-
-        if (distanceUnit === "Km") {
-            return `${(distanceInMeters / 1000).toFixed(2)}km`;
-        }
-
-        return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
-    };
+    const formatDistance = (distanceInMeters) =>
+        formatDistanceFromMeters(distanceInMeters, distanceUnit);
 
     const totalPages = Math.ceil(rideHistory.length / itemsPerPage);
 

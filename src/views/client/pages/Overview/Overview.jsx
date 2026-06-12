@@ -28,6 +28,10 @@ import Tag from "../../../../components/ui/Tag/Tag";
 import { lockBodyScroll } from "../../../../utils/functions/common.function";
 import Modal from "../../../../components/shared/Modal/Modal";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
+import {
+  getAvatarSrc,
+  handleAvatarError,
+} from "../../../../utils/defaultAvatar";
 import AddBooking from "./components/AddBooking/AddBooking";
 import { apiGetDispatchSystem } from "../../../../services/SettingsConfigurationServices";
 import { apiGetDashboardDetails, apiGetSystemAlerts } from "../../../../services/DashboardService";
@@ -379,16 +383,10 @@ const Overview = () => {
         <div className="sm:mb-[30px] mb-1 sm:w-[calc(100%-240px)] w-full flex gap-5 items-center">
           <div className="w-20 h-20 rounded-full bg-[#000000]">
             <img
-              src={
-                tenantData?.picture
-                  ? `${appConfig.backendUrl}/${tenantData.picture}`
-                  : "/default-avatar.png"
-              }
+              src={getAvatarSrc(tenantData?.picture, appConfig.backendUrl)}
               alt="Profile"
               className="w-full h-full rounded-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "/default-avatar.png";
-              }}
+              onError={handleAvatarError}
             />
           </div>
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">

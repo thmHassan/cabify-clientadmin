@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import _ from "lodash";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
 import FormSelection from "../../../../../../components/ui/FormSelection/FormSelection";
+import Password from "../../../../../../components/elements/CustomPassword/Password";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { apiCreateDriveManagement, apiEditDriverManagement } from "../../../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
-import { DRIVER_VALIDATION_SCHEMA } from "../../../../validators/pages/driverManagement.validation";
+import { DRIVER_EDIT_VALIDATION_SCHEMA, DRIVER_VALIDATION_SCHEMA } from "../../../../validators/pages/driverManagement.validation";
 import toast from "react-hot-toast";
 import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
@@ -88,8 +89,8 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
       formDataObj.append("email", values.email || "");
       formDataObj.append("country_code", values.country_code || "");
       formDataObj.append("phone_no", values.phone_no || "");
-      if (values.password) {
-        formDataObj.append("password", values.password);
+      if (!isEditMode || values.password) {
+        formDataObj.append("password", values.password || "");
       }
       formDataObj.append("address", values.address || "");
       formDataObj.append("driver_license", values.driver_license || "");
@@ -153,7 +154,9 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
           joined_date: initialValue?.joined_date || "",
           sub_company: initialValue?.sub_company || "",
         }}
-        validationSchema={DRIVER_VALIDATION_SCHEMA}
+        validationSchema={
+          isEditMode ? DRIVER_EDIT_VALIDATION_SCHEMA : DRIVER_VALIDATION_SCHEMA
+        }
         onSubmit={handleSubmit}
         validateOnChange={true}
         validateOnBlur={true}
@@ -240,40 +243,18 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
-                {/* <div className="w-[calc((100%-20px)/2)]">
-                  <FormLabel htmlFor="phone_no">Phone Number</FormLabel>
-                  <div className="flex items-center border border-[#8D8D8D] rounded-lg overflow-hidden shadow-[-4px_4px_6px_0px_#0000001F] sm:h-16 h-14">
-                    <Field
-                      as="select"
-                      name="country_code"
-                      className="h-full px-3 sm:px-4 bg-gray-100 border-r border-[#8D8D8D] outline-none font-semibold"
-                    >
-                      <option value="+91">+91</option>
-                      <option value="+92">+92</option>
-                      <option value="+1">+1</option>
-                      <option value="+44">+44</option>
-                      <option value="+971">+971</option>
-                    </Field>
-                    <Field
-                      type="text"
-                      name="phone_no"
-                      placeholder="Enter phone number"
-                      className="flex-1 sm:px-5 px-4 h-full outline-none placeholder:text-[#6C6C6C] font-semibold"
-                    />
-
-                  </div>
-
-                  <ErrorMessage name="country_code" component="div" className="text-red-500 text-sm mt-1" />
-                  <ErrorMessage name="phone_no" component="div" className="text-red-500 text-sm mt-1" />
-                </div> */}
-                {/* <div className="w-[calc((100%-20px)/2)]">
+                <div className="w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="password">Password</FormLabel>
                   <div className="sm:h-16 h-14">
-                    <Field
-                      type="password"
+                    <Password
                       name="password"
-                      className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                      placeholder={isEditMode ? "Leave blank to keep current" : "Enter Password"}
+                      className="sm:px-5 px-4 sm:py-[21px] py-4 !select-none border border-[#8D8D8D] rounded-lg w-full h-14 sm:h-16 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
+                      placeholder={
+                        isEditMode
+                          ? "Leave blank to keep current"
+                          : "Enter password"
+                      }
+                      autoComplete="new-password"
                     />
                   </div>
                   <ErrorMessage
@@ -281,7 +262,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
-                </div> */}
+                </div>
                 <div className="w-[calc((100%-20px)/2)]">
                   <FormLabel htmlFor="address">Address</FormLabel>
                   <div className="sm:h-16 h-14">

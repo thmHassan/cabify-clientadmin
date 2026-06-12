@@ -3,7 +3,6 @@ import appConfig from "../../configs/app.config";
 import useAuth from "../../../utils/hooks/useAuth";
 import SettingIcon from "../../svg/SettingIcon";
 import NotificationIcon from "../../svg/NotificationIcon";
-import userImage from "../../../assets/Images/71067d46ba23cf7a8102bc3d1fab56453de3b958.jpg";
 import AppLogoIcon from "../../svg/AppLogoIcon";
 import { NAV_ELEMENTS } from "../../../constants/nav.route.constant/nav.route.constant";
 import NavElement from "./components/NavElement";
@@ -23,6 +22,10 @@ import { getTenantData, getTenantId } from "../../../utils/functions/tokenEncryp
 import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus } from "../../routes/SocketProvider";
+import {
+  getAvatarSrc,
+  handleAvatarError,
+} from "../../../utils/defaultAvatar";
 
 const UserPageContainer = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -616,16 +619,10 @@ const renderBookingSystemUI = () => {
               <div className="max-w-[200px] w-full rounded-[30px] bg-[#ffffff] py-1 sm:py-[5px] px-1 sm:px-[5px] lg:pl-[5px] lg:pr-5 flex items-center gap-1.5 sm:gap-3">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0">
                   <img
-                    src={
-                      tenantData?.picture
-                        ? `${appConfig.backendUrl}/${tenantData.picture}`
-                        : "/default-avatar.png"
-                    }
+                    src={getAvatarSrc(tenantData?.picture, appConfig.backendUrl)}
                     alt="Profile"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/default-avatar.png";
-                    }}
+                    onError={handleAvatarError}
                   />
                 </div>
                 <div className="hidden sm:flex font-semibold w-[calc(100%-56px)] text-base sm:text-[18px] leading-5 sm:leading-[25px] truncate capitalize">

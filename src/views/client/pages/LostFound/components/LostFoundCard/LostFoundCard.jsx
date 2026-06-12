@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+
+const LostFoundCard = ({ lostfound, onStatusChange }) => {
     const statusBtnRef = useRef(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -73,7 +74,7 @@ import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 
     return (
         <div
-            className="bg-white rounded-[15px] p-4 flex items-center justify-between hover:shadow-md overflow-x-auto"
+            className="relative bg-white rounded-[15px] p-4 flex items-center justify-between hover:shadow-md overflow-x-auto"
         >
             <div className="flex items-center gap-3">
                 <div className="w-60">

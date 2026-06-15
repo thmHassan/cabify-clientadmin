@@ -1,39 +1,16 @@
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { useEffect, useState } from "react";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const RevenueStatementsCard = ({ revenue, onEdit, showView, onView }) => {
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
-    const tenant = getTenantData();
-    const timeZone = tenant?.time_zone || "UTC";
+    const { currencySymbol } = useCurrency();
+    const { formatDate } = useTimezoneFormatting();
 
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
-
-    const formatDate = (dateString) => {
+    const formatRevenueDate = (dateString) => {
         if (!dateString) return "N/A";
-
-        const date = new Date(dateString);
-
-        return date.toLocaleString("en-GB", {
-            timeZone: timeZone,
+        return formatDate(dateString, {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -82,7 +59,7 @@ const RevenueStatementsCard = ({ revenue, onEdit, showView, onView }) => {
                     <p className="font-semibold text-xl">{revenue.booking_id || "N/A"}</p>
                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
                         <p className="text-[#333333] text-center font-semibold text-sm">
-                            {formatDate(revenue.created_at)}
+                            {formatRevenueDate(revenue.created_at)}
                         </p>
                     </div>
                 </div>

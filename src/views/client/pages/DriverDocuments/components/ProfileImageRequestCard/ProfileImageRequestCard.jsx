@@ -6,19 +6,7 @@ import {
   apiRejectDriverProfileImageApproval,
 } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
-
-const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const getStatusLabel = (status) => {
   if (!status) return "Unknown";
@@ -26,6 +14,7 @@ const getStatusLabel = (status) => {
 };
 
 const ProfileImageRequestCard = ({ request, onStatusChange }) => {
+  const { formatDateOr } = useTimezoneFormatting();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const driverId = request?.driver_id ?? request?.id;
@@ -92,7 +81,7 @@ const ProfileImageRequestCard = ({ request, onStatusChange }) => {
             <span className="font-medium">Reason:</span> {description}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Requested: {formatDate(requestedAt)}
+            Requested: {formatDateOr(requestedAt, "N/A")}
           </p>
         </div>
       </div>

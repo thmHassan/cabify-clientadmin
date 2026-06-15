@@ -16,6 +16,7 @@ import { debounce } from "lodash";
 import History from "./components/History";
 import successSound from "../../../../../../assets/audio/meldix-success-340660.mp3";
 import { apiGetCompanyApiKeys } from "../../../../../../services/SettingsConfigurationServices";
+import { getTimePartsInTimezone } from "../../../../../../utils/timezoneUtils";
 
 const GOOGLE_KEY = "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 const BARIKOI_KEY = "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
@@ -624,8 +625,8 @@ const AddBooking = ({ setIsOpen }) => {
             }
 
             if (values.pickup_time_type === "asap") {
-                const now = new Date();
-                formData.append('pickup_time', `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`);
+                const { hour, minute } = getTimePartsInTimezone();
+                formData.append('pickup_time', `${hour}:${minute}:00`);
             } else {
                 const timeValue = values.pickup_time || '';
                 formData.append('pickup_time', timeValue ? `${timeValue}:00` : '');

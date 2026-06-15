@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 import { apiSendUserInvoice } from "../../../../../../services/UserService";
 import toast from "react-hot-toast";
 
 const UserDetails = ({ user, onEdit, onDelete }) => {
-    const tenantData = getTenantData();
-    const timeZone = tenantData?.time_zone || "UTC";
+    const { formatDateOr } = useTimezoneFormatting();
     const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
 
     const actionOptions = [
@@ -23,21 +22,7 @@ const UserDetails = ({ user, onEdit, onDelete }) => {
         },
     ];
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-
-        const date = new Date(dateString);
-
-        return date.toLocaleString("en-GB", {
-            timeZone: timeZone,
-            weekday: "short",
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).replace(",", "");
-    };
+    const formatDate = formatDateOr;
 
     const getFirstLetter = (name) => {
         if (!name) return "?";

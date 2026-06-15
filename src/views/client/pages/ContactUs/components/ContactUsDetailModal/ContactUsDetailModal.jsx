@@ -5,8 +5,8 @@ import {
     apiGetContactUsById,
     apiPostContactUsResponse,
 } from "../../../../../../services/ContactUsService";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import toast from "react-hot-toast";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const DetailRow = ({ label, value }) => (
     <div>
@@ -24,25 +24,7 @@ const ContactUsDetailModal = ({ contactId, onClose, onResponded }) => {
     const [error, setError] = useState(null);
     const [responseText, setResponseText] = useState("");
 
-    const tenant = getTenantData();
-    const timeZone = tenant?.time_zone || "UTC";
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        if (Number.isNaN(date.getTime())) return dateString;
-        return date
-            .toLocaleString("en-GB", {
-                timeZone: timeZone,
-                weekday: "short",
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-            .replace(",", "");
-    };
+    const { formatDateOr } = useTimezoneFormatting();
 
     const capitalizeFirst = (value) => {
         if (!value) return "-";
@@ -139,8 +121,8 @@ const ContactUsDetailModal = ({ contactId, onClose, onResponded }) => {
                         <DetailRow label="User Type" value={capitalizeFirst(contact?.user_type)} />
                         <DetailRow label="User ID" value={contact?.user_id} />
                         <DetailRow label="Status" value={capitalizeFirst(contact?.status)} />
-                        <DetailRow label="Submitted At" value={formatDate(contact?.created_at)} />
-                        <DetailRow label="Responded At" value={formatDate(contact?.responded_at)} />
+                        <DetailRow label="Submitted At" value={formatDateOr(contact?.created_at)} />
+                        <DetailRow label="Responded At" value={formatDateOr(contact?.responded_at)} />
                         <div className="sm:col-span-2">
                             <DetailRow label="Message" value={contact?.message} />
                         </div>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { apiGetDispatcherLog } from "../../../../../../services/DispatcherService";
 import Button from "../../../../../../components/ui/Button/Button";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const ViewLogModel = ({ dispatcher, setIsOpen }) => {
-    const today = new Date().toISOString().split("T")[0];
-
-    const [selectedDate, setSelectedDate] = useState(today);
+    const { getTodayDateString, formatTimeOr } = useTimezoneFormatting();
+    const [selectedDate, setSelectedDate] = useState(() => getTodayDateString());
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -58,10 +58,7 @@ const ViewLogModel = ({ dispatcher, setIsOpen }) => {
                 <div className="flex flex-col gap-2">
                     {logs.map((log) => (
                         <p key={log.id} className="text-sm">
-                            {new Date(log.datetime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                            })}{" "}
+                            {formatTimeOr(log.datetime)}{" "}
                             ({log.type})
                         </p>
                     ))}

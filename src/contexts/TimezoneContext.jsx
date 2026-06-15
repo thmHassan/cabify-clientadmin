@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getTenantData, storeTenantData } from '../utils/functions/tokenEncryption';
 
 const TimezoneContext = createContext();
@@ -34,24 +34,23 @@ export const TimezoneProvider = ({ children }) => {
   }, []);
 
   // Update timezone when company profile changes
-  const updateTimezone = (newTimezone) => {
+  const updateTimezone = useCallback((newTimezone) => {
     try {
-      if (newTimezone && newTimezone !== timezone) {
-        setTimezone(newTimezone);
-        
-        // Update tenant data with new timezone
-        const tenantData = getTenantData() || {};
-        const updatedTenantData = {
-          ...tenantData,
-          company_timezone: newTimezone,
-          time_zone: newTimezone // Keep both for compatibility
-        };
-        storeTenantData(updatedTenantData);
-      }
+      if (!newTimezone) return;
+
+      setTimezone(newTimezone);
+
+      const tenantData = getTenantData() || {};
+      const updatedTenantData = {
+        ...tenantData,
+        company_timezone: newTimezone,
+        time_zone: newTimezone,
+      };
+      storeTenantData(updatedTenantData);
     } catch (error) {
       console.error('Error updating timezone:', error);
     }
-  };
+  }, []);
 
   const value = {
     timezone,

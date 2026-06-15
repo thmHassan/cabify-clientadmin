@@ -1,29 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import UserDropdown from "../../../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../../../components/svg/ThreeDotsIcon";
-import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
+import { useCurrency } from "../../../../../../../../contexts/CurrencyContext";
 
 const RideCountCard = ({ commission, onEdit, onDelete }) => {
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
+    const { currencySymbol } = useCurrency();
 
     const actionOptions = [
         {

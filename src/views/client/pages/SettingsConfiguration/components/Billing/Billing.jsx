@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { apiGetInvoiceHistory, apiGetStripeInformation, apiSaveStripeInformation, apiGetPlanDetails } from "../../../../../../services/SettingsConfigurationServices";
 import toast from 'react-hot-toast';
 import Button from "../../../../../../components/ui/Button/Button";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const Billing = () => {
     const { formatDate, formatDateOnly } = useTimezoneFormatting();
+    const { currencySymbol, formatAmount } = useCurrency();
     const [invoices, setInvoices] = useState([]);
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [invoiceLoading, setInvoiceLoading] = useState(false);
     const [planDetails, setPlanDetails] = useState({
         plan_name: "Professional Plan",
@@ -30,24 +30,6 @@ const Billing = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
 
     const fetchPlanDetails = useCallback(async () => {
         setPlanLoading(true);
@@ -231,7 +213,7 @@ const Billing = () => {
                                     </div>
                                     <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] min-w-[110px]">
                                         <p className="text-[#333333] text-center font-semibold text-sm">
-                                            {currencySymbol} {inv.amount || "$0.00"}
+                                            {currencySymbol} {formatAmount(inv.amount, "0.00")}
                                         </p>
                                     </div>
                                 </div>

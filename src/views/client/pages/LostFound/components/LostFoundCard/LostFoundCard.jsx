@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const LostFoundCard = ({ lostfound, onStatusChange }) => {
+    const { formatDate } = useTimezoneFormatting();
     const statusBtnRef = useRef(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -21,16 +23,16 @@ const LostFoundCard = ({ lostfound, onStatusChange }) => {
         setShowDropdown((prev) => !prev);
     };
 
-    function formatDateTime(isoString) {
-        const date = new Date(isoString);
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-
-        return `${day}-${month}-${year} at ${hours}:${minutes}`;
-    }
+    const formatDateTime = (isoString) => {
+        if (!isoString) return "-";
+        return formatDate(isoString, {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }).replace(",", " at");
+    };
 
     const getStatusStyles = (status) => {
         switch (status) {

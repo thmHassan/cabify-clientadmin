@@ -1,26 +1,18 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Button from "../../../../../../components/ui/Button/Button";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
 import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 import { apiGetDriverRidingDetails } from "../../../../../../services/RevenueStatementsService";
 
 const DriverRidingDetails = ({ revenueInfo, handleClose }) => {
+  const { formatDateOr } = useTimezoneFormatting();
+  const { currencySymbol } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [driverDetails, setDriverDetails] = useState(null);
-  const [currencySymbol, setCurrencySymbol] = useState("₹");
   const distanceUnit = useDistanceUnit();
-
-  const currencySymbols = {
-    INR: "₹",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    AUD: "A$",
-    CAD: "C$",
-    AED: "د.إ",
-  };
 
   const fetchDetails = async () => {
     console.log("revenueInfo======", revenueInfo);
@@ -54,14 +46,6 @@ const DriverRidingDetails = ({ revenueInfo, handleClose }) => {
   useEffect(() => {
     fetchDetails();
   }, [revenueInfo]);
-
-  useEffect(() => {
-    const tenant = getTenantData();
-
-    if (tenant?.currency) {
-      setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-    }
-  }, []);
 
   const formatDistance = (dist) => formatDistanceFromMeters(dist, distanceUnit);
 
@@ -146,9 +130,7 @@ const DriverRidingDetails = ({ revenueInfo, handleClose }) => {
                           {ride.booking_id || "N/A"}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {ride.created_at
-                            ? new Date(ride.created_at).toLocaleString()
-                            : "-"}
+                          {ride.created_at ? formatDateOr(ride.created_at) : "-"}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1 max-w-xs">

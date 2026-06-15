@@ -1,56 +1,14 @@
-import { useEffect, useState } from "react";
-import { getTenantData } from "../../../../../utils/functions/tokenEncryption";
-import { time } from "framer-motion";
+import { useTimezoneFormatting } from "../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../contexts/CurrencyContext";
 
 const CancellationsCard = ({ cancellations }) => {
-  const tenant = getTenantData();
-  const timeZone = tenant?.time_zone || "UTC";
-
-  const currencySymbols = {
-    INR: "₹",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    AUD: "A$",
-    CAD: "C$",
-    AED: "د.إ",
-  };
-
-  const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-  useEffect(() => {
-    const tenant = getTenantData();
-
-    if (tenant?.currency) {
-      setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-    }
-  }, []);
+  const { formatDateOr } = useTimezoneFormatting();
+  const { currencySymbol, formatAmount } = useCurrency();
 
 
   const capitalizeFirst = (value) => {
     if (!value) return "-";
     return value.charAt(0).toUpperCase() + value.slice(1);
-  };
-
-  const formatAmount = (amount) => {
-    if (amount === null || amount === undefined) return "-";
-    return Number(amount).toFixed(2);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-
-    const date = new Date(dateString);
-
-    return date.toLocaleString("en-GB", {
-      timeZone: timeZone,
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).replace(",", "");
   };
 
   return (
@@ -130,7 +88,7 @@ const CancellationsCard = ({ cancellations }) => {
         <div className="w-[140px]">
           <p className="text-xs text-center text-[#6C6C6C]">Initiated At</p>
           <p className="text-[#333333] text-center font-semibold text-sm line-clamp-3">
-            {formatDate(cancellations.created_at)}
+            {formatDateOr(cancellations.created_at)}
           </p>
         </div>
       </div>

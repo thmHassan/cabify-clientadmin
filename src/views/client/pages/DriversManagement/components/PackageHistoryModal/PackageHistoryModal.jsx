@@ -3,31 +3,16 @@ import toast from "react-hot-toast";
 import { apiGetPackageHistory } from "../../../../../../services/DriverManagementService";
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
 import Button from "../../../../../../components/ui/Button/Button";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const PackageHistoryModal = ({ onClose, driver }) => {
+    const { formatDateOnlyOr } = useTimezoneFormatting();
+    const { currencySymbol } = useCurrency();
     const [loading, setLoading] = useState(true);
     const [packageHistoryData, setPackageHistoryData] = useState(null);
     const [packageType, setPackageType] = useState(null);
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
-    useEffect(() => {
-        const tenant = getTenantData();
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
 
     useEffect(() => {
         if (driver?.id) fetchPackageHistory();
@@ -58,18 +43,7 @@ const PackageHistoryModal = ({ onClose, driver }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "Not Set";
-        try {
-            return new Date(dateString).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-            });
-        } catch {
-            return "Invalid Date";
-        }
-    };
+    const formatDate = (dateString) => formatDateOnlyOr(dateString, "Not Set");
 
     const packageEntries = packageHistoryData || [];
     const totalAmount = packageEntries.reduce((sum, entry) => sum + parseFloat(entry.amount || 0), 0);

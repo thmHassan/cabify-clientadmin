@@ -4,30 +4,19 @@ import { apiCollectAccountAndEmail, apiGetAccountRideHistory } from "../../../..
 import Button from "../../../../../../components/ui/Button/Button";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
 import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
 
 const AccountRideHistory = ({ account, handleClose }) => {
+    const { currencySymbol, formatAmount } = useCurrency();
     const [rideHistory, setRideHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [collecting, setCollecting] = useState(false);
     const distanceUnit = useDistanceUnit();
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [totalAmount, setTotalAmount] = useState(0);
-
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
 
     const handleCollectAmount = async () => {
         if (!totalAmount || Number(totalAmount) <= 0) {
@@ -90,14 +79,6 @@ const AccountRideHistory = ({ account, handleClose }) => {
         }
     };
 
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
-
     const formatDistance = (distanceInMeters) =>
         formatDistanceFromMeters(distanceInMeters, distanceUnit);
 
@@ -129,7 +110,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Total Amount:</span>
                         <span className="text-lg font-semibold text-[#252525]">
-                            {currencySymbol}{Number(totalAmount).toFixed(2)}
+                            {currencySymbol}{formatAmount(totalAmount, "0.00")}
                         </span>
                     </div>
                     <Button
@@ -173,7 +154,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
                                             <div className="text-right">
                                                 <p className="text-xs text-gray-500 mb-1">Fare</p>
                                                 <p className="font-semibold text-[#333333]">
-                                                    {currencySymbol}{ride?.offered_amount || "0"}
+                                                    {currencySymbol}{formatAmount(ride?.offered_amount, "0")}
                                                 </p>
                                             </div>
                                         </div>
@@ -249,7 +230,7 @@ const AccountRideHistory = ({ account, handleClose }) => {
                                         <div className="inline-flex flex-col px-2 py-2 min-w-[100px] rounded-full bg-gray-100 text-left whitespace-nowrap min-w-[140px]">
                                             <p className="text-xs text-center text-gray-500">Fare</p>
                                             <p className="text-black text-center font-semibold text-sm">
-                                                {currencySymbol}{ride?.offered_amount || "0"}
+                                                {currencySymbol}{formatAmount(ride?.offered_amount, "0")}
                                             </p>
                                         </div>
                                     </div>

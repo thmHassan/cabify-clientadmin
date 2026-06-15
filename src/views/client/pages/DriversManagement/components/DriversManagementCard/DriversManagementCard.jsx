@@ -5,17 +5,17 @@ import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
 import { apieditDriverStatus, apiSendDriverInvoice, apiGetPackageHistory } from "../../../../../../services/DriverManagementService";
 import toast from "react-hot-toast";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 import SettlementAmountModel from "../SettlementAmountModel";
 import PackageHistoryModal from "../PackageHistoryModal/PackageHistoryModal";
 import Modal from "../../../../../../components/shared/Modal/Modal";
 import { apiGetCommissionData } from "../../../../../../services/SettingsConfigurationServices";
 
 const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange, onViewDetails }) => {
+    const { currencySymbol } = useCurrency();
     const [status, setStatus] = useState(driver?.status || "pending");
     const [loading, setLoading] = useState(false);
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [isSettlementOpen, setIsSettlementOpen] = useState(false);
     const [showSettlementButton, setShowSettlementButton] = useState(false);
     const [commissionPackageType, setCommissionPackageType] = useState(null);
@@ -41,16 +41,6 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange, onView
         } finally {
             setIsInvoiceLoading(false);
         }
-    };
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
     };
 
     const actionOptions = [
@@ -120,11 +110,6 @@ const DriverManagementCard = ({ driver, onEdit, onDelete, onStatusChange, onView
     };
 
     useEffect(() => {
-        const tenant = getTenantData();
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-
         const fetchCommissionData = async () => {
             try {
                 const response = await apiGetCommissionData();

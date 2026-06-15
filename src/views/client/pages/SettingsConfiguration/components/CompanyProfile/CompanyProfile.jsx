@@ -65,13 +65,16 @@ const CompanyProfile = () => {
             if (response?.data?.success === 1) {
                 const companyData = response?.data?.data;
                 setCompanyProfileData(companyData || {});
+                if (companyData?.company_timezone) {
+                    updateTimezone(companyData.company_timezone);
+                }
             }
         } catch (error) {
             setCompanyProfileData({});
         } finally {
             setTableLoading(false);
         }
-    }, []);
+    }, [updateTimezone]);
 
     useEffect(() => {
         fetchCompanieProfile();

@@ -3,8 +3,8 @@ import Button from "../../../../../../components/ui/Button/Button";
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
 import { apiGetDriverManagementById } from "../../../../../../services/DriverManagementService";
 import { apiGetUserById } from "../../../../../../services/UserService";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
 
 const DetailRow = ({ label, value }) => (
     <div>
@@ -45,8 +45,7 @@ const TicketUserDetailModal = ({ ticket, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const tenant = getTenantData();
-    const timeZone = tenant?.time_zone || "UTC";
+    const { formatDateOr } = useTimezoneFormatting();
 
     const { userId, userType, displayName, userDetail } = useMemo(
         () => getTicketCreatorInfo(ticket),
@@ -55,22 +54,7 @@ const TicketUserDetailModal = ({ ticket, onClose }) => {
 
     const isDriver = userType === "driver";
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        if (Number.isNaN(date.getTime())) return dateString;
-        return date
-            .toLocaleString("en-GB", {
-                timeZone,
-                weekday: "short",
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-            .replace(",", "");
-    };
+    const formatDate = formatDateOr;
 
     const capitalizeFirst = (value) => {
         if (!value) return "-";

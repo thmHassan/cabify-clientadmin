@@ -8,8 +8,9 @@ import {
 } from "../../../../../../services/DriverManagementService";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServices";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const DetailItem = ({ label, value, className = "" }) => (
   <div className={className}>
@@ -51,39 +52,19 @@ const getVehicleFields = (data) => {
   };
 };
 
-const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
 const formatStatus = (status) => {
   if (!status) return "-";
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
 const DriverDetailsModal = ({ driverId, onClose, onEdit }) => {
+  const { formatDateOnlyOr } = useTimezoneFormatting();
+  const { currencySymbol } = useCurrency();
   const [driverData, setDriverData] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [subCompanyList, setSubCompanyList] = useState([]);
   const [vehicleList, setVehicleList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-  const currencySymbols = {
-    INR: "₹",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    AUD: "A$",
-    CAD: "C$",
-    AED: "د.إ",
-  };
 
   const loadDriverDetails = useCallback(async () => {
     if (!driverId) return;
@@ -141,13 +122,6 @@ const DriverDetailsModal = ({ driverId, onClose, onEdit }) => {
   useEffect(() => {
     loadDriverDetails();
   }, [loadDriverDetails]);
-
-  useEffect(() => {
-    const tenant = getTenantData();
-    if (tenant?.currency) {
-      setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-    }
-  }, []);
 
   const getSubCompanyLabel = (value) =>
     subCompanyList.find((item) => item.value === value?.toString())?.label || value;
@@ -240,7 +214,7 @@ const DriverDetailsModal = ({ driverId, onClose, onEdit }) => {
               label="Assigned Vehicle"
               value={getAssignedVehicleLabel(driverData.assigned_vehicle)}
             />
-            <DetailItem label="Joined Date" value={formatDate(driverData.joined_date)} />
+            <DetailItem label="Joined Date" value={formatDateOnlyOr(driverData.joined_date)} />
             <DetailItem
               label="Wallet Balance"
               value={`${currencySymbol} ${driverData.wallet_balance ?? "0"}`}
@@ -277,7 +251,7 @@ const DriverDetailsModal = ({ driverId, onClose, onEdit }) => {
             <DetailItem label="Plate Number" value={vehicleFields.plate_no} />
             <DetailItem
               label="Vehicle Registration Date"
-              value={formatDate(vehicleFields.vehicle_registration_date)}
+              value={formatDateOnlyOr(vehicleFields.vehicle_registration_date)}
             />
           </div>
         </section>

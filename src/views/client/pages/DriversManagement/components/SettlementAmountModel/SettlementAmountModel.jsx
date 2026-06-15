@@ -6,9 +6,10 @@ import {
 } from "../../../../../../services/DriverManagementService";
 import AppLogoLoader from "../../../../../../components/shared/AppLogoLoader";
 import Button from "../../../../../../components/ui/Button/Button";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import Pagination from "../../../../../../components/ui/Pagination/Pagination";
 import { PAGE_SIZE_OPTIONS } from "../../../../../../constants/selectOptions";
+import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const LockIcon = () => (
     <svg
@@ -24,32 +25,16 @@ const LockIcon = () => (
 );
 
 const SettlementAmountModel = ({ onClose, driver, packageType }) => {
+    const { formatDateOnlyOr } = useTimezoneFormatting();
+    const { currencySymbol } = useCurrency();
     const [loading, setLoading] = useState(true);
     const [collecting, setCollecting] = useState(false);
     const [commissionData, setCommissionData] = useState(null);
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
     const activePackageType = packageType || commissionData?.package_type;
     const isPercentageBased = activePackageType === "commission_without_topup";
-
-    useEffect(() => {
-        const tenant = getTenantData();
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
 
     useEffect(() => {
         if (driver?.id) fetchCommissionEntries(1);
@@ -123,18 +108,7 @@ const SettlementAmountModel = ({ onClose, driver, packageType }) => {
         fetchCommissionEntries(1, limit);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "Not Set";
-        try {
-            return new Date(dateString).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-            });
-        } catch {
-            return "Invalid Date";
-        }
-    };
+    const formatDate = (dateString) => formatDateOnlyOr(dateString, "Not Set");
 
     const validEntries =
         commissionData?.commission_entries?.filter(

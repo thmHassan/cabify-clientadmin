@@ -10,6 +10,7 @@ import ScrollToTop from "./components/shared/ScrollToTop";
 import Loading from "./components/shared/Loading/Loading";
 import { SocketProvider } from "./components/routes/SocketProvider";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 
 const environment = import.meta.env.VITE_NODE_ENV;
 
@@ -24,9 +25,11 @@ function App() {
         <ScrollToTop>
           <Suspense fallback={<Loading />}>
             <TimezoneProvider>
-              <SocketProvider>
-                <AllRoutes />
-              </SocketProvider>
+              <CurrencyProvider>
+                <SocketProvider>
+                  <AllRoutes />
+                </SocketProvider>
+              </CurrencyProvider>
             </TimezoneProvider>
           </Suspense>
         </ScrollToTop>

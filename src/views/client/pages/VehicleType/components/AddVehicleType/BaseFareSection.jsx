@@ -1,28 +1,9 @@
 import { Field, ErrorMessage } from "formik";
 import FormLabel from "../../../../../../components/ui/FormLabel/FormLabel";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import { useEffect, useState } from "react";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const BaseFareSection = ({ values, setFieldValue, distanceUnit }) => {
-  const currencySymbols = {
-    INR: "₹",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    AUD: "A$",
-    CAD: "C$",
-    AED: "د.إ",
-  };
-
-  const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-  useEffect(() => {
-    const tenant = getTenantData();
-
-    if (tenant?.currency) {
-      setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-    }
-  }, []);
+  const { currencySymbol } = useCurrency();
 
   return (
     <div className="flex flex-row gap-3">

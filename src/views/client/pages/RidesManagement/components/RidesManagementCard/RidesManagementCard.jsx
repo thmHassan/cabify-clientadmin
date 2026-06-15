@@ -1,40 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
+import { useCurrency } from "../../../../../../contexts/CurrencyContext";
 
 const RidesManagementCard = ({ ride, onView, onDelete, distanceUnit }) => {
+    const { currencySymbol, formatAmount } = useCurrency();
 
     const statusColors = {
         pending: "bg-[#F5C60B] text-white",
         cancelled: "bg-red-500 text-white",
         completed: "bg-green-500 text-white",
-        // arrived: "bg-blue-500 text-white",
         ongoing: "bg-[#10B981] text-white",
-        default: "bg-[#EFEFEF] text-gray-600"
+        default: "bg-[#EFEFEF] text-gray-600",
     };
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
 
     const formatDistance = (distanceInMeters) =>
         formatDistanceFromMeters(distanceInMeters, distanceUnit);
@@ -56,11 +36,6 @@ const RidesManagementCard = ({ ride, onView, onDelete, distanceUnit }) => {
     const capitalizeFirst = (value) => {
         if (!value) return "-";
         return value.charAt(0).toUpperCase() + value.slice(1);
-    };
-
-    const formatAmount = (amount) => {
-        if (amount === null || amount === undefined) return "-";
-        return Number(amount).toFixed(2);
     };
 
     return (

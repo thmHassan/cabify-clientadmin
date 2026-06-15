@@ -1,30 +1,13 @@
 import { useState } from "react";
 import Button from "../../../../../components/ui/Button/Button";
 import Modal from "../../../../../components/shared/Modal/Modal";
-import { getTenantData } from "../../../../../utils/functions/tokenEncryption";
 import { lockBodyScroll, unlockBodyScroll } from "../../../../../utils/functions/common.function";
+import { useTimezoneFormatting } from "../../../../../utils/timezoneUtils";
 import ContactUsDetailModal from "../components/ContactUsDetailModal";
 
 const ContactUsCard = ({ contact, onResponded }) => {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-    const tenant = getTenantData();
-    const timeZone = tenant?.time_zone || "UTC";
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        return date
-            .toLocaleString("en-GB", {
-                timeZone: timeZone,
-                weekday: "short",
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-            .replace(",", "");
-    };
+    const { formatDateOr } = useTimezoneFormatting();
 
     const capitalizeFirst = (value) => {
         if (!value) return "-";
@@ -99,7 +82,7 @@ const ContactUsCard = ({ contact, onResponded }) => {
                     <div className="w-[160px]">
                         <p className="text-xs text-center text-[#6C6C6C]">Submitted At</p>
                         <p className="text-[#333333] text-center font-semibold text-sm line-clamp-2">
-                            {formatDate(contact?.created_at)}
+                            {formatDateOr(contact?.created_at)}
                         </p>
                     </div>
                 </div>

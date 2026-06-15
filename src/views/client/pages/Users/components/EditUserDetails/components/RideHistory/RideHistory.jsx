@@ -1,30 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { getTenantData } from "../../../../../../../../utils/functions/tokenEncryption";
+import React from "react";
 import useDistanceUnit from "../../../../../../../../utils/hooks/useDistanceUnit";
 import { formatDistanceFromMeters } from "../../../../../../../../utils/tenantFormatUtils";
+import { useCurrency } from "../../../../../../../../contexts/CurrencyContext";
 
 const RideHistory = ({ user }) => {
-
-    const currencySymbols = {
-        INR: "₹",
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        AUD: "A$",
-        CAD: "C$",
-        AED: "د.إ",
-    };
-
+    const { currencySymbol, formatAmount } = useCurrency();
     const distanceUnit = useDistanceUnit();
-    const [currencySymbol, setCurrencySymbol] = useState("₹");
-
-    useEffect(() => {
-        const tenant = getTenantData();
-
-        if (tenant?.currency) {
-            setCurrencySymbol(currencySymbols[tenant.currency] || tenant.currency);
-        }
-    }, []);
 
     const formatDistance = (distanceInMeters) =>
         formatDistanceFromMeters(distanceInMeters, distanceUnit);
@@ -40,12 +21,6 @@ const RideHistory = ({ user }) => {
         if (!value) return "-";
         return value.charAt(0).toUpperCase() + value.slice(1);
     };
-
-    const formatAmount = (amount) => {
-        if (amount === null || amount === undefined) return "-";
-        return Number(amount).toFixed(2);
-    };
-
 
     return (
         <div

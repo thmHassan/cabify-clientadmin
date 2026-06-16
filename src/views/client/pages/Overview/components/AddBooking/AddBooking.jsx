@@ -672,6 +672,7 @@ const AddBooking = ({ setIsOpen }) => {
             formData.append('tel_no', values.tel_no || '');
             formData.append('journey_type', values.journey_type || '');
             formData.append('account', values.account || '');
+            formData.append('account_id', values.account || '');
             formData.append('vehicle', values.vehicle || '');
             formData.append('driver', values.driver || '');
             formData.append('passenger', values.passenger || '0');

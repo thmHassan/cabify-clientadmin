@@ -37,6 +37,16 @@ const capitalizeFirst = (value) => {
     return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
+const FormFieldMessage = ({ name }) => (
+    <div className="min-h-[20px]">
+        <ErrorMessage
+            name={name}
+            component="div"
+            className="text-red-500 text-sm mt-1 block leading-snug"
+        />
+    </div>
+);
+
 const GeneralNotification = () => {
     const [vehicleList, setVehicleList] = useState([]);
     const [loadingVehicleType, setLoadingVehicleType] = useState(false);
@@ -258,45 +268,33 @@ const GeneralNotification = () => {
                 >
                     {({ values, setFieldValue, handleSubmit, resetForm }) => (
                         <Form>
-                            <div className="max-w-[720px] flex flex-col gap-5">
-                                <div>
+                            <div className="max-w-[720px] flex flex-col gap-6">
+                                <div className="flex flex-col gap-1">
                                     <FormLabel>Title</FormLabel>
-                                    <div className="sm:h-16 h-14">
-                                        <Field
-                                            name="title"
-                                            type="text"
-                                            placeholder="Enter Title"
-                                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full font-semibold"
-                                        />
-                                    </div>
-                                    <ErrorMessage
+                                    <Field
                                         name="title"
-                                        component="div"
-                                        className="text-red-500 text-sm mt-1"
+                                        type="text"
+                                        placeholder="Enter Title"
+                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full font-semibold min-h-[56px]"
                                     />
+                                    <FormFieldMessage name="title" />
                                 </div>
 
-                                <div>
+                                <div className="flex flex-col gap-1">
                                     <FormLabel>Body</FormLabel>
-                                    <div className="h-[130px]">
-                                        <Field
-                                            as="textarea"
-                                            name="body"
-                                            rows={5}
-                                            placeholder="Write here..."
-                                            className="h-full sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full font-semibold"
-                                        />
-                                    </div>
-                                    <ErrorMessage
+                                    <Field
+                                        as="textarea"
                                         name="body"
-                                        component="div"
-                                        className="text-red-500 text-sm mt-1"
+                                        rows={5}
+                                        placeholder="Write here..."
+                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full font-semibold min-h-[130px] resize-y"
                                     />
+                                    <FormFieldMessage name="body" />
                                 </div>
 
-                                <div>
+                                <div className="flex flex-col gap-1">
                                     <FormLabel>User Type</FormLabel>
-                                    <div className="sm:h-16 h-14">
+                                    <div className="min-h-[56px]">
                                         <FormSelection
                                             name="type"
                                             value={values.type}
@@ -307,17 +305,13 @@ const GeneralNotification = () => {
                                             options={USER_TYPE_OPTIONS}
                                         />
                                     </div>
-                                    <ErrorMessage
-                                        name="type"
-                                        component="div"
-                                        className="text-red-500 text-sm mt-1"
-                                    />
+                                    <FormFieldMessage name="type" />
                                 </div>
 
                                 {isDriverType && (
-                                    <div>
+                                    <div className="flex flex-col gap-1">
                                         <FormLabel>Vehicle Type (optional filter)</FormLabel>
-                                        <div className="sm:h-16 h-14">
+                                        <div className="min-h-[56px]">
                                             <FormSelection
                                                 name="vehicleType"
                                                 value={values.vehicleType}

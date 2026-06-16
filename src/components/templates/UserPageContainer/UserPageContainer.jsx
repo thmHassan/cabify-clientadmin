@@ -523,7 +523,7 @@ const renderBookingSystemUI = () => {
                   </div>
 
                   {/* Notification List */}
-                  <div className="overflow-y-auto max-h-[400px]">
+                  <div className="overflow-y-auto max-h-[400px] flex flex-col">
                     {notifications.length === 0 ? (
                       <div className="p-8 text-center text-gray-500">
                         <svg
@@ -545,52 +545,54 @@ const renderBookingSystemUI = () => {
                       notifications.map((notification) => (
                         <div
                           key={notification.id}
-                          className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                          className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0 ${
                             !notification.read ? "bg-blue-50" : ""
                           }`}
                         >
-                          <div className="flex justify-between items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-1">
-                                <h4 className="text-sm font-semibold text-gray-900 truncate">
-                                  {notification.title}
-                                </h4>
-                                {!notification.read && (
-                                  <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
-                                )}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h4 className="text-sm font-semibold text-gray-900 break-words">
+                                    {notification.title}
+                                  </h4>
+                                  {!notification.read && (
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 break-words whitespace-pre-wrap">
+                                  {notification.description}
+                                </p>
                               </div>
-                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                {notification.description}
-                              </p>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-500">
-                                  Client: {notification.client_id}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {formatTimestamp(notification.timestamp)}
-                                </span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() =>
-                                handleDeleteNotification(notification.id)
-                              }
-                              className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                              <button
+                                onClick={() =>
+                                  handleDeleteNotification(notification.id)
+                                }
+                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs text-gray-500 truncate">
+                                Client: {notification.client_id}
+                              </span>
+                              <span className="text-xs text-gray-400 flex-shrink-0">
+                                {formatTimestamp(notification.timestamp)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))

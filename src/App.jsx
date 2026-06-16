@@ -35,6 +35,10 @@ function App() {
         </ScrollToTop>
         <Toaster
           position="bottom-right"
+          gutter={16}
+          containerStyle={{
+            zIndex: 99999,
+          }}
           toastOptions={{
             duration: 3000,
             style: {

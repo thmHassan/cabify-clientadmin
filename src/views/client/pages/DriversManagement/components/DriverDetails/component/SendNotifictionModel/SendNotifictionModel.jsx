@@ -65,39 +65,35 @@ const SendNotifictionModel = ({ setIsOpen, driverId }) => {
                                         Send Notification
                                     </span>
                                 </div>
-                                <div className="">
-                                    <div className="w-full">
-                                        <FormLabel htmlFor="title">Title</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                name="title"
-                                                className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                                placeholder="Enter Title"
-                                            />
-                                        </div>
+                                <div className="flex flex-col gap-1">
+                                    <FormLabel htmlFor="title">Title</FormLabel>
+                                    <Field
+                                        name="title"
+                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full min-h-[56px] shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
+                                        placeholder="Enter Title"
+                                    />
+                                    <div className="min-h-[20px]">
                                         <ErrorMessage
                                             name="title"
                                             component="div"
-                                            className="text-red-500 text-sm mt-1"
+                                            className="text-red-500 text-sm mt-1 block leading-snug"
                                         />
                                     </div>
                                 </div>
-                                <div className="sm:mb-[60px] mt-2">
-                                    <div className="w-full mb-4">
-                                        <FormLabel htmlFor="description">Description</FormLabel>
-                                        <div className="sm:h-16 h-14">
-                                            <Field
-                                                as="textarea"
-                                                name="description"
-                                                rows={4}
-                                                className="w-full border border-[#8D8D8D] rounded-lg px-4 py-3 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
-                                                placeholder="Write description"
-                                            />
-                                        </div>
+                                <div className="flex flex-col gap-1 mt-4">
+                                    <FormLabel htmlFor="description">Description</FormLabel>
+                                    <Field
+                                        as="textarea"
+                                        name="description"
+                                        rows={4}
+                                        className="w-full min-h-[120px] border border-[#8D8D8D] rounded-lg px-4 py-3 shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold resize-y"
+                                        placeholder="Write description"
+                                    />
+                                    <div className="min-h-[20px]">
                                         <ErrorMessage
                                             name="description"
                                             component="div"
-                                            className="text-red-500 text-sm mt-1"
+                                            className="text-red-500 text-sm mt-1 block leading-snug"
                                         />
                                     </div>
                                 </div>

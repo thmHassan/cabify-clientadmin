@@ -11,6 +11,7 @@ import Loading from "./components/shared/Loading/Loading";
 import { SocketProvider } from "./components/routes/SocketProvider";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
+import { MapConfigProvider } from "./contexts/MapConfigContext";
 
 const environment = import.meta.env.VITE_NODE_ENV;
 
@@ -26,9 +27,11 @@ function App() {
           <Suspense fallback={<Loading />}>
             <TimezoneProvider>
               <CurrencyProvider>
-                <SocketProvider>
-                  <AllRoutes />
-                </SocketProvider>
+                <MapConfigProvider>
+                  <SocketProvider>
+                    <AllRoutes />
+                  </SocketProvider>
+                </MapConfigProvider>
               </CurrencyProvider>
             </TimezoneProvider>
           </Suspense>

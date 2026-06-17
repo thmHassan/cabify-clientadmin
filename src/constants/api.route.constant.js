@@ -124,6 +124,10 @@ export const SAVE_DISPATCH_SYSTEM = "/company/set-dispatch-system"
 export const GATE_DISPATCH_SYSTEM = "/company/get-dispatch-system"
 export const MATCH_PASSWORD = "/company/match-password"
 export const GET_COMPANY_API_KEYS = "/company/get-api-keys"
+export const GET_MAP_INFORMATION = "/company/map-information"
+export const GET_MAPIFY_TILES_BRIGHT = "/company/mapify-tiles/bright"
+export const GET_MAPIFY_GEOCODING = "/company/mapify-geocoding"
+export const GET_MAPIFY_SEARCH = "/company/mapify-search"
 
 //api for account
 export const GET_ACCOUNT = "/company/list-account";

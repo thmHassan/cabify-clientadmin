@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getTenantData } from "../../../../../../../utils/functions/tokenEncryption";
 import { getTenantCountryIso } from "../../../../../../../utils/tenantFormatUtils";
-import { apiGetCompanyApiKeys } from "../../../../../../../services/SettingsConfigurationServices";
+import MapifyMap from "../../../../../../../components/maps/MapifyMap";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COUNTRY_CENTERS = {
@@ -35,13 +35,10 @@ const getCountryCenter = () => {
     return COUNTRY_CENTERS[code] || COUNTRY_CENTERS.DEFAULT;
 };
 
-const getApiKeysInternal = (stateApiKeys) => {
-    const tenant = getTenantData();
-    return {
-        googleKey: stateApiKeys?.googleKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || tenant?.google_api_key || null,
-        barikoiKey: stateApiKeys?.barikoiKey || import.meta.env.VITE_BARIKOI_API_KEY || tenant?.barikoi_api_key || null,
-    };
-};
+const getApiKeysInternal = (stateApiKeys) => ({
+    googleKey: stateApiKeys?.googleKey?.trim() || null,
+    barikoiKey: stateApiKeys?.barikoiKey?.trim() || null,
+});
 
 // ─── Script loaders (singleton) ───────────────────────────────────────────────
 let googleMapsPromise = null;
@@ -621,6 +618,7 @@ const BarikoiMap = ({
 // from the parent — NOT raw Formik values that change on every keystroke.
 export default function Maps({
     mapsApi,
+    countryOfUse = "",
     pickupCoords,
     destinationCoords,
     viaCoords = [],
@@ -633,26 +631,60 @@ export default function Maps({
     SEARCH_API,
     apiKeys,
 }) {
-
+    const { googleKey, barikoiKey } = getApiKeysInternal(apiKeys);
+    const provider = mapsApi === "google" && googleKey
+        ? "google"
+        : mapsApi === "barikoi" && barikoiKey
+          ? "barikoi"
+          : "mapify";
 
     useEffect(() => {
-        const { googleKey, barikoiKey } = getApiKeysInternal(apiKeys);
-        if (mapsApi === "barikoi" && barikoiKey) {
+        if (provider === "mapify") {
             loadMaplibre().catch(console.error);
-        } else if (mapsApi === "google" && googleKey) {
+        } else if (provider === "google" && googleKey) {
             loadGoogleMaps(googleKey).catch(console.error);
+        } else if (provider === "barikoi" && barikoiKey) {
+            loadMaplibre().catch(console.error);
         }
-    }, [mapsApi, apiKeys]);
+    }, [provider, googleKey, barikoiKey]);
 
     const sharedProps = {
-        pickupCoords, destinationCoords, viaCoords,
-        setFieldValue, fetchPlotName,
-        setPickupPlotData, setDestinationPlotData,
-        onPickupConfirmed, onDestinationConfirmed,
+        pickupCoords,
+        destinationCoords,
+        viaCoords,
+        setFieldValue,
+        fetchPlotName,
+        setPickupPlotData,
+        setDestinationPlotData,
+        onPickupConfirmed,
+        onDestinationConfirmed,
         apiKeys,
     };
-    if (mapsApi === "barikoi") return <BarikoiMap {...sharedProps} />;
-    return <GoogleMap {...sharedProps} SEARCH_API={SEARCH_API} />;
+
+    if (provider === "mapify") {
+        return <MapifyMap countryOfUse={countryOfUse} {...sharedProps} />;
+    }
+    if (provider === "barikoi") return <BarikoiMap {...sharedProps} />;
+    if (provider === "google" && googleKey) {
+        return <GoogleMap {...sharedProps} SEARCH_API={SEARCH_API} />;
+    }
+
+    return (
+        <div
+            style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "400px",
+                background: "#fef2f2",
+                borderRadius: "8px",
+            }}
+        >
+            <p style={{ color: "#dc2626", fontSize: "14px" }}>
+                No map provider configured
+            </p>
+        </div>
+    );
 }
 
 // import { useEffect, useRef, useState } from "react";

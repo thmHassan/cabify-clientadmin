@@ -10,14 +10,10 @@ import RedCarIcon from "../../../../components/svg/RedCarIcon";
 import GreenCarIcon from "../../../../components/svg/GreenCarIcon";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import { getTenantCountryIso } from "../../../../utils/tenantFormatUtils";
-import { apiGetCompanyApiKeys } from "../../../../services/SettingsConfigurationServices";
-
-const GOOGLE_KEY =
-  import.meta.env.VITE_GOOGLE_MAPS_API_KEY ||
-  "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
-const BARIKOI_KEY =
-  import.meta.env.VITE_BARIKOI_API_KEY ||
-  "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
+import { useMapConfig } from "../../../../contexts/MapConfigContext";
+import { fetchMapifyStyle } from "../../../../utils/map/fetchMapifyStyle";
+import { buildOsmFallbackStyle } from "../../../../utils/map/osmFallbackStyle";
+import { loadGoogleMaps as loadGoogleMapsUtil } from "../../../../utils/map/loadGoogleMaps";
 
 const svgToDataUrl = (SvgComponent, width = 40, height = 40) => {
   const svgString = renderToString(<SvgComponent width={width} height={height} />);
@@ -178,28 +174,6 @@ const buildBarikoiRasterStyle = (barikoiKey) => ({
   ],
 });
 
-const buildOsmFallbackStyle = () => ({
-  version: 8,
-  name: "OSM Fallback",
-  glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
-  sources: {
-    "osm-tiles": {
-      type: "raster",
-      tiles: [
-        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      ],
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors",
-      maxzoom: 19,
-    },
-  },
-  layers: [
-    { id: "osm-tiles", type: "raster", source: "osm-tiles", minzoom: 0, maxzoom: 22 },
-  ],
-});
-
 const animateMarker = (marker, newPosition, duration = 1000) => {
   const startPosition = marker.getPosition();
   const startLat = startPosition.lat();
@@ -248,38 +222,29 @@ const COUNTRY_CENTERS = {
   DEFAULT: { lat: 20.5937, lng: 78.9629 },
 };
 
-const getCountryCenter = () => {
-  const code = getTenantCountryIso();
+const getCountryCenter = (countryCode) => {
+  const code = (countryCode || getTenantCountryIso())?.trim().toUpperCase();
   return COUNTRY_CENTERS[code] || COUNTRY_CENTERS.DEFAULT;
 };
 
 
-const resolveMapType = (mapsApi) => {
+const resolveMapType = (mapsApi, hasGoogleKey) => {
   const val = mapsApi?.trim().toLowerCase();
+  if (val === "google" && hasGoogleKey) return "google";
   if (val === "barikoi") return "barikoi";
-  if (val === "google") return "google";
-
-  const tenant = getTenantData();
-  const tenantMapsApi = tenant?.maps_api?.trim().toLowerCase();
-  if (tenantMapsApi === "barikoi") return "barikoi";
-  return "google";
+  return "mapify";
 };
 
-const getApiKeysInternal = (stateApiKeys) => {
-  const tenant = getTenantData();
-
-  const googleKey =
-    (stateApiKeys?.googleKey?.startsWith("AIza") && stateApiKeys.googleKey) ||
-    (tenant?.google_api_key?.startsWith("AIza") && tenant.google_api_key) ||
-    GOOGLE_KEY;
-
-  const barikoiKey =
-    (stateApiKeys?.barikoiKey?.startsWith("bkoi_") && stateApiKeys.barikoiKey) ||
-    (tenant?.barikoi_api_key?.startsWith("bkoi_") && tenant.barikoi_api_key) ||
-    BARIKOI_KEY;
-
-  return { googleKey, barikoiKey };
-};
+const getApiKeysInternal = (stateApiKeys) => ({
+  googleKey:
+    stateApiKeys?.googleKey && String(stateApiKeys.googleKey).trim()
+      ? String(stateApiKeys.googleKey).trim()
+      : null,
+  barikoiKey:
+    stateApiKeys?.barikoiKey && String(stateApiKeys.barikoiKey).trim()
+      ? String(stateApiKeys.barikoiKey).trim()
+      : null,
+});
 
 const parseDriverData = (rawData) => {
   try {
@@ -344,8 +309,9 @@ const GoogleMapView = ({
 
   // Init map
   useEffect(() => {
+    if (!googleKey) return;
     let isMounted = true;
-    loadGoogleMaps(googleKey)
+    loadGoogleMapsUtil(googleKey)
       .then(() => {
         if (!isMounted || !mapRef.current || mapInstance.current) return;
         const center = getCountryCenter();
@@ -480,6 +446,231 @@ const GoogleMapView = ({
 
   return (
     <div ref={mapRef} className="w-full h-[550px] rounded-xl border border-gray-300 shadow-sm" />
+  );
+};
+
+const MapifyMapView = ({
+  mapRef,
+  mapInstance,
+  markers,
+  driverData,
+  selectedStatus,
+  searchQuery,
+  socket,
+  setDriverData,
+  countryOfUse = "",
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const socketRef = useRef(socket);
+
+  useEffect(() => { socketRef.current = socket; }, [socket]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (mapInstance.current?.resize) mapInstance.current.resize();
+    });
+    ro.observe(mapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      try {
+        await loadMapLibre();
+      } catch (err) {
+        console.error("MapLibre load failed:", err);
+        return;
+      }
+
+      if (!mounted || !mapRef.current || mapInstance.current) return;
+
+      const container = mapRef.current;
+      container.style.position = "relative";
+      await new Promise((r) => requestAnimationFrame(r));
+      await new Promise((r) => setTimeout(r, 50));
+      if (!mounted || !mapRef.current) return;
+
+      const center = getCountryCenter(countryOfUse || getTenantCountryIso());
+
+      const tryInit = async (style, isFallback = false) => {
+        try {
+          const map = new window.maplibregl.Map({
+            container,
+            style,
+            center: [center.lng, center.lat],
+            zoom: 8,
+            fadeDuration: 0,
+            attributionControl: true,
+          });
+
+          map.addControl(new window.maplibregl.NavigationControl(), "bottom-right");
+
+          map.on("load", () => {
+            if (!mounted) return;
+            map.resize();
+            setTimeout(() => {
+              if (mounted) {
+                map.resize();
+                setIsLoaded(true);
+              }
+            }, 150);
+          });
+
+          map.on("error", (e) => {
+            const msg = e?.error?.message || String(e);
+            if (
+              !isFallback &&
+              (msg.includes("403") ||
+                msg.includes("401") ||
+                msg.includes("Failed to fetch"))
+            ) {
+              if (!map._usingFallback) {
+                map._usingFallback = true;
+                console.warn("Mapify tiles unavailable, switching to OSM fallback");
+                map.setStyle(buildOsmFallbackStyle());
+              }
+            }
+          });
+
+          mapInstance.current = map;
+        } catch (err) {
+          console.error("Mapify map init failed:", err);
+          if (!isFallback) {
+            tryInit(buildOsmFallbackStyle(), true);
+          }
+        }
+      };
+
+      let style = await fetchMapifyStyle();
+      if (!style?.version) style = buildOsmFallbackStyle();
+      await tryInit(style);
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+      if (mapInstance.current) {
+        try {
+          Object.values(markers.current).forEach((m) => {
+            try { m.remove(); } catch { /* ignore */ }
+          });
+          markers.current = {};
+          mapInstance.current.remove();
+        } catch { /* ignore */ }
+        mapInstance.current = null;
+        setIsLoaded(false);
+      }
+    };
+  }, [countryOfUse]);
+
+  const updateOrAddMarker = useCallback((rawData) => {
+    if (!mapInstance.current || !isLoaded) return;
+    const data = parseDriverData(rawData);
+    if (!data) return;
+
+    const driverId = data.client_id || data.dispatcher_id || data.driver_id || data.id;
+    if (driverId == null) return;
+
+    const latitude = data.latitude;
+    const longitude = data.longitude;
+    if (latitude == null || longitude == null || isNaN(latitude) || isNaN(longitude)) return;
+
+    const driving_status = data.driving_status || "idle";
+    const name = data.name || data.driver_name || `Driver ${driverId}`;
+    const phoneNo = data?.phone_no || data?.mobile || "";
+    const vehiclePlateNo = data?.plate_no || data?.vehicle_plate_no || "";
+
+    const lngLat = [Number(longitude), Number(latitude)];
+    const popupHTML = buildInfoHTML({ name, phoneNo, vehiclePlateNo, driving_status });
+
+    setDriverData((prev) => ({
+      ...prev,
+      [driverId]: {
+        ...data,
+        position: { lat: Number(latitude), lng: Number(longitude) },
+        driving_status,
+        name,
+        phoneNo,
+        vehiclePlateNo,
+      },
+    }));
+
+    if (markers.current[driverId]) {
+      const marker = markers.current[driverId];
+      marker.setLngLat(lngLat);
+      const el = marker.getElement();
+      const img = el.querySelector("img");
+      if (img) img.src = (MARKER_ICONS[driving_status] || MARKER_ICONS.idle).url;
+      marker.getPopup()?.setHTML(popupHTML);
+    } else {
+      try {
+        const el = createSvgMarkerEl(driving_status);
+        const popup = new window.maplibregl.Popup({
+          offset: 25,
+          closeButton: false,
+          closeOnClick: false,
+        }).setHTML(popupHTML);
+        const marker = new window.maplibregl.Marker({ element: el, anchor: "center" })
+          .setLngLat(lngLat)
+          .setPopup(popup)
+          .addTo(mapInstance.current);
+
+        marker._isOpen = false;
+        el.addEventListener("click", () => {
+          if (marker._isOpen) {
+            popup.remove();
+            marker._isOpen = false;
+          } else {
+            Object.values(markers.current).forEach((m) => {
+              try {
+                m.getPopup()?.remove();
+                m._isOpen = false;
+              } catch { /* ignore */ }
+            });
+            popup.setLngLat(lngLat).addTo(mapInstance.current);
+            marker._isOpen = true;
+          }
+        });
+
+        markers.current[driverId] = marker;
+      } catch (err) {
+        console.warn("Marker add error:", err);
+      }
+    }
+  }, [isLoaded, setDriverData]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handle = (rawData) => updateOrAddMarker(rawData);
+    socket.on("driver-location-update", handle);
+    return () => { socket.off("driver-location-update", handle); };
+  }, [socket, updateOrAddMarker]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    Object.entries(markers.current).forEach(([id, marker]) => {
+      const driver = driverData[id];
+      if (!driver) return;
+      let visible = true;
+      if (selectedStatus.value !== "all") visible = driver.driving_status === selectedStatus.value;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        visible = visible && (driver.name?.toLowerCase().includes(q) || id.toString().includes(q));
+      }
+      try { marker.getElement().style.display = visible ? "flex" : "none"; } catch { /* ignore */ }
+    });
+  }, [selectedStatus, searchQuery, driverData, isLoaded]);
+
+  return (
+    <div
+      ref={mapRef}
+      className="w-full h-[550px] rounded-xl border border-gray-300 shadow-sm"
+      style={{ position: "relative", minHeight: "550px" }}
+    />
   );
 };
 
@@ -704,45 +895,26 @@ const BarikoiMapView = ({
 // Main Map page
 // ════════════════════════════════════════════════════════════════════════════════
 const Map = () => {
+  const {
+    loading: mapConfigLoading,
+    provider: mapType,
+    googleKey,
+    barikoiKey,
+    countryOfUse,
+    configError,
+  } = useMapConfig();
+  const apiKeys = { googleKey, barikoiKey };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(
     MAP_STATUS_OPTIONS.find((o) => o.value === "all") ?? MAP_STATUS_OPTIONS[0]
   );
   const [driverData, setDriverData] = useState({});
-  const [mapType, setMapType] = useState(() => resolveMapType(null));
-  const [apiKeys, setApiKeys] = useState({ googleKey: GOOGLE_KEY, barikoiKey: BARIKOI_KEY });
 
   const socket = useSocket();
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markers = useRef({});
-
-  // Fetch API keys + preferred map type from backend
-  useEffect(() => {
-    const fetchApiKeys = async () => {
-      try {
-        const res = await apiGetCompanyApiKeys();
-        if (res.data?.success) {
-          const data = res.data.data;
-
-          const googleKey =
-            data.google_api_key?.startsWith("AIza") ? data.google_api_key : GOOGLE_KEY;
-          const barikoiKey =
-            data.barikoi_api_key?.startsWith("bkoi_") ? data.barikoi_api_key : BARIKOI_KEY;
-
-          setApiKeys({ googleKey, barikoiKey });
-
-          // Only update mapType if the backend explicitly sends a value
-          if (data.maps_api) {
-            setMapType(resolveMapType(data.maps_api));
-          }
-        }
-      } catch (err) {
-        console.error("Fetch API keys error:", err);
-      }
-    };
-    fetchApiKeys();
-  }, []);
 
   const sharedProps = {
     mapRef,
@@ -776,7 +948,17 @@ const Map = () => {
           </div>
         </div>
 
-        {mapType === "barikoi" ? (
+        {mapConfigLoading ? (
+          <div className="w-full h-[550px] rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 text-sm">
+            Loading map configuration...
+          </div>
+        ) : configError ? (
+          <div className="w-full h-[550px] rounded-xl border border-red-200 bg-red-50 flex items-center justify-center text-red-600 text-sm">
+            {configError}
+          </div>
+        ) : mapType === "mapify" ? (
+          <MapifyMapView countryOfUse={countryOfUse} {...sharedProps} />
+        ) : mapType === "barikoi" ? (
           <BarikoiMapView {...sharedProps} />
         ) : (
           <GoogleMapView {...sharedProps} />

@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { apiSaveThirdPartyInformation } from "../../../../../../services/SettingsConfigurationServices";
 import { fetchThirdPartyMapSettings } from "../../../../../../utils/map/fetchThirdPartyMapSettings";
-import { hasValidGoogleKey } from "../../../../../../utils/map/resolveMapProvider";
+import {
+    hasValidGoogleKey,
+    isMapifyMapProvider,
+} from "../../../../../../utils/map/resolveMapProvider";
 import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
 import toast from "react-hot-toast";
 
@@ -13,6 +16,10 @@ const Integrations = () => {
         barikoi_api_keys: "",
         map_settings: "",
         map_type: "default",
+        map_provider: "mapify",
+        uses_mapify: true,
+        uses_google_map: false,
+        google_api_key_configured: false,
         mail_server: "",
         mail_from: "",
         mail_user_name: "",
@@ -31,10 +38,13 @@ const Integrations = () => {
     const tenantDataFromStorage = getTenantData();
     const showMapIntegrations = tenantDataFromStorage?.map !== "disable";
 
+    const usesMapifyMaps = isMapifyMapProvider(thirdPartyData);
     const googleKeyConfigured = hasValidGoogleKey(thirdPartyData.google_api_keys);
-    const activeMapProvider = googleKeyConfigured
-        ? "Google Maps"
-        : "Mapify (default)";
+    const activeMapProvider = usesMapifyMaps
+        ? "Mapify"
+        : googleKeyConfigured
+            ? "Google Maps"
+            : "Mapify (default)";
 
     const fetchThirdPartyInformation = useCallback(async () => {
         setTableLoading(true);
@@ -55,6 +65,14 @@ const Integrations = () => {
                 barikoi_api_keys: settings.barikoi_api_keys || "",
                 map_settings: settings.map_settings || "",
                 map_type: settings.map_type || "default",
+                map_provider: settings.map_provider || "mapify",
+                uses_mapify:
+                    settings.uses_mapify !== undefined
+                        ? settings.uses_mapify
+                        : true,
+                uses_google_map: settings.uses_google_map === true,
+                google_api_key_configured:
+                    settings.google_api_key_configured === true,
                 mail_server: settings.mail_server || "",
                 mail_from: settings.mail_from || "",
                 mail_user_name: settings.mail_user_name || "",
@@ -74,6 +92,10 @@ const Integrations = () => {
                 barikoi_api_keys: "",
                 map_settings: "",
                 map_type: "default",
+                map_provider: "mapify",
+                uses_mapify: true,
+                uses_google_map: false,
+                google_api_key_configured: false,
                 mail_server: "",
                 mail_from: "",
                 mail_user_name: "",
@@ -99,9 +121,17 @@ const Integrations = () => {
         setError(null);
 
         const formData = new FormData();
-        formData.append("google_api_keys", thirdPartyData.google_api_keys);
-        formData.append("barikoi_api_keys", thirdPartyData.barikoi_api_keys);
-        formData.append("map_settings", thirdPartyData.map_settings);
+
+        if (usesMapifyMaps) {
+            formData.append("map_type", thirdPartyData.map_type || "default");
+            formData.append("map_provider", "mapify");
+            formData.append("uses_mapify", "1");
+            formData.append("uses_google_map", "0");
+        } else {
+            formData.append("google_api_keys", thirdPartyData.google_api_keys);
+            formData.append("barikoi_api_keys", thirdPartyData.barikoi_api_keys);
+            formData.append("map_settings", thirdPartyData.map_settings);
+        }
 
         if (thirdPartyData.smtp_type === "custom") {
             formData.append("mail_server", thirdPartyData.mail_server);
@@ -138,52 +168,71 @@ const Integrations = () => {
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
-                    {showMapIntegrations && (
-                        <>
-                            <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <h3 className="font-semibold text-gray-800">Google Maps</h3>
-                                            <span
-                                                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                                    googleKeyConfigured
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-600"
-                                                }`}
-                                            >
-                                                {googleKeyConfigured ? "API key configured" : "No API key"}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Active map provider: {activeMapProvider}
-                                            {mapConfigSource
-                                                ? ` (loaded from ${mapConfigSource})`
-                                                : ""}
-                                        </p>
-                                        <div className="mt-2">
-                                            <InputBox
-                                                label="API Key"
-                                                placeholder="Enter Google Maps API Key"
-                                                value={thirdPartyData.google_api_keys}
-                                                onChange={(e) =>
-                                                    setThirdPartyData({
-                                                        ...thirdPartyData,
-                                                        google_api_keys: e.target.value,
-                                                    })
-                                                }
-                                                disabled={tableLoading}
-                                            />
-                                        </div>
-                                        {!googleKeyConfigured && (
-                                            <p className="text-sm text-gray-500 mt-2">
-                                                When no Google key is saved, the app uses Mapify as the default map provider.
-                                            </p>
-                                        )}
+                    {showMapIntegrations && usesMapifyMaps && (
+                        <div className="p-4 border rounded-xl bg-white shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                                <h3 className="font-semibold text-gray-800">Mapify Maps</h3>
+                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                    Active
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Active map provider: {activeMapProvider}
+                                {mapConfigSource
+                                    ? ` (loaded from ${mapConfigSource})`
+                                    : ""}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-3">
+                                Your account uses Mapify for maps, location search, and geocoding.
+                                No Google API key is required.
+                            </p>
+                        </div>
+                    )}
+
+                    {showMapIntegrations && !usesMapifyMaps && (
+                        <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <h3 className="font-semibold text-gray-800">Google Maps</h3>
+                                        <span
+                                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                                googleKeyConfigured
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-gray-100 text-gray-600"
+                                            }`}
+                                        >
+                                            {googleKeyConfigured ? "API key configured" : "No API key"}
+                                        </span>
                                     </div>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Active map provider: {activeMapProvider}
+                                        {mapConfigSource
+                                            ? ` (loaded from ${mapConfigSource})`
+                                            : ""}
+                                    </p>
+                                    <div className="mt-2">
+                                        <InputBox
+                                            label="API Key"
+                                            placeholder="Enter Google Maps API Key"
+                                            value={thirdPartyData.google_api_keys}
+                                            onChange={(e) =>
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    google_api_keys: e.target.value,
+                                                })
+                                            }
+                                            disabled={tableLoading}
+                                        />
+                                    </div>
+                                    {!googleKeyConfigured && (
+                                        <p className="text-sm text-gray-500 mt-2">
+                                            When no Google key is saved, the app uses Mapify as the default map provider.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
 

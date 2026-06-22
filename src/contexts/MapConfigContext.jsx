@@ -3,9 +3,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
-import { fetchMapConfig } from "../utils/map/fetchMapConfig";
+import { loadMapSettings } from "../utils/map/loadMapSettings";
 import { isAuthenticated } from "../utils/functions/tokenEncryption";
 import { useAppSelector } from "../store";
 
@@ -18,6 +19,7 @@ const defaultConfig = {
   countryOfUse: "",
   searchApi: "mapify",
   configError: null,
+  mapConfigSource: null,
   settings: {},
   apiKeysData: {},
 };
@@ -35,6 +37,7 @@ export const useMapConfig = () => {
 export const MapConfigProvider = ({ children }) => {
   const [config, setConfig] = useState(defaultConfig);
   const [reloadKey, setReloadKey] = useState(0);
+  const loadIdRef = useRef(0);
   const authToken = useAppSelector((state) => state.auth.session.token);
   const signedIn = useAppSelector((state) => state.auth.session.signedIn);
 
@@ -44,6 +47,8 @@ export const MapConfigProvider = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
+    const loadId = ++loadIdRef.current;
+    const isRefresh = reloadKey > 0;
 
     const load = async () => {
       if (!isAuthenticated()) {
@@ -52,11 +57,11 @@ export const MapConfigProvider = ({ children }) => {
         return;
       }
 
-      setConfig((prev) => ({ ...prev, loading: true }));
+      setConfig((prev) => ({ ...prev, loading: true, configError: null }));
 
       try {
-        const result = await fetchMapConfig();
-        if (!mounted) return;
+        const result = await loadMapSettings({ force: isRefresh });
+        if (!mounted || loadId !== loadIdRef.current) return;
 
         setConfig({
           loading: false,
@@ -67,12 +72,13 @@ export const MapConfigProvider = ({ children }) => {
           countryOfUse: result.countryOfUse,
           searchApi: result.searchApi,
           configError: result.configError,
+          mapConfigSource: result.mapConfigSource,
           settings: result.settings,
           apiKeysData: result.apiKeysData,
         });
       } catch (error) {
         console.error("MapConfigProvider error:", error);
-        if (!mounted) return;
+        if (!mounted || loadId !== loadIdRef.current) return;
         setConfig({
           ...defaultConfig,
           loading: false,

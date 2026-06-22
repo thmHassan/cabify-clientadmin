@@ -11,6 +11,7 @@ import GreenCarIcon from "../../../../components/svg/GreenCarIcon";
 import { getTenantData } from "../../../../utils/functions/tokenEncryption";
 import { getTenantCountryIso } from "../../../../utils/tenantFormatUtils";
 import { useMapConfig } from "../../../../contexts/MapConfigContext";
+import MapConfigLoader from "../../../../components/shared/MapConfigLoader";
 import { fetchMapifyStyle } from "../../../../utils/map/fetchMapifyStyle";
 import { buildOsmFallbackStyle } from "../../../../utils/map/osmFallbackStyle";
 import { loadGoogleMaps as loadGoogleMapsUtil } from "../../../../utils/map/loadGoogleMaps";
@@ -902,8 +903,13 @@ const Map = () => {
     barikoiKey,
     countryOfUse,
     configError,
+    refreshMapConfig,
   } = useMapConfig();
   const apiKeys = { googleKey, barikoiKey };
+
+  useEffect(() => {
+    refreshMapConfig();
+  }, [refreshMapConfig]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(
@@ -949,9 +955,11 @@ const Map = () => {
         </div>
 
         {mapConfigLoading ? (
-          <div className="w-full h-[550px] rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 text-sm">
-            Loading map configuration...
-          </div>
+          <MapConfigLoader
+            message="Loading map configuration..."
+            className="w-full h-[550px]"
+            minHeight="h-[550px]"
+          />
         ) : configError ? (
           <div className="w-full h-[550px] rounded-xl border border-red-200 bg-red-50 flex items-center justify-center text-red-600 text-sm">
             {configError}

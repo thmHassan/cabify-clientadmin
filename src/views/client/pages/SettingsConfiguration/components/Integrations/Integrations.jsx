@@ -5,18 +5,23 @@ import { fetchThirdPartyMapSettings } from "../../../../../../utils/map/fetchThi
 import {
     hasValidGoogleKey,
     isMapifyMapProvider,
+    isTruthyFlag,
+    mergeMapSettingsFromSources,
+    normalizeMapsApi,
 } from "../../../../../../utils/map/resolveMapProvider";
 import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
 import toast from "react-hot-toast";
 
 const Integrations = () => {
-    const { refreshMapConfig } = useMapConfig();
+    const tenantDataFromStorage = getTenantData();
+    const { refreshMapConfig, mapsApi: contextMapsApi } = useMapConfig();
     const [thirdPartyData, setThirdPartyData] = useState({
         google_api_keys: "",
         barikoi_api_keys: "",
         map_settings: "",
         map_type: "default",
         map_provider: "mapify",
+        maps_api: normalizeMapsApi(tenantDataFromStorage?.maps_api) || "mapify",
         uses_mapify: true,
         uses_google_map: false,
         google_api_key_configured: false,
@@ -35,10 +40,14 @@ const Integrations = () => {
     const [error, setError] = useState(null);
     const [mapConfigSource, setMapConfigSource] = useState(null);
 
-    const tenantDataFromStorage = getTenantData();
     const showMapIntegrations = tenantDataFromStorage?.map !== "disable";
 
-    const usesMapifyMaps = isMapifyMapProvider(thirdPartyData);
+    const effectiveMapsApi = normalizeMapsApi(
+        contextMapsApi || thirdPartyData.maps_api || tenantDataFromStorage?.maps_api
+    );
+    const usesMapifyMaps =
+        effectiveMapsApi === "mapify" ||
+        (effectiveMapsApi !== "google" && isMapifyMapProvider(thirdPartyData));
     const googleKeyConfigured = hasValidGoogleKey(thirdPartyData.google_api_keys);
     const activeMapProvider = usesMapifyMaps
         ? "Mapify"
@@ -59,20 +68,26 @@ const Integrations = () => {
             }
 
             setMapConfigSource(fromFallback ? "map-information" : "third-party-information");
+            const mergedSettings = mergeMapSettingsFromSources({
+                settings,
+                tenant: tenantDataFromStorage,
+            });
             setThirdPartyData((prev) => ({
                 ...prev,
-                google_api_keys: settings.google_api_keys || "",
-                barikoi_api_keys: settings.barikoi_api_keys || "",
+                maps_api: mergedSettings.maps_api || "",
+                google_api_keys: mergedSettings.google_api_keys || "",
+                barikoi_api_keys: mergedSettings.barikoi_api_keys || "",
                 map_settings: settings.map_settings || "",
                 map_type: settings.map_type || "default",
                 map_provider: settings.map_provider || "mapify",
                 uses_mapify:
                     settings.uses_mapify !== undefined
-                        ? settings.uses_mapify
+                        ? isTruthyFlag(settings.uses_mapify)
                         : true,
-                uses_google_map: settings.uses_google_map === true,
-                google_api_key_configured:
-                    settings.google_api_key_configured === true,
+                uses_google_map: isTruthyFlag(settings.uses_google_map),
+                google_api_key_configured: isTruthyFlag(
+                    settings.google_api_key_configured
+                ),
                 mail_server: settings.mail_server || "",
                 mail_from: settings.mail_from || "",
                 mail_user_name: settings.mail_user_name || "",
@@ -88,6 +103,7 @@ const Integrations = () => {
         } catch (fetchError) {
             setMapConfigSource(null);
             setThirdPartyData({
+                maps_api: normalizeMapsApi(tenantDataFromStorage?.maps_api) || "mapify",
                 google_api_keys: "",
                 barikoi_api_keys: "",
                 map_settings: "",

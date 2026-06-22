@@ -1,7 +1,11 @@
 import { apiGetCompanyApiKeys } from "../../services/SettingsConfigurationServices";
 import { getTenantData } from "../functions/tokenEncryption";
 import { fetchThirdPartyMapSettings } from "./fetchThirdPartyMapSettings";
-import { resolveMapProvider } from "./resolveMapProvider";
+import {
+  mergeMapSettingsFromSources,
+  normalizeMapsApi,
+  resolveMapProvider,
+} from "./resolveMapProvider";
 
 export async function fetchMapConfig() {
   const { settings, error: configError } = await fetchThirdPartyMapSettings();
@@ -20,8 +24,18 @@ export async function fetchMapConfig() {
     console.error("Failed to load company API keys:", error);
   }
 
-  const resolved = resolveMapProvider({ settings });
+  const mergedSettings = mergeMapSettingsFromSources({
+    settings,
+    apiKeysData,
+    tenant,
+  });
+
+  const resolved = resolveMapProvider({
+    settings: mergedSettings,
+    apiKeysData,
+  });
   const provider = resolved.provider || "mapify";
+  const mapsApi = normalizeMapsApi(mergedSettings.maps_api) || provider;
 
   const searchApi =
     provider === "google" && resolved.googleKey
@@ -32,13 +46,13 @@ export async function fetchMapConfig() {
 
   return {
     provider,
-    mapsApi: provider,
+    mapsApi,
     googleKey: resolved.googleKey || null,
     barikoiKey: resolved.barikoiKey || null,
     countryOfUse: String(countryOfUse || "").trim().toUpperCase(),
     searchApi,
     configError: provider ? null : configError || "No map provider configured",
-    settings,
+    settings: mergedSettings,
     apiKeysData,
   };
 }

@@ -1,5 +1,17 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import initSocket from "../../services/socketConntection";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import initSocket, { disconnectSocket, getSocket } from "../../services/socketConntection";
+import { isAuthenticated } from "../../utils/functions/tokenEncryption";
+
+const SOCKET_RECONNECT_EVENT = "socket:reconnect";
+const SOCKET_DISCONNECT_EVENT = "socket:disconnect";
+
+export const requestSocketReconnect = () => {
+  window.dispatchEvent(new CustomEvent(SOCKET_RECONNECT_EVENT));
+};
+
+export const requestSocketDisconnect = () => {
+  window.dispatchEvent(new CustomEvent(SOCKET_DISCONNECT_EVENT));
+};
 
 const SocketContext = createContext(null);
 
@@ -7,32 +19,70 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    const socketInstance = initSocket();
+  const connectSocket = useCallback(() => {
+    if (!isAuthenticated()) {
+      disconnectSocket();
+      setSocket(null);
+      setIsConnected(false);
+      return null;
+    }
 
-    if (!socketInstance) return;
+    const existingSocket = getSocket();
+    if (existingSocket) {
+      setSocket(existingSocket);
+      setIsConnected(existingSocket.connected);
+      return existingSocket;
+    }
+
+    const socketInstance = initSocket();
+    if (!socketInstance) {
+      setSocket(null);
+      setIsConnected(false);
+      return null;
+    }
 
     const onConnect = () => {
-      console.log("✅ Connected in Provider:", socketInstance.id);
       setIsConnected(true);
     };
 
     const onDisconnect = () => {
-      console.log("❌ Disconnected in Provider");
       setIsConnected(false);
     };
 
     socketInstance.on("connect", onConnect);
     socketInstance.on("disconnect", onDisconnect);
-
     setSocket(socketInstance);
+    setIsConnected(socketInstance.connected);
+
+    return socketInstance;
+  }, []);
+
+  const handleSocketDisconnect = useCallback(() => {
+    disconnectSocket();
+    setSocket(null);
+    setIsConnected(false);
+  }, []);
+
+  useEffect(() => {
+    const socketInstance = connectSocket();
+
+    const onReconnect = () => {
+      connectSocket();
+    };
+
+    window.addEventListener(SOCKET_RECONNECT_EVENT, onReconnect);
+    window.addEventListener(SOCKET_DISCONNECT_EVENT, handleSocketDisconnect);
 
     return () => {
-      socketInstance.off("connect", onConnect);
-      socketInstance.off("disconnect", onDisconnect);
-      // socketInstance.disconnect(); // optional
+      window.removeEventListener(SOCKET_RECONNECT_EVENT, onReconnect);
+      window.removeEventListener(SOCKET_DISCONNECT_EVENT, handleSocketDisconnect);
+
+      if (socketInstance) {
+        socketInstance.off("connect");
+        socketInstance.off("disconnect");
+      }
     };
-  }, []);
+  }, [connectSocket, handleSocketDisconnect]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

@@ -4,6 +4,21 @@ import { getCompanyId, getDecryptedToken, getTenantId } from "../utils/functions
 
 let socket = null;
 
+export const getSocket = () => socket;
+
+export const disconnectSocket = () => {
+  if (!socket) return;
+
+  try {
+    socket.removeAllListeners();
+    socket.disconnect();
+  } catch (error) {
+    console.warn("Failed to disconnect socket:", error);
+  } finally {
+    socket = null;
+  }
+};
+
 const initSocket = () => {
   if (socket) return socket;
 

@@ -135,6 +135,19 @@ export const storeTenantData = (tenantData) => {
 };
 
 /**
+ * Stores dispatcher company data from login in localStorage
+ * @param {object} companyData
+ */
+export const storeCompanyData = (companyData) => {
+  try {
+    if (!companyData) return;
+    localStorage.setItem('company_data', JSON.stringify(companyData));
+  } catch (error) {
+    console.error('Failed to store company data:', error);
+  }
+};
+
+/**
  * Retrieves tenant id from localStorage
  * @returns {string|null}
  */
@@ -170,6 +183,20 @@ export const getTenantData = () => {
     return raw ? JSON.parse(raw) : null;
   } catch (error) {
     console.error('Failed to get tenant data:', error);
+    return null;
+  }
+};
+
+/**
+ * Retrieves dispatcher company data from localStorage
+ * @returns {object|null}
+ */
+export const getCompanyData = () => {
+  try {
+    const raw = localStorage.getItem('company_data');
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.error('Failed to get company data:', error);
     return null;
   }
 };
@@ -238,6 +265,9 @@ export const clearAllAuthData = () => {
     
     // Remove tenant data
     localStorage.removeItem('tenant_data');
+
+    // Remove dispatcher company data
+    localStorage.removeItem('company_data');
 
     // Remove any legacy Redux persistence data
     localStorage.removeItem('admin');

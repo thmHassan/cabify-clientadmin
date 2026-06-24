@@ -8,6 +8,7 @@ import {
 import toast from "react-hot-toast";
 import Button from "../../../../../../components/ui/Button/Button";
 import CardContainer from "../../../../../../components/shared/CardContainer";
+import { useSocket } from "../../../../../../components/routes/SocketProvider";
 
 const RETRY_STEP_KEY = "show_only_after_not_selected_in_auto_dispatch";
 const HIDDEN_TRY_STEP_KEYS = new Set([
@@ -36,6 +37,81 @@ const applyDefaultThirdTry = (state, followUp) => {
     });
 
     return nextState;
+};
+
+const AUTO_DISPATCH_SYSTEM_KEYS = [
+    "auto_dispatch_plot_base",
+    "auto_dispatch_nearest_driver",
+];
+
+const getDispatchItem = (systemKey) =>
+    dispatchData.find((item) => item.systemKey === systemKey);
+
+const getSystemKeyForFollowUpKey = (followUpKey) => {
+    for (const dispatchItem of dispatchData) {
+        for (const followUp of dispatchItem.followUps) {
+            if (followUp.key === followUpKey) {
+                return dispatchItem.systemKey;
+            }
+            if (followUp.children?.some((child) => child.key === followUpKey)) {
+                return dispatchItem.systemKey;
+            }
+        }
+    }
+    return null;
+};
+
+const clearSystemFollowUps = (systemKey, state) => {
+    const dispatchItem = getDispatchItem(systemKey);
+    if (!dispatchItem) return state;
+
+    const nextState = { ...state };
+    dispatchItem.followUps.forEach((followUp) => {
+        nextState[followUp.key] = false;
+        followUp.children?.forEach((child) => {
+            nextState[child.key] = false;
+        });
+    });
+    return nextState;
+};
+
+const systemHasEnabledFollowUps = (systemKey, state) => {
+    const dispatchItem = getDispatchItem(systemKey);
+    if (!dispatchItem) return false;
+
+    return dispatchItem.followUps.some((followUp) => {
+        if (state[followUp.key]) return true;
+        return followUp.children?.some((child) => state[child.key]);
+    });
+};
+
+const clearOtherDispatchSystems = (activeSystemKey, state) =>
+    dispatchData.reduce((nextState, dispatchItem) => {
+        if (dispatchItem.systemKey === activeSystemKey) {
+            return nextState;
+        }
+        return clearSystemFollowUps(dispatchItem.systemKey, nextState);
+    }, state);
+
+const normalizeAutoDispatchSelection = (state, priorities = {}) => {
+    const enabledSystems = AUTO_DISPATCH_SYSTEM_KEYS.filter((systemKey) =>
+        systemHasEnabledFollowUps(systemKey, state)
+    );
+
+    if (enabledSystems.length <= 1) {
+        return state;
+    }
+
+    const activeSystem = [...enabledSystems].sort(
+        (a, b) => (priorities[a] || 99) - (priorities[b] || 99)
+    )[0];
+
+    return enabledSystems.reduce((nextState, systemKey) => {
+        if (systemKey === activeSystem) {
+            return nextState;
+        }
+        return clearSystemFollowUps(systemKey, nextState);
+    }, state);
 };
 
 const dispatchData = [
@@ -147,6 +223,8 @@ const DispatchSystem = () => {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [password, setPassword] = useState("");
     const [verifying, setVerifying] = useState(false);
+    const [selectedDispatchSystem, setSelectedDispatchSystem] = useState(null);
+    const socket = useSocket();
 
     const getSystemDisplayName = (key) =>
     ({
@@ -292,14 +370,23 @@ const DispatchSystem = () => {
                     }
                 });
 
-                setCheckedState(
+                const normalizedInitial = normalizeAutoDispatchSelection(
                     dispatchData.reduce((state, dispatchItem) => {
                         dispatchItem.followUps.forEach((followUp) => {
                             Object.assign(state, applyDefaultThirdTry(state, followUp));
                         });
                         return state;
-                    }, initial)
+                    }, initial),
+                    initialPriorities
                 );
+
+                const activeSystem =
+                    dispatchData.find((dispatchItem) =>
+                        systemHasEnabledFollowUps(dispatchItem.systemKey, normalizedInitial)
+                    )?.systemKey || null;
+
+                setSelectedDispatchSystem(activeSystem);
+                setCheckedState(normalizedInitial);
                 setPriorities(initialPriorities);
             }
         } catch (e) {
@@ -322,23 +409,49 @@ const DispatchSystem = () => {
 
     const filteredDispatchData = getFilteredDispatchData();
 
-    const toggle = (key) => setCheckedState((p) => ({ ...p, [key]: !p[key] }));
+    const toggle = (key) => {
+        setCheckedState((prev) => {
+            const willEnable = !prev[key];
+            let nextState = { ...prev, [key]: willEnable };
+
+            if (willEnable) {
+                const systemKey = getSystemKeyForFollowUpKey(key);
+                if (systemKey) {
+                    setSelectedDispatchSystem(systemKey);
+                    nextState = clearOtherDispatchSystems(systemKey, nextState);
+                    nextState[key] = true;
+                }
+            }
+
+            return nextState;
+        });
+    };
 
     const handleToggleGroupChange = (group, selectedKey) => {
         setCheckedState((prev) => {
-            const newState = { ...prev };
+            const willEnable = !prev[selectedKey];
+            let newState = { ...prev };
 
             dispatchData.forEach((p) => {
                 p.followUps.forEach((f) => {
                     if (f.group === group) {
                         if (f.key === selectedKey) {
-                            newState[f.key] = !prev[selectedKey];
+                            newState[f.key] = willEnable;
                         } else {
                             newState[f.key] = false;
                         }
                     }
                 });
             });
+
+            if (willEnable) {
+                const systemKey = getSystemKeyForFollowUpKey(selectedKey);
+                if (systemKey) {
+                    setSelectedDispatchSystem(systemKey);
+                    newState = clearOtherDispatchSystems(systemKey, newState);
+                    newState[selectedKey] = true;
+                }
+            }
 
             dispatchData.forEach((p) => {
                 p.followUps.forEach((followUp) => {
@@ -350,6 +463,16 @@ const DispatchSystem = () => {
 
             return newState;
         });
+    };
+
+    const handleDispatchSystemSelect = (systemKey) => {
+        setSelectedDispatchSystem(systemKey);
+        setCheckedState((prev) =>
+            dispatchData.reduce(
+                (state, item) => clearSystemFollowUps(item.systemKey, state),
+                prev
+            )
+        );
     };
 
     const handlePriorityChange = (systemKey, newPriority) => {
@@ -399,11 +522,24 @@ const DispatchSystem = () => {
         setSaving(true);
         try {
             const formData = new FormData();
+            const activeAutoDispatchSystem = AUTO_DISPATCH_SYSTEM_KEYS.find(
+                (systemKey) => systemStatus[systemKey]
+            );
 
             dispatchData.forEach((p, i) => {
+                let isSystemEnabled = !!systemStatus[p.systemKey];
+
+                if (
+                    AUTO_DISPATCH_SYSTEM_KEYS.includes(p.systemKey) &&
+                    activeAutoDispatchSystem &&
+                    p.systemKey !== activeAutoDispatchSystem
+                ) {
+                    isSystemEnabled = false;
+                }
+
                 formData.append(
                     `${p.systemKey}[status]`,
-                    systemStatus[p.systemKey] ? "enable" : "disable"
+                    isSystemEnabled ? "enable" : "disable"
                 );
 
                 formData.append(
@@ -413,7 +549,7 @@ const DispatchSystem = () => {
 
                 p.followUps.forEach((f) => {
                     if (f.stepKey) {
-                        const shouldEnable = systemStatus[p.systemKey] && checkedState[f.key];
+                        const shouldEnable = isSystemEnabled && checkedState[f.key];
                         formData.append(
                             `${p.systemKey}[${f.stepKey}]`,
                             shouldEnable ? "enable" : "disable"
@@ -421,7 +557,7 @@ const DispatchSystem = () => {
                     }
                     f.children?.forEach((c) => {
                         let shouldEnable =
-                            systemStatus[p.systemKey] && checkedState[c.key];
+                            isSystemEnabled && checkedState[c.key];
 
                         if (
                             isRetryFollowUp(f) &&
@@ -441,10 +577,18 @@ const DispatchSystem = () => {
                 });
             });
 
+            if (socket?.id) {
+                formData.append("socket_id", socket.id);
+            }
+
             const res = await apiSaveDispatchSystem(formData);
-            res?.data?.success === 1
-                ? toast.success("Dispatch system saved successfully")
-                : toast.error("Save failed");
+            if (res?.data?.success === 1) {
+                toast.success(
+                    "Dispatch system saved successfully. Connected company users will be notified to refresh."
+                );
+            } else {
+                toast.error("Save failed");
+            }
         } catch {
             toast.error("Something went wrong");
         } finally {
@@ -470,30 +614,9 @@ const DispatchSystem = () => {
                                 <input
                                     type="radio"
                                     name="dispatch_system"
-                                    checked={Object.keys(systemStatus).find(
-                                        (key) => systemStatus[key]
-                                    ) === p.systemKey}
+                                    checked={selectedDispatchSystem === p.systemKey}
                                     className="h-4 w-4"
-                                    onChange={() => {
-                                        const resetSystems = {};
-                                        dispatchData.forEach((item) => {
-                                            resetSystems[item.systemKey] = false;
-                                        });
-                                        resetSystems[p.systemKey] = true;
-
-                                        setSystemStatus(resetSystems);
-                                        const newState = {};
-                                        dispatchData.forEach((item) => {
-                                            item.followUps.forEach((f) => {
-                                                newState[f.key] = false;
-                                                f.children?.forEach((c) => {
-                                                    newState[c.key] = false;
-                                                });
-                                            });
-                                        });
-
-                                        setCheckedState(newState);
-                                    }}
+                                    onChange={() => handleDispatchSystemSelect(p.systemKey)}
                                 />
                                 {/* <input
                                     type="checkbox"

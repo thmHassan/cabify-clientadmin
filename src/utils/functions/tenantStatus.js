@@ -1,0 +1,57 @@
+import {
+  FORCE_LOGOUT_REASONS,
+  NOTIFICATION_ACTIONS,
+} from "../../constants/socketEvents.constant";
+
+export const COMPANY_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+};
+
+const INACTIVE_COMPANY_MESSAGE_KEY = "company_inactive_message";
+export const INACTIVE_COMPANY_MESSAGE = "Company is inactive";
+export const DEFAULT_DEACTIVATED_MESSAGE =
+  "Your company has been deactivated. You have been logged out.";
+
+export const getTenantStatus = (tenantData) =>
+  String(tenantData?.status || "").toLowerCase();
+
+export const getCompanyStatusFromDispatcherData = (companyData) =>
+  String(companyData?.data?.status || companyData?.status || "").toLowerCase();
+
+export const isCompanyInactive = (tenantData) =>
+  getTenantStatus(tenantData) === COMPANY_STATUS.INACTIVE;
+
+export const isCompanyInactiveFromDispatcherLogin = (companyData) =>
+  getCompanyStatusFromDispatcherData(companyData) === COMPANY_STATUS.INACTIVE;
+
+export const isSessionCompanyInactive = (tenantData, companyData) =>
+  isCompanyInactive(tenantData) ||
+  isCompanyInactiveFromDispatcherLogin(companyData);
+
+export const shouldForceLogout = (data = {}) =>
+  data.action === NOTIFICATION_ACTIONS.FORCE_LOGOUT ||
+  data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE;
+
+export const setInactiveCompanyMessage = (
+  message = INACTIVE_COMPANY_MESSAGE
+) => {
+  try {
+    sessionStorage.setItem(INACTIVE_COMPANY_MESSAGE_KEY, message);
+  } catch (error) {
+    console.warn("Failed to store inactive company message", error);
+  }
+};
+
+export const consumeInactiveCompanyMessage = () => {
+  try {
+    const message = sessionStorage.getItem(INACTIVE_COMPANY_MESSAGE_KEY);
+    if (message) {
+      sessionStorage.removeItem(INACTIVE_COMPANY_MESSAGE_KEY);
+    }
+    return message;
+  } catch (error) {
+    console.warn("Failed to read inactive company message", error);
+    return null;
+  }
+};

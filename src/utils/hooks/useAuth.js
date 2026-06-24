@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   apiSignIn,
@@ -23,8 +23,20 @@ import {
   getUserDataFromToken,
   storeTenantId,
   storeTenantData,
-  storeCompanyId, 
+  storeCompanyId,
+  getTenantData,
+  getCompanyData,
+  storeCompanyData,
 } from "../functions/tokenEncryption";
+import {
+  INACTIVE_COMPANY_MESSAGE,
+  isCompanyInactive,
+  isCompanyInactiveFromDispatcherLogin,
+  isSessionCompanyInactive,
+  setInactiveCompanyMessage,
+} from "../functions/tenantStatus";
+import { disconnectSocket } from "../../services/socketConntection";
+import { requestSocketDisconnect, requestSocketReconnect } from "../../components/routes/SocketProvider";
 
 function useAuth() {
   const dispatch = useAppDispatch();
@@ -38,11 +50,28 @@ function useAuth() {
       const resp = await apiSignIn(values);
       if (resp.data) {
         const { token } = resp.data;
+        const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+        const companyData = resp.data?.company_data || resp.data?.data?.company_data || null;
+
+        if (
+          isCompanyInactive(tenantData) ||
+          isCompanyInactiveFromDispatcherLogin(companyData)
+        ) {
+          clearAllAuthData();
+          try {
+            localStorage.removeItem("auth_user");
+          } catch (e) {
+            console.warn("Failed to remove auth_user from localStorage", e);
+          }
+
+          return {
+            status: "failed",
+            message: INACTIVE_COMPANY_MESSAGE,
+          };
+        }
+
         console.log(resp.data.user, "resp.data.user====");
         dispatch(signInSuccess(token));
-
-        // Build user data: prefer explicit user, otherwise derive from tenant_data
-        const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
         const tenantId =
           resp.data?.tenant_id ||
           resp.data?.tenantId ||
@@ -79,6 +108,7 @@ function useAuth() {
             storeTenantId(tenantId);
           }
           const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+          const companyData = resp.data?.company_data || resp.data?.data?.company_data || null;
           if (tenantData) {
             storeTenantData(tenantData);
             
@@ -88,12 +118,16 @@ function useAuth() {
               console.log("✅ Stored company_id:", tenantData.company_id);
             }
           }
+          if (companyData) {
+            storeCompanyData(companyData);
+          }
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
         }
 
         const redirectUrl = query.get(REDIRECT_URL_KEY);
         navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath);
+        requestSocketReconnect();
         return {
           status: "success",
           message: "",
@@ -126,6 +160,22 @@ function useAuth() {
       if (isSuccess) {
         const token = possibleToken;
         const user = data.user || data.data?.user || data.admin || null;
+        const tenantData = data.tenant_data || data.data?.tenant_data || null;
+
+        if (isCompanyInactive(tenantData)) {
+          clearAllAuthData();
+          try {
+            localStorage.removeItem("auth_user");
+          } catch (e) {
+            console.warn("Failed to remove auth_user from localStorage", e);
+          }
+
+          return {
+            status: "failed",
+            message: INACTIVE_COMPANY_MESSAGE,
+            data,
+          };
+        }
 
         if (token) {
           // Store encrypted token in localStorage under 'admin_token'
@@ -154,7 +204,6 @@ function useAuth() {
           if (tenantId) {
             storeTenantId(tenantId);
           }
-          const tenantData = data.tenant_data || data.data?.tenant_data || null;
           if (tenantData) {
             storeTenantData(tenantData);
             
@@ -171,6 +220,7 @@ function useAuth() {
         // Redirect to home page on success
         const redirectUrl = query.get(REDIRECT_URL_KEY);
         navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath);
+        requestSocketReconnect();
 
         return {
           status: "success",
@@ -193,7 +243,7 @@ function useAuth() {
     }
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback(() => {
     clearAllAuthData();
 
     try {
@@ -213,7 +263,18 @@ function useAuth() {
     );
 
     navigate(appConfig.unAuthenticatedEntryPath);
-  };
+  }, [dispatch, navigate]);
+
+  const logoutInactiveCompany = useCallback((message = INACTIVE_COMPANY_MESSAGE) => {
+    setInactiveCompanyMessage(message);
+    requestSocketDisconnect();
+    disconnectSocket();
+    handleSignOut();
+  }, [handleSignOut]);
+
+  const forceLogout = useCallback((message = INACTIVE_COMPANY_MESSAGE) => {
+    logoutInactiveCompany(message);
+  }, [logoutInactiveCompany]);
 
   const signOut = () => {
     // Simple logout - just remove token and redirect
@@ -230,6 +291,13 @@ function useAuth() {
 
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
+      const tenantData = getTenantData();
+      const companyData = getCompanyData();
+      if (isSessionCompanyInactive(tenantData, companyData)) {
+        logoutInactiveCompany();
+        return;
+      }
+
       // console.log("Restoring authentication state from encrypted token");
       dispatch(signInSuccess("restored")); // We don't need the actual token in Redux
 
@@ -239,13 +307,15 @@ function useAuth() {
         dispatch(setUser(userData));
       }
     }
-  }, [dispatch, signedIn]);
+  }, [dispatch, signedIn, logoutInactiveCompany]);
 
   return {
     authenticated: isAuthenticated() || (token && signedIn),
     signIn,
     adminSignIn,
     signOut,
+    logoutInactiveCompany,
+    forceLogout,
   };
 }
 

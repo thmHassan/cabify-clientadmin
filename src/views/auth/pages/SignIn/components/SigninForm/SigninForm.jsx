@@ -1,6 +1,7 @@
 import React from "react";
 import useAuth from "../../../../../../utils/hooks/useAuth";
 import useApiLoader from "../../../../../../utils/hooks/useApiLoader";
+import { consumeInactiveCompanyMessage } from "../../../../../../utils/functions/tenantStatus";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import Password from "../../../../../../components/elements/CustomPassword/Password";
 import Button from "../../../../../../components/ui/Button/Button";
@@ -25,6 +26,17 @@ const SigninForm = ({
     message: "",
     type: "error",
   });
+
+  React.useEffect(() => {
+    const inactiveMessage = consumeInactiveCompanyMessage();
+    if (inactiveMessage) {
+      setToast({
+        show: true,
+        message: inactiveMessage,
+        type: "error",
+      });
+    }
+  }, []);
 
   const onSignIn = async (values, setSubmitting) => {
     const { email, password } = values;

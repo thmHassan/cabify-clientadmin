@@ -13,6 +13,9 @@ const backendSocketUrl = normalizeUrl(
   import.meta.env.VITE_BACKEND_SOCKET_URL || `${backendUrl}/socket-api`
 );
 
+// Socket.IO connects to backendUrl (not backendSocketUrl).
+// backendSocketUrl is only for HTTP REST routes under /socket-api.
+
 const getAssetUrl = (path) => {
   if (!path) return "";
   if (/^(https?:|data:)/.test(path)) return path;

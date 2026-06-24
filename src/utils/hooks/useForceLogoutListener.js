@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import {
   DEFAULT_DEACTIVATED_MESSAGE,
-  shouldForceLogout,
 } from "../functions/tenantStatus";
 import {
   getTenantData,
@@ -18,8 +17,6 @@ const useForceLogoutListener = () => {
 
   useEffect(() => {
     const handleCompanyInactiveLogout = (data = {}) => {
-      if (!shouldForceLogout(data)) return;
-
       const tenantData = getTenantData();
       if (tenantData) {
         storeTenantData({ ...tenantData, status: "inactive" });

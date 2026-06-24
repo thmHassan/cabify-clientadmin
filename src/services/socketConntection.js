@@ -7,6 +7,7 @@ let socket = null;
 let companyInactiveLogoutHandler = null;
 
 const handleCompanyInactiveLogoutEvent = (data) => {
+  console.log("company-inactive-logout received:", data);
   companyInactiveLogoutHandler?.(data);
 };
 
@@ -28,6 +29,13 @@ export const registerCompanyInactiveLogoutHandler = (handler) => {
 
   const currentSocket = getSocket();
   if (currentSocket) {
+    bindCompanyInactiveLogoutListener(currentSocket);
+  }
+};
+
+export const rebindCompanyInactiveLogoutListener = () => {
+  const currentSocket = getSocket();
+  if (currentSocket && companyInactiveLogoutHandler) {
     bindCompanyInactiveLogoutListener(currentSocket);
   }
 };
@@ -73,7 +81,7 @@ const initSocket = () => {
     return null;
   }
 
-  socket = io(appConfig.backendSocketUrl, {
+  socket = io(appConfig.backendUrl, {
     path: "/socket.io",
     transports: ["polling", "websocket"],
     reconnection: true,

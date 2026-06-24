@@ -23,6 +23,7 @@ import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisib
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus } from "../../routes/SocketProvider";
 import useDispatchSettingsRefreshNotification from "../../../utils/hooks/useDispatchSettingsRefreshNotification";
+import { rebindCompanyInactiveLogoutListener } from "../../../services/socketConntection";
 import { SOCKET_EVENTS, NOTIFICATION_ACTIONS } from "../../../constants/socketEvents.constant";
 import { refreshCurrentPage } from "../../../utils/notifications/refreshPageNotification";
 import {
@@ -145,15 +146,14 @@ const UserPageContainer = ({ children }) => {
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on(SOCKET_EVENTS.SEND_REMINDER, handleSendReminder);
+    rebindCompanyInactiveLogoutListener();
 
     console.log("🔌 All listeners registered");
 
     return () => {
-      console.log("🔌 Cleaning up listeners");
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off(SOCKET_EVENTS.SEND_REMINDER, handleSendReminder);
-      socket.offAny();
     };
   }, [socket]);
 

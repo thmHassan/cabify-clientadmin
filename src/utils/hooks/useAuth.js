@@ -29,7 +29,6 @@ import {
 } from "../functions/tokenEncryption";
 import {
   INACTIVE_COMPANY_MESSAGE,
-  DEFAULT_DEACTIVATED_MESSAGE,
   isCompanyInactive,
   setInactiveCompanyMessage,
 } from "../functions/tenantStatus";
@@ -138,16 +137,9 @@ function useAuth() {
             console.warn("Failed to remove auth_user from localStorage", e);
           }
 
-          setInactiveCompanyMessage(
-            data?.message || DEFAULT_DEACTIVATED_MESSAGE
-          );
-
           return {
             status: "failed",
-            message:
-              data?.message ||
-              INACTIVE_COMPANY_MESSAGE ||
-              DEFAULT_DEACTIVATED_MESSAGE,
+            message: INACTIVE_COMPANY_MESSAGE,
             data,
           };
         }

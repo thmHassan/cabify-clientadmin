@@ -10,8 +10,7 @@ export const COMPANY_STATUS = {
 
 const INACTIVE_COMPANY_MESSAGE_KEY = "company_inactive_message";
 export const INACTIVE_COMPANY_MESSAGE = "Company status is inactive.";
-export const DEFAULT_DEACTIVATED_MESSAGE =
-  "Your company has been deactivated. You have been logged out.";
+export const DEFAULT_DEACTIVATED_MESSAGE = "Company status is inactive.";
 
 export const getTenantStatus = (tenantData) =>
   String(tenantData?.status || "").toLowerCase();

@@ -1,20 +1,18 @@
 import {
   DEFAULT_DEACTIVATED_MESSAGE,
   INACTIVE_COMPANY_MESSAGE,
-  shouldForceLogout,
 } from "../functions/tenantStatus";
 import { hardLogoutToLogin } from "../functions/tokenEncryption";
 import { disconnectSocket } from "../../services/socketConntection";
 import { requestSocketDisconnect } from "../../components/routes/SocketProvider";
 import appConfig from "../../components/configs/app.config";
-import { SOCKET_EVENTS } from "../../constants/socketEvents.constant";
 
 export const performCompanyInactiveLogout = (
   message = DEFAULT_DEACTIVATED_MESSAGE
 ) => {
-  const logoutMessage = message || DEFAULT_DEACTIVATED_MESSAGE;
+  const logoutMessage = message || INACTIVE_COMPANY_MESSAGE;
 
-  console.info("[auth] performing company force logout:", logoutMessage);
+  console.info("[auth] performing company inactive logout:", logoutMessage);
 
   requestSocketDisconnect();
   disconnectSocket();
@@ -22,25 +20,20 @@ export const performCompanyInactiveLogout = (
   hardLogoutToLogin(logoutMessage, appConfig.unAuthenticatedEntryPath);
 };
 
-export const handleCompanyClientForceLogoutPayload = (data = {}) => {
-  console.log("[socket] company-client-force-logout received:", {
-    event: SOCKET_EVENTS.COMPANY_CLIENT_FORCE_LOGOUT,
+export const handleCompanyInactiveSocketPayload = (data = {}) => {
+  const companyStatus = String(data?.status || "").toLowerCase();
+
+  console.log("[socket] company status event received:", {
+    event: "company-inactive-logout",
     payload: data,
     status: data?.status,
+    companyStatus,
     action: data?.action,
     reason: data?.reason,
     message: data?.message,
   });
 
-  if (!shouldForceLogout(data)) {
-    console.warn(
-      "[socket] company-client-force-logout ignored — payload did not match logout criteria",
-      data
-    );
-    return;
-  }
-
   performCompanyInactiveLogout(
-    data?.message || DEFAULT_DEACTIVATED_MESSAGE
+    data?.message || INACTIVE_COMPANY_MESSAGE
   );
 };

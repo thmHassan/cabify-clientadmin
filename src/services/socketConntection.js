@@ -22,6 +22,9 @@ const bindCompanyInactiveLogoutListener = (socketInstance) => {
     SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
     handleCompanyInactiveLogoutEvent
   );
+  console.info(
+    `[socket] listening for "${SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT}"`
+  );
 };
 
 export const rebindCompanyInactiveLogoutListener = () => {
@@ -58,17 +61,26 @@ const initSocket = () => {
   }
 
   const socketPath =
-    import.meta.env.VITE_SOCKET_IO_PATH || "/socket-api/socket.io";
+    import.meta.env.VITE_SOCKET_IO_PATH || "/socket.io";
+
+  // /socket-api/socket.io often supports polling only; websocket upgrade fails on nginx.
+  const socketApiPath = socketPath.includes("socket-api");
+  const pollingOnly =
+    import.meta.env.VITE_SOCKET_TRANSPORT === "polling" || socketApiPath;
+  const transports = pollingOnly ? ["polling"] : ["polling", "websocket"];
 
   console.info("[socket] connecting", {
     url: appConfig.backendUrl,
     path: socketPath,
+    transports,
     tenantId,
   });
 
   socket = io(appConfig.backendUrl, {
     path: socketPath,
-    transports: ["polling", "websocket"],
+    transports,
+    upgrade: !pollingOnly,
+    rememberUpgrade: false,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 2000,
@@ -85,8 +97,12 @@ const initSocket = () => {
     },
   });
 
+  socket.io.on("error", (error) => {
+    console.warn("[socket] transport error:", error);
+  });
+
   socket.on("connect", () => {
-    console.info("[socket] connected:", socket.id);
+    console.info("[socket] connected:", socket.id, "via", socket.io.engine.transport.name);
     bindCompanyInactiveLogoutListener(socket);
   });
 

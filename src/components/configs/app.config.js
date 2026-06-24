@@ -1,10 +1,17 @@
 import { SIGN_IN_PATH } from "../../constants/routes.path.constant/auth.route.path.constant";
 
-const isDevelopment = import.meta.env.VITE_NODE_ENV === "development";
+const normalizeUrl = (url) => String(url || "").replace(/\/$/, "");
 
-const backendUrl = isDevelopment
-  ? "http://127.0.0.1:8000"
-  : "https://backend.cabifyit.com";
+const backendUrl = normalizeUrl(
+  import.meta.env.VITE_BACKEND_URL ||
+    (import.meta.env.VITE_NODE_ENV === "development"
+      ? "http://127.0.0.1:8000"
+      : "https://backend.cabifyit.com")
+);
+
+const backendSocketUrl = normalizeUrl(
+  import.meta.env.VITE_BACKEND_SOCKET_URL || `${backendUrl}/socket-api`
+);
 
 const getAssetUrl = (path) => {
   if (!path) return "";
@@ -15,7 +22,7 @@ const getAssetUrl = (path) => {
 const appConfig = {
   apiPrefix: `${backendUrl}/api`,
   backendUrl,
-  backendSocketUrl: `${backendUrl}/socket-api`,
+  backendSocketUrl,
   getAssetUrl,
   authenticatedEntryPath: "/overview",
   unAuthenticatedEntryPath: SIGN_IN_PATH,

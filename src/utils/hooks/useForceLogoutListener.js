@@ -1,41 +1,39 @@
-import { useCallback, useEffect } from "react";
-import { SOCKET_EVENTS } from "../../constants/socketEvents.constant";
+import { useEffect } from "react";
 import {
   DEFAULT_DEACTIVATED_MESSAGE,
   shouldForceLogout,
 } from "../functions/tenantStatus";
+import {
+  getTenantData,
+  storeTenantData,
+} from "../functions/tokenEncryption";
+import {
+  registerCompanyInactiveLogoutHandler,
+  unregisterCompanyInactiveLogoutHandler,
+} from "../../services/socketConntection";
 import useAuth from "./useAuth";
 
-const FORCE_LOGOUT_EVENTS = [
-  SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
-  SOCKET_EVENTS.DISPATCHER_FORCED_LOGOUT,
-];
-
-const useForceLogoutListener = (socket) => {
+const useForceLogoutListener = () => {
   const { forceLogout } = useAuth();
 
-  const handleForceLogout = useCallback(
-    (data) => {
+  useEffect(() => {
+    const handleCompanyInactiveLogout = (data = {}) => {
       if (!shouldForceLogout(data)) return;
 
+      const tenantData = getTenantData();
+      if (tenantData) {
+        storeTenantData({ ...tenantData, status: "inactive" });
+      }
+
       forceLogout(data?.message || DEFAULT_DEACTIVATED_MESSAGE);
-    },
-    [forceLogout]
-  );
+    };
 
-  useEffect(() => {
-    if (!socket) return;
-
-    FORCE_LOGOUT_EVENTS.forEach((eventName) => {
-      socket.on(eventName, handleForceLogout);
-    });
+    registerCompanyInactiveLogoutHandler(handleCompanyInactiveLogout);
 
     return () => {
-      FORCE_LOGOUT_EVENTS.forEach((eventName) => {
-        socket.off(eventName, handleForceLogout);
-      });
+      unregisterCompanyInactiveLogoutHandler();
     };
-  }, [socket, handleForceLogout]);
+  }, [forceLogout]);
 };
 
 export default useForceLogoutListener;

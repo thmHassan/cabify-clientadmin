@@ -2,7 +2,6 @@ export const SOCKET_EVENTS = {
   SEND_REMINDER: "send-reminder",
   DISPATCH_SETTINGS_CHANGED: "dispatch-settings-changed",
   COMPANY_INACTIVE_LOGOUT: "company-inactive-logout",
-  DISPATCHER_FORCED_LOGOUT: "dispatcher-forced-logout",
 };
 
 export const NOTIFICATION_ACTIONS = {

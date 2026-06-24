@@ -25,14 +25,10 @@ import {
   storeTenantData,
   storeCompanyId,
   getTenantData,
-  getCompanyData,
-  storeCompanyData,
 } from "../functions/tokenEncryption";
 import {
   INACTIVE_COMPANY_MESSAGE,
   isCompanyInactive,
-  isCompanyInactiveFromDispatcherLogin,
-  isSessionCompanyInactive,
   setInactiveCompanyMessage,
 } from "../functions/tenantStatus";
 import { disconnectSocket } from "../../services/socketConntection";
@@ -50,28 +46,11 @@ function useAuth() {
       const resp = await apiSignIn(values);
       if (resp.data) {
         const { token } = resp.data;
-        const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
-        const companyData = resp.data?.company_data || resp.data?.data?.company_data || null;
-
-        if (
-          isCompanyInactive(tenantData) ||
-          isCompanyInactiveFromDispatcherLogin(companyData)
-        ) {
-          clearAllAuthData();
-          try {
-            localStorage.removeItem("auth_user");
-          } catch (e) {
-            console.warn("Failed to remove auth_user from localStorage", e);
-          }
-
-          return {
-            status: "failed",
-            message: INACTIVE_COMPANY_MESSAGE,
-          };
-        }
-
         console.log(resp.data.user, "resp.data.user====");
         dispatch(signInSuccess(token));
+
+        // Build user data: prefer explicit user, otherwise derive from tenant_data
+        const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
         const tenantId =
           resp.data?.tenant_id ||
           resp.data?.tenantId ||
@@ -108,7 +87,6 @@ function useAuth() {
             storeTenantId(tenantId);
           }
           const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
-          const companyData = resp.data?.company_data || resp.data?.data?.company_data || null;
           if (tenantData) {
             storeTenantData(tenantData);
             
@@ -117,9 +95,6 @@ function useAuth() {
               storeCompanyId(tenantData.company_id);
               console.log("✅ Stored company_id:", tenantData.company_id);
             }
-          }
-          if (companyData) {
-            storeCompanyData(companyData);
           }
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
@@ -292,8 +267,7 @@ function useAuth() {
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
       const tenantData = getTenantData();
-      const companyData = getCompanyData();
-      if (isSessionCompanyInactive(tenantData, companyData)) {
+      if (isCompanyInactive(tenantData)) {
         logoutInactiveCompany();
         return;
       }
@@ -306,6 +280,8 @@ function useAuth() {
       if (userData) {
         dispatch(setUser(userData));
       }
+
+      requestSocketReconnect();
     }
   }, [dispatch, signedIn, logoutInactiveCompany]);
 

@@ -16,22 +16,22 @@ export const DEFAULT_DEACTIVATED_MESSAGE =
 export const getTenantStatus = (tenantData) =>
   String(tenantData?.status || "").toLowerCase();
 
-export const getCompanyStatusFromDispatcherData = (companyData) =>
-  String(companyData?.data?.status || companyData?.status || "").toLowerCase();
-
 export const isCompanyInactive = (tenantData) =>
   getTenantStatus(tenantData) === COMPANY_STATUS.INACTIVE;
 
-export const isCompanyInactiveFromDispatcherLogin = (companyData) =>
-  getCompanyStatusFromDispatcherData(companyData) === COMPANY_STATUS.INACTIVE;
+export const shouldForceLogout = (data = {}) => {
+  if (!data || typeof data !== "object") return true;
 
-export const isSessionCompanyInactive = (tenantData, companyData) =>
-  isCompanyInactive(tenantData) ||
-  isCompanyInactiveFromDispatcherLogin(companyData);
+  const hasAction = data.action != null && data.action !== "";
+  const hasReason = data.reason != null && data.reason !== "";
 
-export const shouldForceLogout = (data = {}) =>
-  data.action === NOTIFICATION_ACTIONS.FORCE_LOGOUT ||
-  data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE;
+  if (!hasAction && !hasReason) return true;
+
+  return (
+    data.action === NOTIFICATION_ACTIONS.FORCE_LOGOUT ||
+    data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE
+  );
+};
 
 export const setInactiveCompanyMessage = (
   message = INACTIVE_COMPANY_MESSAGE

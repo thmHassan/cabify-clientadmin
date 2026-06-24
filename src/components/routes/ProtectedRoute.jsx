@@ -3,18 +3,15 @@ import { useEffect } from 'react'
 import appConfig from '../configs/app.config'
 import useAuth from '../../utils/hooks/useAuth'
 import { REDIRECT_URL_KEY } from '../../constants/app.constant'
-import { getTenantData, getCompanyData } from '../../utils/functions/tokenEncryption'
-import { isSessionCompanyInactive } from '../../utils/functions/tenantStatus'
+import { getTenantData } from '../../utils/functions/tokenEncryption'
+import { isCompanyInactive } from '../../utils/functions/tenantStatus'
 
 const { unAuthenticatedEntryPath } = appConfig
 
 const ProtectedRoute = () => {
     const { authenticated, logoutInactiveCompany } = useAuth()
     const location = useLocation()
-    const isInactiveSession = isSessionCompanyInactive(
-        getTenantData(),
-        getCompanyData()
-    )
+    const isInactiveSession = isCompanyInactive(getTenantData())
 
     useEffect(() => {
         if (authenticated && isInactiveSession) {

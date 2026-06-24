@@ -20,16 +20,12 @@ export const isCompanyInactive = (tenantData) =>
   getTenantStatus(tenantData) === COMPANY_STATUS.INACTIVE;
 
 export const shouldForceLogout = (data = {}) => {
-  if (!data || typeof data !== "object") return true;
-
-  const hasAction = data.action != null && data.action !== "";
-  const hasReason = data.reason != null && data.reason !== "";
-
-  if (!hasAction && !hasReason) return true;
+  if (!data || typeof data !== "object") return false;
 
   return (
     data.action === NOTIFICATION_ACTIONS.FORCE_LOGOUT ||
-    data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE
+    data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE ||
+    String(data.status || "").toLowerCase() === COMPANY_STATUS.INACTIVE
   );
 };
 

@@ -4,14 +4,28 @@ import { SOCKET_EVENTS } from "../constants/socketEvents.constant";
 import { getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
 import { handleCompanyInactiveSocketPayload } from "../utils/auth/forceLogoutBridge";
 
+const SOCKET_IO_PATH = "/socket.io";
+
 let socket = null;
 
-const handleCompanyInactiveLogoutEvent = (data) => {
-  console.info("[socket] company-inactive-logout event:", data);
+const handleCompanyInactiveLogoutEvent = (data = {}) => {
+  const tenantId = getTenantId();
+  const payloadTenant =
+    data.client_id ?? data.database ?? data.tenant_id ?? null;
+
+  if (payloadTenant && String(payloadTenant) !== String(tenantId)) {
+    console.warn("[socket] ignored company-inactive-logout for other tenant", {
+      payloadTenant,
+      tenantId,
+    });
+    return;
+  }
+
+  console.info("[socket] company-inactive-logout received:", data);
   handleCompanyInactiveSocketPayload(data);
 };
 
-const bindCompanyInactiveLogoutListener = (socketInstance) => {
+const registerCompanyInactiveLogoutListener = (socketInstance) => {
   if (!socketInstance) return;
 
   socketInstance.off(
@@ -22,13 +36,14 @@ const bindCompanyInactiveLogoutListener = (socketInstance) => {
     SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
     handleCompanyInactiveLogoutEvent
   );
+
   console.info(
-    `[socket] listening for "${SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT}"`
+    `[socket] registered "${SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT}" on socket ${socketInstance.id || "(pending)"}`
   );
 };
 
 export const rebindCompanyInactiveLogoutListener = () => {
-  bindCompanyInactiveLogoutListener(getSocket());
+  registerCompanyInactiveLogoutListener(getSocket());
 };
 
 export const getSocket = () => socket;
@@ -56,31 +71,20 @@ const initSocket = () => {
   const token = getDecryptedToken();
 
   if (!tenantId || !token) {
-    console.warn("Tenant ID or auth token not found, socket not connected");
+    console.warn("[socket] missing tenantId or token, not connecting");
     return null;
   }
 
-  const socketPath =
-    import.meta.env.VITE_SOCKET_IO_PATH || "/socket.io";
-
-  // /socket-api/socket.io often supports polling only; websocket upgrade fails on nginx.
-  const socketApiPath = socketPath.includes("socket-api");
-  const pollingOnly =
-    import.meta.env.VITE_SOCKET_TRANSPORT === "polling" || socketApiPath;
-  const transports = pollingOnly ? ["polling"] : ["polling", "websocket"];
-
   console.info("[socket] connecting", {
     url: appConfig.backendUrl,
-    path: socketPath,
-    transports,
+    path: SOCKET_IO_PATH,
+    room: `client_${tenantId}`,
     tenantId,
   });
 
   socket = io(appConfig.backendUrl, {
-    path: socketPath,
-    transports,
-    upgrade: !pollingOnly,
-    rememberUpgrade: false,
+    path: SOCKET_IO_PATH,
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 2000,
@@ -97,13 +101,15 @@ const initSocket = () => {
     },
   });
 
-  socket.io.on("error", (error) => {
-    console.warn("[socket] transport error:", error);
-  });
-
   socket.on("connect", () => {
-    console.info("[socket] connected:", socket.id, "via", socket.io.engine.transport.name);
-    bindCompanyInactiveLogoutListener(socket);
+    console.info(
+      "[socket] connected:",
+      socket.id,
+      "room client_" + tenantId,
+      "via",
+      socket.io.engine.transport.name
+    );
+    registerCompanyInactiveLogoutListener(socket);
   });
 
   socket.on("disconnect", (reason) => {
@@ -113,8 +119,6 @@ const initSocket = () => {
   socket.on("connect_error", (error) => {
     console.error("[socket] connect_error:", error.message);
   });
-
-  bindCompanyInactiveLogoutListener(socket);
 
   return socket;
 };

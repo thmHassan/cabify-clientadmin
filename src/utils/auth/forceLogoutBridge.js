@@ -1,6 +1,7 @@
 import {
   DEFAULT_DEACTIVATED_MESSAGE,
   setInactiveCompanyMessage,
+  shouldForceLogout,
 } from "../functions/tenantStatus";
 import {
   clearAllAuthData,
@@ -47,6 +48,11 @@ export const performCompanyInactiveLogout = (
 };
 
 export const handleCompanyInactiveSocketPayload = (data = {}) => {
+  if (!shouldForceLogout(data)) {
+    console.warn("[socket] company-inactive-logout ignored — payload did not match logout criteria", data);
+    return;
+  }
+
   performCompanyInactiveLogout(
     data?.message || DEFAULT_DEACTIVATED_MESSAGE
   );

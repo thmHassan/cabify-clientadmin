@@ -1,59 +1,39 @@
 import {
   DEFAULT_DEACTIVATED_MESSAGE,
-  setInactiveCompanyMessage,
-  shouldForceLogout,
+  INACTIVE_COMPANY_MESSAGE,
 } from "../functions/tenantStatus";
-import {
-  clearAllAuthData,
-  getTenantData,
-  storeTenantData,
-} from "../functions/tokenEncryption";
+import { hardLogoutToLogin } from "../functions/tokenEncryption";
 import { disconnectSocket } from "../../services/socketConntection";
 import { requestSocketDisconnect } from "../../components/routes/SocketProvider";
 import appConfig from "../../components/configs/app.config";
 
-let forceLogoutHandler = null;
-
-export const setForceLogoutHandler = (handler) => {
-  forceLogoutHandler = handler;
-};
-
 export const performCompanyInactiveLogout = (
   message = DEFAULT_DEACTIVATED_MESSAGE
 ) => {
-  const tenantData = getTenantData();
-  if (tenantData) {
-    storeTenantData({ ...tenantData, status: "inactive" });
-  }
+  const logoutMessage = message || INACTIVE_COMPANY_MESSAGE;
 
-  setInactiveCompanyMessage(message);
+  console.info("[auth] performing company inactive logout:", logoutMessage);
+
   requestSocketDisconnect();
   disconnectSocket();
 
-  if (forceLogoutHandler) {
-    forceLogoutHandler(message);
-    return;
-  }
-
-  clearAllAuthData();
-  try {
-    localStorage.removeItem("auth_user");
-  } catch (error) {
-    console.warn("Failed to remove auth_user", error);
-  }
-
-  if (window.location.pathname !== appConfig.unAuthenticatedEntryPath) {
-    window.location.href = appConfig.unAuthenticatedEntryPath;
-  }
+  hardLogoutToLogin(logoutMessage, appConfig.unAuthenticatedEntryPath);
 };
 
 export const handleCompanyInactiveSocketPayload = (data = {}) => {
-  if (!shouldForceLogout(data)) {
-    console.warn("[socket] company-inactive-logout ignored — payload did not match logout criteria", data);
-    return;
-  }
+  const companyStatus = String(data?.status || "").toLowerCase();
+
+  console.log("[socket] company status event received:", {
+    event: "company-inactive-logout",
+    payload: data,
+    status: data?.status,
+    companyStatus,
+    action: data?.action,
+    reason: data?.reason,
+    message: data?.message,
+  });
 
   performCompanyInactiveLogout(
-    data?.message || DEFAULT_DEACTIVATED_MESSAGE
+    data?.message || INACTIVE_COMPANY_MESSAGE
   );
 };

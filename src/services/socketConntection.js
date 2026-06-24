@@ -13,6 +13,15 @@ const handleCompanyInactiveLogoutEvent = (data = {}) => {
   const payloadTenant =
     data.client_id ?? data.database ?? data.tenant_id ?? null;
 
+  console.log("[socket] company-inactive-logout raw event:", {
+    payload: data,
+    loggedInTenantId: tenantId,
+    payloadTenant,
+    companyStatus: data?.status,
+    action: data?.action,
+    reason: data?.reason,
+  });
+
   if (payloadTenant && String(payloadTenant) !== String(tenantId)) {
     console.warn("[socket] ignored company-inactive-logout for other tenant", {
       payloadTenant,
@@ -21,7 +30,6 @@ const handleCompanyInactiveLogoutEvent = (data = {}) => {
     return;
   }
 
-  console.info("[socket] company-inactive-logout received:", data);
   handleCompanyInactiveSocketPayload(data);
 };
 

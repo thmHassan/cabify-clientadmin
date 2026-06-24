@@ -150,10 +150,12 @@ const CompanyProfile = () => {
         formData.append("support_rescue_number", companyProfileData.support_rescue_number || "");
         formData.append("support_emergency_no", companyProfileData.support_emergency_no || "");
         formData.append("support_contact_no", companyProfileData.support_contact_no || "");
-        formData.append(
-            "search_radius",
-            companyProfileData.search_radius || DEFAULT_SEARCH_RADIUS_KM
-        );
+        if (isNearestDriverEnabled) {
+            formData.append(
+                "search_radius",
+                companyProfileData.search_radius || DEFAULT_SEARCH_RADIUS_KM
+            );
+        }
 
         try {
             const response = await apiSaveCompanyProfile(formData);

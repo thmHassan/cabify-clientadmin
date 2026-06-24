@@ -9,6 +9,35 @@ import toast from "react-hot-toast";
 import Button from "../../../../../../components/ui/Button/Button";
 import CardContainer from "../../../../../../components/shared/CardContainer";
 
+const RETRY_STEP_KEY = "show_only_after_not_selected_in_auto_dispatch";
+const HIDDEN_TRY_STEP_KEYS = new Set([
+    "show_only_after_not_selected_in_auto_dispatch_first_try",
+    "show_only_after_not_selected_in_auto_dispatch_second_try",
+    "show_only_after_not_selected_in_auto_dispatch_third_try",
+]);
+
+const isRetryFollowUp = (followUp) => followUp.stepKey === RETRY_STEP_KEY;
+
+const getThirdTryChild = (followUp) =>
+    followUp.children?.find((child) =>
+        child.stepKey === "show_only_after_not_selected_in_auto_dispatch_third_try"
+    );
+
+const applyDefaultThirdTry = (state, followUp) => {
+    if (!isRetryFollowUp(followUp) || !state[followUp.key]) return state;
+
+    const nextState = { ...state };
+    const thirdTryChild = getThirdTryChild(followUp);
+
+    followUp.children?.forEach((child) => {
+        if (HIDDEN_TRY_STEP_KEYS.has(child.stepKey)) {
+            nextState[child.key] = child.key === thirdTryChild?.key;
+        }
+    });
+
+    return nextState;
+};
+
 const dispatchData = [
     {
         priority: "Priority 1",
@@ -263,7 +292,14 @@ const DispatchSystem = () => {
                     }
                 });
 
-                setCheckedState(initial);
+                setCheckedState(
+                    dispatchData.reduce((state, dispatchItem) => {
+                        dispatchItem.followUps.forEach((followUp) => {
+                            Object.assign(state, applyDefaultThirdTry(state, followUp));
+                        });
+                        return state;
+                    }, initial)
+                );
                 setPriorities(initialPriorities);
             }
         } catch (e) {
@@ -300,6 +336,14 @@ const DispatchSystem = () => {
                         } else {
                             newState[f.key] = false;
                         }
+                    }
+                });
+            });
+
+            dispatchData.forEach((p) => {
+                p.followUps.forEach((followUp) => {
+                    if (followUp.group === group && followUp.key === selectedKey) {
+                        Object.assign(newState, applyDefaultThirdTry(newState, followUp));
                     }
                 });
             });
@@ -376,7 +420,19 @@ const DispatchSystem = () => {
                         );
                     }
                     f.children?.forEach((c) => {
-                        const shouldEnable = systemStatus[p.systemKey] && checkedState[c.key];
+                        let shouldEnable =
+                            systemStatus[p.systemKey] && checkedState[c.key];
+
+                        if (
+                            isRetryFollowUp(f) &&
+                            checkedState[f.key] &&
+                            HIDDEN_TRY_STEP_KEYS.has(c.stepKey)
+                        ) {
+                            shouldEnable =
+                                c.stepKey ===
+                                "show_only_after_not_selected_in_auto_dispatch_third_try";
+                        }
+
                         formData.append(
                             `${p.systemKey}[${c.stepKey}]`,
                             shouldEnable ? "enable" : "disable"
@@ -470,6 +526,8 @@ const DispatchSystem = () => {
                                     {priorities[p.systemKey] || i + 1})
                                 </h2>
 
+                                {/* Select Priority hidden — priority still saved from loaded/default values */}
+                                {/*
                                 <div className="mb-4">
                                     <label className="text-sm text-gray-600 block mb-1">
                                         Select Priority
@@ -488,6 +546,7 @@ const DispatchSystem = () => {
                                         ))}
                                     </select>
                                 </div>
+                                */}
 
                                 {p.followUps.map((f) => (
                                     <div key={f.key} className="mb-2 py-2">
@@ -517,7 +576,15 @@ const DispatchSystem = () => {
 
                                         {f.children && checkedState[f.key] && (
                                             <div className="ml-6 mt-3 space-y-2">
-                                                {f.children.map((c) => (
+                                                {f.children
+                                                    .filter(
+                                                        (child) =>
+                                                            !(
+                                                                isRetryFollowUp(f) &&
+                                                                HIDDEN_TRY_STEP_KEYS.has(child.stepKey)
+                                                            )
+                                                    )
+                                                    .map((c) => (
                                                     <label key={c.key} className="flex gap-2 text-sm">
                                                         <input
                                                             type="checkbox"

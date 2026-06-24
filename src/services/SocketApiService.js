@@ -1,6 +1,6 @@
 import axios from "axios";
 import appConfig from "../components/configs/app.config";
-import { getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
+import { getDecryptedToken, resolveDatabaseId } from "../utils/functions/tokenEncryption";
 
 const socketApi = axios.create({
     baseURL: appConfig.backendSocketUrl,
@@ -14,14 +14,14 @@ const socketApi = axios.create({
 socketApi.interceptors.request.use(
     (config) => {
         const token = getDecryptedToken();
-        const tenantId = getTenantId();
+        const databaseId = resolveDatabaseId();
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
-        if (tenantId) {
-            config.headers.database = tenantId;
+        if (databaseId) {
+            config.headers.database = databaseId;
         }
 
         return config;

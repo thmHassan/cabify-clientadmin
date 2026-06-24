@@ -3,60 +3,68 @@ import appConfig from "../components/configs/app.config";
 import { SOCKET_EVENTS } from "../constants/socketEvents.constant";
 import {
   getDecryptedToken,
-  resolveSocketClientId,
+  resolveDatabaseId,
 } from "../utils/functions/tokenEncryption";
-import { handleCompanyInactiveSocketPayload } from "../utils/auth/forceLogoutBridge";
+import { handleCompanyClientForceLogoutPayload } from "../utils/auth/forceLogoutBridge";
 
 const SOCKET_IO_PATH = "/socket.io";
 
 let socket = null;
 let activeSocketClientId = null;
 
-const handleCompanyInactiveLogoutEvent = (data = {}) => {
-  const clientId = resolveSocketClientId();
+const handleCompanyClientForceLogoutEvent = (data = {}) => {
+  const tenantId = resolveDatabaseId();
+  const payloadClientId = data.client_id ?? null;
+  const payloadDatabase = data.database ?? null;
   const payloadTenant =
-    data.client_id ?? data.database ?? data.tenant_id ?? null;
+    payloadClientId ?? payloadDatabase ?? data.tenant_id ?? null;
 
-  console.log("[socket] company-inactive-logout raw event:", {
+  console.log("[socket] company-client-force-logout raw event:", {
     payload: data,
-    loggedInClientId: clientId,
+    loggedInTenantId: tenantId,
+    payloadClientId,
+    payloadDatabase,
     payloadTenant,
     companyStatus: data?.status,
     action: data?.action,
     reason: data?.reason,
   });
 
-  if (payloadTenant && String(payloadTenant) !== String(clientId)) {
-    console.warn("[socket] ignored company-inactive-logout for other tenant", {
-      payloadTenant,
-      clientId,
-    });
+  if (payloadTenant && String(payloadTenant) !== String(tenantId)) {
+    console.warn(
+      "[socket] ignored company-client-force-logout — tenant mismatch",
+      { payloadTenant, tenantId }
+    );
     return;
   }
 
-  handleCompanyInactiveSocketPayload(data);
+  handleCompanyClientForceLogoutPayload(data);
 };
 
-const registerCompanyInactiveLogoutListener = (socketInstance) => {
+const registerCompanyClientForceLogoutListener = (socketInstance) => {
   if (!socketInstance) return;
 
   socketInstance.off(
-    SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
-    handleCompanyInactiveLogoutEvent
+    SOCKET_EVENTS.COMPANY_CLIENT_FORCE_LOGOUT,
+    handleCompanyClientForceLogoutEvent
   );
   socketInstance.on(
-    SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
-    handleCompanyInactiveLogoutEvent
+    SOCKET_EVENTS.COMPANY_CLIENT_FORCE_LOGOUT,
+    handleCompanyClientForceLogoutEvent
   );
 
   console.info(
-    `[socket] registered "${SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT}" on socket ${socketInstance.id || "(pending)"}`
+    `[socket] registered "${SOCKET_EVENTS.COMPANY_CLIENT_FORCE_LOGOUT}" on socket ${socketInstance.id || "(pending)"}`
   );
 };
 
-export const rebindCompanyInactiveLogoutListener = () => {
-  registerCompanyInactiveLogoutListener(getSocket());
+export const rebindCompanyClientForceLogoutListener = () => {
+  registerCompanyClientForceLogoutListener(getSocket());
 };
+
+/** @deprecated use rebindCompanyClientForceLogoutListener */
+export const rebindCompanyInactiveLogoutListener =
+  rebindCompanyClientForceLogoutListener;
 
 export const getSocket = () => socket;
 
@@ -68,8 +76,8 @@ export const disconnectSocket = () => {
 
   try {
     socket.off(
-      SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
-      handleCompanyInactiveLogoutEvent
+      SOCKET_EVENTS.COMPANY_CLIENT_FORCE_LOGOUT,
+      handleCompanyClientForceLogoutEvent
     );
     socket.disconnect();
   } catch (error) {
@@ -86,18 +94,18 @@ export const reconnectSocket = () => {
 };
 
 const initSocket = () => {
-  const clientId = resolveSocketClientId();
+  const tenantId = resolveDatabaseId();
   const token = getDecryptedToken();
 
-  if (!clientId || !token) {
-    console.warn("[socket] missing clientId or token, not connecting", {
-      clientId,
+  if (!tenantId || !token) {
+    console.warn("[socket] missing tenantId or token, not connecting", {
+      tenantId,
       hasToken: Boolean(token),
     });
     return null;
   }
 
-  if (socket && activeSocketClientId === clientId) {
+  if (socket && activeSocketClientId === tenantId) {
     return socket;
   }
 
@@ -108,12 +116,13 @@ const initSocket = () => {
   console.info("[socket] connecting", {
     url: appConfig.backendUrl,
     path: SOCKET_IO_PATH,
-    room: `client_${clientId}`,
-    clientId,
-    company_id: clientId,
+    room: `client_${tenantId}`,
+    tenantId,
+    client_id: tenantId,
+    database: tenantId,
   });
 
-  activeSocketClientId = clientId;
+  activeSocketClientId = tenantId;
 
   socket = io(appConfig.backendUrl, {
     path: SOCKET_IO_PATH,
@@ -126,8 +135,8 @@ const initSocket = () => {
     },
     query: {
       role: "client",
-      client_id: clientId,
-      database: clientId,
+      client_id: tenantId,
+      database: tenantId,
     },
     extraHeaders: {
       Authorization: `Bearer ${token}`,
@@ -138,11 +147,11 @@ const initSocket = () => {
     console.info(
       "[socket] connected:",
       socket.id,
-      "room client_" + clientId,
+      "room client_" + tenantId,
       "via",
       socket.io.engine.transport.name
     );
-    registerCompanyInactiveLogoutListener(socket);
+    registerCompanyClientForceLogoutListener(socket);
   });
 
   socket.on("disconnect", (reason) => {

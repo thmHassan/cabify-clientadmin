@@ -18,7 +18,7 @@ import DrawerIcon from "../../svg/DrawerIcon";
 import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
-import { getTenantData, getTenantId } from "../../../utils/functions/tokenEncryption";
+import { getTenantData, resolveDatabaseId } from "../../../utils/functions/tokenEncryption";
 import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus } from "../../routes/SocketProvider";
@@ -58,7 +58,7 @@ const UserPageContainer = ({ children }) => {
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
   const tenantData = getTenantData();
-  const tenantId = getTenantId();
+  const tenantId = resolveDatabaseId();
   const navigate = useNavigate();
   const location = useLocation();
   const socket = useSocket();

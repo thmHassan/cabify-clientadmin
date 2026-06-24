@@ -22,10 +22,9 @@ import {
   isAuthenticated,
   getUserDataFromToken,
   getTenantData,
-  getTenantId,
-  resolveSocketClientId,
+  ensureDatabaseIdSynced,
+  extractApiTenantId,
   persistTenantSession,
-  storeTenantId,
 } from "../functions/tokenEncryption";
 import {
   INACTIVE_COMPANY_MESSAGE,
@@ -78,14 +77,9 @@ function useAuth() {
 
         // Persist tenant metadata if present
         try {
-          const apiTenantId =
-            resp.data?.tenant_id ||
-            resp.data?.tenantId ||
-            resp.data?.data?.tenant_id ||
-            resp.data?.data?.tenantId ||
-            null;
           const tenantData =
             resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+          const apiTenantId = extractApiTenantId(resp.data, tenantData);
 
           persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
@@ -167,12 +161,7 @@ function useAuth() {
 
         // Save tenant id (database) for socket room and API headers
         try {
-          const apiTenantId =
-            data.tenant_id ||
-            data.tenantId ||
-            data.data?.tenant_id ||
-            data.data?.tenantId ||
-            null;
+          const apiTenantId = extractApiTenantId(data, tenantData);
 
           persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
@@ -248,12 +237,9 @@ function useAuth() {
 
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
+      ensureDatabaseIdSynced();
+
       const tenantData = getTenantData();
-      const clientId = resolveSocketClientId();
-      if (clientId && clientId !== getTenantId()) {
-        storeTenantId(clientId);
-        console.log("[auth] corrected stale tenant_id to socket client id:", clientId);
-      }
 
       if (isCompanyInactive(tenantData)) {
         logoutInactiveCompany();

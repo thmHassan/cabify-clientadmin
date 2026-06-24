@@ -180,50 +180,103 @@ export const getTenantData = () => {
 };
 
 /**
- * Database name used for socket room client_<id>, query params, and API database header.
- * Backend emits company events to the company database (company_id), not a separate numeric tenant id.
+ * Extracts the tenant/database id from a login API response.
+ * Must not use company_id — that is a separate business identifier.
  */
-export const resolveSocketClientId = () => {
-  const tenantData = getTenantData();
-  const companyId = getCompanyId();
-  const tenantId = getTenantId();
+export const extractApiTenantId = (data = {}, tenantData = null) => {
+  const td = tenantData || data?.tenant_data || data?.data?.tenant_data || null;
 
   return (
-    tenantData?.database ||
-    tenantData?.company_id ||
-    companyId ||
-    tenantId ||
+    data?.tenant_id ||
+    data?.tenantId ||
+    data?.database ||
+    data?.data?.tenant_id ||
+    data?.data?.tenantId ||
+    data?.data?.database ||
+    td?.tenant_id ||
+    td?.tenantId ||
+    td?.database ||
     null
   );
 };
 
 /**
- * Persists tenant metadata and normalizes tenant_id to the socket/database client id.
+ * Resolves the value for the API `database` header and socket client_id.
+ */
+export const resolveDatabaseId = () => {
+  const storedTenantId = getTenantId();
+  const companyId = getCompanyId();
+  const tenantData = getTenantData();
+
+  const fromTenantData = extractApiTenantId({}, tenantData);
+
+  if (fromTenantData) {
+    if (
+      storedTenantId &&
+      companyId &&
+      String(storedTenantId) === String(companyId) &&
+      String(fromTenantData) !== String(companyId)
+    ) {
+      return fromTenantData;
+    }
+
+    return storedTenantId || fromTenantData;
+  }
+
+  return storedTenantId;
+};
+
+/**
+ * Fixes stale localStorage when tenant_id was incorrectly set to company_id.
+ */
+export const ensureDatabaseIdSynced = () => {
+  const resolved = resolveDatabaseId();
+
+  if (resolved && resolved !== getTenantId()) {
+    storeTenantId(resolved);
+    console.warn("[auth] synced database id:", resolved);
+  }
+
+  return resolved || getTenantId();
+};
+
+/**
+ * Tenant database id from login (used for API `database` header and socket client_id).
+ */
+export const getDatabaseId = () => resolveDatabaseId();
+
+/**
+ * Persists tenant metadata from login. Keeps tenant_id (database) separate from company_id.
  */
 export const persistTenantSession = ({ tenantData, tenantId: apiTenantId } = {}) => {
-  if (tenantData) {
-    storeTenantData(tenantData);
-    if (tenantData.company_id) {
-      storeCompanyId(tenantData.company_id);
+  const databaseId =
+    apiTenantId || extractApiTenantId({ tenant_data: tenantData }, tenantData);
+
+  const enrichedTenantData =
+    tenantData && databaseId
+      ? { ...tenantData, tenant_id: databaseId }
+      : tenantData;
+
+  if (enrichedTenantData) {
+    storeTenantData(enrichedTenantData);
+    if (enrichedTenantData.company_id) {
+      storeCompanyId(enrichedTenantData.company_id);
     }
   }
 
-  const socketClientId =
-    tenantData?.database ||
-    tenantData?.company_id ||
-    apiTenantId ||
-    null;
-
-  if (socketClientId) {
-    storeTenantId(socketClientId);
-    console.log("[auth] socket client id resolved:", socketClientId, {
-      company_id: tenantData?.company_id,
-      database: tenantData?.database,
-      api_tenant_id: apiTenantId,
+  if (databaseId) {
+    storeTenantId(databaseId);
+    console.log("[auth] tenant session stored:", {
+      tenant_id: databaseId,
+      company_id: enrichedTenantData?.company_id,
     });
+  } else {
+    console.warn(
+      "[auth] no tenant/database id in login response — API calls may fail"
+    );
   }
 
-  return socketClientId;
+  return databaseId;
 };
 
 /**

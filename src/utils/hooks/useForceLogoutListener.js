@@ -1,4 +1,4 @@
-// Logout on company-inactive-logout is handled directly in socketConntection.js.
+// Logout on company-client-force-logout is handled directly in socketConntection.js.
 // This hook is kept for backwards compatibility with ForceLogoutListener.
 const useForceLogoutListener = () => {};
 

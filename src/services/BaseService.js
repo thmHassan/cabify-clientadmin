@@ -5,7 +5,7 @@ import store, { setUser, signOutSuccess } from "../store";
 import {
   clearAllAuthData,
   getDecryptedToken,
-  getTenantId,
+  resolveSocketClientId,
 } from "../utils/functions/tokenEncryption";
 
 const unauthorizedCode = [401, 403, 419];
@@ -26,9 +26,9 @@ BaseService.interceptors.request.use(
 
     // Add database (tenant) id header if available
     try {
-      const tenantId = getTenantId();
-      if (tenantId) {
-        config.headers[REQUEST_HEADER_DATABASE_KEY] = tenantId;
+      const clientId = resolveSocketClientId();
+      if (clientId) {
+        config.headers[REQUEST_HEADER_DATABASE_KEY] = clientId;
       }
     } catch (e) {
       // ignore database header errors

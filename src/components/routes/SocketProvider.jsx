@@ -1,5 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import initSocket, { disconnectSocket, getSocket } from "../../services/socketConntection";
+import initSocket, {
+  disconnectSocket,
+  getSocket,
+  reconnectSocket,
+} from "../../services/socketConntection";
 import { isAuthenticated } from "../../utils/functions/tokenEncryption";
 
 const SOCKET_RECONNECT_EVENT = "socket:reconnect";
@@ -67,7 +71,20 @@ export const SocketProvider = ({ children }) => {
     const socketInstance = connectSocket();
 
     const onReconnect = () => {
-      connectSocket();
+      disconnectSocket();
+      setSocket(null);
+      setIsConnected(false);
+
+      const socketInstance = reconnectSocket();
+      if (!socketInstance) return;
+
+      const onConnect = () => setIsConnected(true);
+      const onDisconnect = () => setIsConnected(false);
+
+      socketInstance.on("connect", onConnect);
+      socketInstance.on("disconnect", onDisconnect);
+      setSocket(socketInstance);
+      setIsConnected(socketInstance.connected);
     };
 
     window.addEventListener(SOCKET_RECONNECT_EVENT, onReconnect);

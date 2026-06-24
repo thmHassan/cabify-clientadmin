@@ -21,13 +21,15 @@ import {
   clearAllAuthData,
   isAuthenticated,
   getUserDataFromToken,
-  storeTenantId,
-  storeTenantData,
-  storeCompanyId,
   getTenantData,
+  getTenantId,
+  resolveSocketClientId,
+  persistTenantSession,
+  storeTenantId,
 } from "../functions/tokenEncryption";
 import {
   INACTIVE_COMPANY_MESSAGE,
+  DEFAULT_DEACTIVATED_MESSAGE,
   isCompanyInactive,
   setInactiveCompanyMessage,
 } from "../functions/tenantStatus";
@@ -77,25 +79,16 @@ function useAuth() {
 
         // Persist tenant metadata if present
         try {
-          const tenantId =
+          const apiTenantId =
             resp.data?.tenant_id ||
             resp.data?.tenantId ||
             resp.data?.data?.tenant_id ||
             resp.data?.data?.tenantId ||
             null;
-          if (tenantId) {
-            storeTenantId(tenantId);
-          }
-          const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
-          if (tenantData) {
-            storeTenantData(tenantData);
-            
-            // STORE COMPANY_ID - ADD THIS
-            if (tenantData.company_id) {
-              storeCompanyId(tenantData.company_id);
-              console.log("✅ Stored company_id:", tenantData.company_id);
-            }
-          }
+          const tenantData =
+            resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+
+          persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
         }
@@ -145,9 +138,16 @@ function useAuth() {
             console.warn("Failed to remove auth_user from localStorage", e);
           }
 
+          setInactiveCompanyMessage(
+            data?.message || DEFAULT_DEACTIVATED_MESSAGE
+          );
+
           return {
             status: "failed",
-            message: INACTIVE_COMPANY_MESSAGE,
+            message:
+              data?.message ||
+              INACTIVE_COMPANY_MESSAGE ||
+              DEFAULT_DEACTIVATED_MESSAGE,
             data,
           };
         }
@@ -173,21 +173,16 @@ function useAuth() {
           );
         }
 
-        // Save tenant id (if returned) to localStorage so BaseService can include it in headers
+        // Save tenant id (database) for socket room and API headers
         try {
-          const tenantId = data.tenant_id || data.tenantId || data.data?.tenant_id || data.data?.tenantId || null;
-          if (tenantId) {
-            storeTenantId(tenantId);
-          }
-          if (tenantData) {
-            storeTenantData(tenantData);
-            
-            // STORE COMPANY_ID - ADD THIS
-            if (tenantData.company_id) {
-              storeCompanyId(tenantData.company_id);
-              console.log("✅ Stored company_id:", tenantData.company_id);
-            }
-          }
+          const apiTenantId =
+            data.tenant_id ||
+            data.tenantId ||
+            data.data?.tenant_id ||
+            data.data?.tenantId ||
+            null;
+
+          persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
         }
@@ -262,6 +257,12 @@ function useAuth() {
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
       const tenantData = getTenantData();
+      const clientId = resolveSocketClientId();
+      if (clientId && clientId !== getTenantId()) {
+        storeTenantId(clientId);
+        console.log("[auth] corrected stale tenant_id to socket client id:", clientId);
+      }
+
       if (isCompanyInactive(tenantData)) {
         logoutInactiveCompany();
         return;

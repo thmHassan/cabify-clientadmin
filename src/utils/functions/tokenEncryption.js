@@ -180,6 +180,53 @@ export const getTenantData = () => {
 };
 
 /**
+ * Database name used for socket room client_<id>, query params, and API database header.
+ * Backend emits company events to the company database (company_id), not a separate numeric tenant id.
+ */
+export const resolveSocketClientId = () => {
+  const tenantData = getTenantData();
+  const companyId = getCompanyId();
+  const tenantId = getTenantId();
+
+  return (
+    tenantData?.database ||
+    tenantData?.company_id ||
+    companyId ||
+    tenantId ||
+    null
+  );
+};
+
+/**
+ * Persists tenant metadata and normalizes tenant_id to the socket/database client id.
+ */
+export const persistTenantSession = ({ tenantData, tenantId: apiTenantId } = {}) => {
+  if (tenantData) {
+    storeTenantData(tenantData);
+    if (tenantData.company_id) {
+      storeCompanyId(tenantData.company_id);
+    }
+  }
+
+  const socketClientId =
+    tenantData?.database ||
+    tenantData?.company_id ||
+    apiTenantId ||
+    null;
+
+  if (socketClientId) {
+    storeTenantId(socketClientId);
+    console.log("[auth] socket client id resolved:", socketClientId, {
+      company_id: tenantData?.company_id,
+      database: tenantData?.database,
+      api_tenant_id: apiTenantId,
+    });
+  }
+
+  return socketClientId;
+};
+
+/**
  * Removes tenant id from localStorage
  */
 export const removeTenantId = () => {

@@ -9,6 +9,7 @@ import AllRoutes from "./components/routes/AllRoutes";
 import ScrollToTop from "./components/shared/ScrollToTop";
 import Loading from "./components/shared/Loading/Loading";
 import { SocketProvider } from "./components/routes/SocketProvider";
+import CompanyInactiveLogoutBridge from "./components/routes/CompanyInactiveLogoutBridge";
 import ForceLogoutListener from "./components/routes/ForceLogoutListener";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
@@ -30,6 +31,7 @@ function App() {
               <CurrencyProvider>
                 <MapConfigProvider>
                   <SocketProvider>
+                    <CompanyInactiveLogoutBridge />
                     <ForceLogoutListener />
                     <AllRoutes />
                   </SocketProvider>

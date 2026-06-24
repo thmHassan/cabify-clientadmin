@@ -2,13 +2,13 @@ import { io } from "socket.io-client";
 import appConfig from "../components/configs/app.config";
 import { SOCKET_EVENTS } from "../constants/socketEvents.constant";
 import { getDecryptedToken, getTenantId } from "../utils/functions/tokenEncryption";
+import { handleCompanyInactiveSocketPayload } from "../utils/auth/forceLogoutBridge";
 
 let socket = null;
-let companyInactiveLogoutHandler = null;
 
 const handleCompanyInactiveLogoutEvent = (data) => {
-  console.log("company-inactive-logout received:", data);
-  companyInactiveLogoutHandler?.(data);
+  console.info("[socket] company-inactive-logout event:", data);
+  handleCompanyInactiveSocketPayload(data);
 };
 
 const bindCompanyInactiveLogoutListener = (socketInstance) => {
@@ -24,32 +24,8 @@ const bindCompanyInactiveLogoutListener = (socketInstance) => {
   );
 };
 
-export const registerCompanyInactiveLogoutHandler = (handler) => {
-  companyInactiveLogoutHandler = handler;
-
-  const currentSocket = getSocket();
-  if (currentSocket) {
-    bindCompanyInactiveLogoutListener(currentSocket);
-  }
-};
-
 export const rebindCompanyInactiveLogoutListener = () => {
-  const currentSocket = getSocket();
-  if (currentSocket && companyInactiveLogoutHandler) {
-    bindCompanyInactiveLogoutListener(currentSocket);
-  }
-};
-
-export const unregisterCompanyInactiveLogoutHandler = () => {
-  companyInactiveLogoutHandler = null;
-
-  const currentSocket = getSocket();
-  if (currentSocket) {
-    currentSocket.off(
-      SOCKET_EVENTS.COMPANY_INACTIVE_LOGOUT,
-      handleCompanyInactiveLogoutEvent
-    );
-  }
+  bindCompanyInactiveLogoutListener(getSocket());
 };
 
 export const getSocket = () => socket;
@@ -81,8 +57,17 @@ const initSocket = () => {
     return null;
   }
 
+  const socketPath =
+    import.meta.env.VITE_SOCKET_IO_PATH || "/socket-api/socket.io";
+
+  console.info("[socket] connecting", {
+    url: appConfig.backendUrl,
+    path: socketPath,
+    tenantId,
+  });
+
   socket = io(appConfig.backendUrl, {
-    path: "/socket.io",
+    path: socketPath,
     transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionAttempts: Infinity,
@@ -101,16 +86,16 @@ const initSocket = () => {
   });
 
   socket.on("connect", () => {
-    console.log("Socket connected:", socket.id);
+    console.info("[socket] connected:", socket.id);
     bindCompanyInactiveLogoutListener(socket);
   });
 
   socket.on("disconnect", (reason) => {
-    console.log("Socket disconnected:", reason);
+    console.info("[socket] disconnected:", reason);
   });
 
   socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error.message);
+    console.error("[socket] connect_error:", error.message);
   });
 
   bindCompanyInactiveLogoutListener(socket);

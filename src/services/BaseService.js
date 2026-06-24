@@ -6,7 +6,13 @@ import {
   clearAllAuthData,
   getDecryptedToken,
   getTenantId,
+  getTenantData,
 } from "../utils/functions/tokenEncryption";
+import {
+  DEFAULT_DEACTIVATED_MESSAGE,
+  isCompanyInactive,
+} from "../utils/functions/tenantStatus";
+import { performCompanyInactiveLogout } from "../utils/auth/forceLogoutBridge";
 
 const unauthorizedCode = [401, 403, 419];
 
@@ -42,11 +48,34 @@ BaseService.interceptors.request.use(
 );
 
 BaseService.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const tenantData =
+      response?.data?.tenant_data || response?.data?.data?.tenant_data;
+
+    if (isCompanyInactive(tenantData)) {
+      performCompanyInactiveLogout(
+        response?.data?.message || DEFAULT_DEACTIVATED_MESSAGE
+      );
+    }
+
+    return response;
+  },
   (error) => {
     const { response } = error;
 
     console.log(response, "response========");
+
+    const tenantData =
+      response?.data?.tenant_data || response?.data?.data?.tenant_data;
+    const message = response?.data?.message || "";
+
+    if (
+      isCompanyInactive(tenantData) ||
+      /company.*inactive|deactivated/i.test(message)
+    ) {
+      performCompanyInactiveLogout(message || DEFAULT_DEACTIVATED_MESSAGE);
+      return Promise.reject(error);
+    }
 
     if (response && unauthorizedCode.includes(response.status)) {
       store.dispatch(signOutSuccess());

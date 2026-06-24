@@ -31,8 +31,8 @@ import {
   isCompanyInactive,
   setInactiveCompanyMessage,
 } from "../functions/tenantStatus";
-import { disconnectSocket } from "../../services/socketConntection";
-import { requestSocketDisconnect, requestSocketReconnect } from "../../components/routes/SocketProvider";
+import { performCompanyInactiveLogout } from "../auth/forceLogoutBridge";
+import { requestSocketReconnect } from "../../components/routes/SocketProvider";
 
 function useAuth() {
   const dispatch = useAppDispatch();
@@ -241,15 +241,10 @@ function useAuth() {
   }, [dispatch, navigate]);
 
   const logoutInactiveCompany = useCallback((message = INACTIVE_COMPANY_MESSAGE) => {
-    setInactiveCompanyMessage(message);
-    requestSocketDisconnect();
-    disconnectSocket();
-    handleSignOut();
-  }, [handleSignOut]);
+    performCompanyInactiveLogout(message);
+  }, []);
 
-  const forceLogout = useCallback((message = INACTIVE_COMPANY_MESSAGE) => {
-    logoutInactiveCompany(message);
-  }, [logoutInactiveCompany]);
+  const forceLogout = logoutInactiveCompany;
 
   const signOut = () => {
     // Simple logout - just remove token and redirect

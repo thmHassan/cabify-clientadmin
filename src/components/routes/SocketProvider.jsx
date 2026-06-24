@@ -3,6 +3,7 @@ import initSocket, {
   disconnectSocket,
   getSocket,
   reconnectSocket,
+  getSocketDebugSnapshot,
 } from "../../services/socketConntection";
 import { isAuthenticated } from "../../utils/functions/tokenEncryption";
 
@@ -25,6 +26,7 @@ export const SocketProvider = ({ children }) => {
 
   const connectSocket = useCallback(() => {
     if (!isAuthenticated()) {
+      console.warn("[socket:debug] SocketProvider — not authenticated, skipping connect");
       disconnectSocket();
       setSocket(null);
       setIsConnected(false);
@@ -33,13 +35,19 @@ export const SocketProvider = ({ children }) => {
 
     const existingSocket = getSocket();
     if (existingSocket) {
+      console.warn("[socket:debug] SocketProvider — reusing socket", {
+        socketId: existingSocket.id,
+        connected: existingSocket.connected,
+      });
       setSocket(existingSocket);
       setIsConnected(existingSocket.connected);
       return existingSocket;
     }
 
+    console.warn("[socket:debug] SocketProvider — calling initSocket()");
     const socketInstance = initSocket();
     if (!socketInstance) {
+      console.warn("[socket:debug] SocketProvider — initSocket returned null", getSocketDebugSnapshot());
       setSocket(null);
       setIsConnected(false);
       return null;
@@ -68,7 +76,8 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const socketInstance = connectSocket();
+    console.warn("[socket:debug] SocketProvider mounted on", window.location.pathname);
+    connectSocket();
 
     const onReconnect = () => {
       disconnectSocket();
@@ -93,11 +102,6 @@ export const SocketProvider = ({ children }) => {
     return () => {
       window.removeEventListener(SOCKET_RECONNECT_EVENT, onReconnect);
       window.removeEventListener(SOCKET_DISCONNECT_EVENT, handleSocketDisconnect);
-
-      if (socketInstance) {
-        socketInstance.off("connect");
-        socketInstance.off("disconnect");
-      }
     };
   }, [connectSocket, handleSocketDisconnect]);
 

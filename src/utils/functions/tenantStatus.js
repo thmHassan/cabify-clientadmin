@@ -21,10 +21,29 @@ export const isCompanyInactive = (tenantData) =>
 export const shouldForceLogout = (data = {}) => {
   if (!data || typeof data !== "object") return false;
 
-  return (
+  const actionMatches =
     data.action === NOTIFICATION_ACTIONS.FORCE_LOGOUT ||
+    data.type === NOTIFICATION_ACTIONS.FORCE_LOGOUT;
+
+  const inactiveMatches =
     data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE ||
-    String(data.status || "").toLowerCase() === COMPANY_STATUS.INACTIVE
+    String(data.new_status || "").toLowerCase() === COMPANY_STATUS.INACTIVE ||
+    String(data.status || "").toLowerCase() === COMPANY_STATUS.INACTIVE;
+
+  return actionMatches && inactiveMatches;
+};
+
+export const isDeactivatedCompanyLoginError = (error) => {
+  const response = error?.response;
+  if (!response || response.status !== 403) return false;
+
+  const data = response.data || {};
+
+  return (
+    shouldForceLogout(data) ||
+    data.reason === FORCE_LOGOUT_REASONS.COMPANY_INACTIVE ||
+    String(data.status || data.new_status || "").toLowerCase() ===
+      COMPANY_STATUS.INACTIVE
   );
 };
 

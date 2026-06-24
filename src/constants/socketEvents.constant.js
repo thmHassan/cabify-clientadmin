@@ -1,6 +1,10 @@
 export const SOCKET_EVENTS = {
   SEND_REMINDER: "send-reminder",
   DISPATCH_SETTINGS_CHANGED: "dispatch-settings-changed",
+  COMPANY_STATUS_CHANGED: "company-status-changed",
+  COMPANY_INACTIVE_LOGOUT: "company-inactive-logout",
+  DISPATCHER_FORCED_LOGOUT: "dispatcher-forced-logout",
+  /** @deprecated use COMPANY_STATUS_CHANGED */
   COMPANY_CLIENT_FORCE_LOGOUT: "company-client-force-logout",
 };
 

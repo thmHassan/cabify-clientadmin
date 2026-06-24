@@ -6,6 +6,7 @@ import {
   clearAllAuthData,
   getDecryptedToken,
   ensureDatabaseIdSynced,
+  isAuthenticated,
 } from "../utils/functions/tokenEncryption";
 
 const unauthorizedCode = [401, 403, 419];
@@ -48,7 +49,11 @@ BaseService.interceptors.response.use(
 
     console.log(response, "response========");
 
-    if (response && unauthorizedCode.includes(response.status)) {
+    if (
+      response &&
+      unauthorizedCode.includes(response.status) &&
+      isAuthenticated()
+    ) {
       store.dispatch(signOutSuccess());
       store.dispatch(
         setUser({

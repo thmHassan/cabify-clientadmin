@@ -29,7 +29,7 @@ import {
 import {
   INACTIVE_COMPANY_MESSAGE,
   isCompanyInactive,
-  setInactiveCompanyMessage,
+  isDeactivatedCompanyLoginError,
 } from "../functions/tenantStatus";
 import { performCompanyInactiveLogout } from "../auth/forceLogoutBridge";
 import { requestSocketReconnect } from "../../components/routes/SocketProvider";
@@ -187,6 +187,14 @@ function useAuth() {
         data,
       };
     } catch (errors) {
+      if (isDeactivatedCompanyLoginError(errors)) {
+        return {
+          status: "failed",
+          message:
+            errors?.response?.data?.message || INACTIVE_COMPANY_MESSAGE,
+        };
+      }
+
       return {
         status: "failed",
         message: errors?.response?.data?.message || errors.toString(),

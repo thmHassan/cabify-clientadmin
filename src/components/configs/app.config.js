@@ -13,8 +13,11 @@ const backendSocketUrl = normalizeUrl(
   import.meta.env.VITE_BACKEND_SOCKET_URL || `${backendUrl}/socket-api`
 );
 
-// Socket.IO connects to backendUrl (not backendSocketUrl).
-// backendSocketUrl is only for HTTP REST routes under /socket-api.
+const socketIoPath =
+  import.meta.env.VITE_SOCKET_IO_PATH || "/socket.io";
+
+// Socket.IO connects to backendUrl with socketIoPath (VITE_SOCKET_IO_PATH).
+// backendSocketUrl is for HTTP REST routes under /socket-api.
 
 const getAssetUrl = (path) => {
   if (!path) return "";
@@ -26,6 +29,7 @@ const appConfig = {
   apiPrefix: `${backendUrl}/api`,
   backendUrl,
   backendSocketUrl,
+  socketIoPath,
   getAssetUrl,
   authenticatedEntryPath: "/overview",
   unAuthenticatedEntryPath: SIGN_IN_PATH,

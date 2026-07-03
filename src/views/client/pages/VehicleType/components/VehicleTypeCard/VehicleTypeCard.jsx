@@ -1,10 +1,7 @@
-import React, { useState } from "react";
 import appConfig from "../../../../../../components/configs/app.config";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
-import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 
 const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
     const actionOptions = [
@@ -18,11 +15,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         },
     ];
 
-    const distanceUnit = useDistanceUnit();
-
-    const formatDistance = (distanceInMeters) =>
-        formatDistanceFromMeters(distanceInMeters, distanceUnit);
-
     const capitalizeFirst = (value) => {
         if (!value) return "-";
         return value.charAt(0).toUpperCase() + value.slice(1);
@@ -35,7 +27,7 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
             <div className="flex gap-2">
                 <div className="w-[100px] h-[60px]">
                     <img
-                        src={`${appConfig.backendUrl}${vehicle.vehicle_image}`}
+                        src={appConfig.getAssetUrl(vehicle.vehicle_image)}
                         className="w-full h-full rounded-md border-[1px] border-[#D7D7D7]"
                         alt="vehicle"
                     />

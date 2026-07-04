@@ -188,19 +188,15 @@ const DriverDetails = () => {
 
     const getVehicleFormData = (data) => {
         const hasChangeRequest = Number(data?.vehicle_change_request) === 1;
+        const assignedVehicle = hasChangeRequest
+            ? data?.change_assigned_vehicle || data?.assigned_vehicle || ""
+            : data?.assigned_vehicle || "";
+
         return {
             vehicle_name: hasChangeRequest
                 ? data?.change_vehicle_name || data?.vehicle_name || ""
                 : data?.vehicle_name || "",
-            vehicle_type: hasChangeRequest
-                ? data?.change_vehicle_type
-                    ? data.change_vehicle_type.toString()
-                    : data?.vehicle_type
-                        ? data.vehicle_type.toString()
-                        : ""
-                : data?.vehicle_type
-                    ? data.vehicle_type.toString()
-                    : "",
+            vehicle_type: assignedVehicle ? assignedVehicle.toString() : "",
             vehicle_service: hasChangeRequest
                 ? data?.change_vehicle_service || data?.vehicle_service || ""
                 : data?.vehicle_service || "",
@@ -289,6 +285,7 @@ const DriverDetails = () => {
                         vehicletype.map((v) => ({
                             label: v.vehicle_type_name,
                             value: v.id.toString(),
+                            service: v.vehicle_type_service || "",
                         }))
                     );
                 }
@@ -325,7 +322,7 @@ const DriverDetails = () => {
                         : getDefaultDialCode(),
                     address: data.address || "",
                     driver_license: data.driver_license || "",
-                    assigned_vehicle: data.assigned_vehicle || "",
+                    assigned_vehicle: vehicleData.vehicle_type || (data.assigned_vehicle || ""),
                     joined_date: data.joined_date
                         ? data.joined_date.split(" ")[0]
                         : "",
@@ -430,6 +427,17 @@ const DriverDetails = () => {
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleVehicleTypeChange = (value) => {
+        const selectedVehicle = vehicleList.find((vehicle) => vehicle.value === value);
+        setFormData((prev) => ({
+            ...prev,
+            assigned_vehicle: value,
+            vehicle_type: value,
+            vehicle_name: selectedVehicle?.label || prev.vehicle_name,
+            vehicle_service: selectedVehicle?.service || prev.vehicle_service,
+        }));
     };
 
     const handleFileChange = (e) => {
@@ -953,9 +961,7 @@ const DriverDetails = () => {
                             </label>
                             <select
                                 value={formData.assigned_vehicle}
-                                onChange={(e) =>
-                                    handleInputChange("assigned_vehicle", e.target.value)
-                                }
+                                onChange={(e) => handleVehicleTypeChange(e.target.value)}
                                 disabled={loadingVehicles}
                                 className="w-full h-11 rounded-lg border border-gray-300 px-4 text-sm focus:ring-1 focus:ring-blue-600 focus:outline-none"
                             >
@@ -1175,9 +1181,7 @@ const DriverDetails = () => {
                             </label>
                             <select
                                 value={formData.vehicle_type}
-                                onChange={(e) =>
-                                    handleInputChange("vehicle_type", e.target.value)
-                                }
+                                onChange={(e) => handleVehicleTypeChange(e.target.value)}
                                 disabled={loadingVehicles}
                                 className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-500"
                             >

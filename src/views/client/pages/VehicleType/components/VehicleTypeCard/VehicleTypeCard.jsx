@@ -24,6 +24,7 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         <div
             className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-auto"
         >
+            
             <div className="flex gap-2">
                 <div className="w-[100px] h-[60px]">
                     <img
@@ -41,7 +42,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[140px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Minimum Distance</p>
                     <p className="text-[#333333] font-semibold text-sm text-center">{vehicle.minimum_distance || "-"}</p>
-                    {/* <p className="text-[#333333] font-semibold text-sm text-center">{formatDistance(vehicle.minimum_distance || "-")}</p> */}
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[150px]">
@@ -69,7 +69,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
                         <ThreeDotsIcon />
                     </Button>
                 </UserDropdown>
-
             </div>
         </div>
     );

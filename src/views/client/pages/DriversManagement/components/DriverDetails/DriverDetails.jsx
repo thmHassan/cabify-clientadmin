@@ -76,6 +76,64 @@ const FormField = ({
     );
 };
 
+const normalizeDateInput = (value) => {
+    if (!value) return "";
+    const raw = String(value).trim();
+    if (!raw) return "";
+
+    const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+    const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (slashMatch) {
+        const [, day, month, year] = slashMatch;
+        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+    }
+
+    return "";
+};
+
+const findVehicleOptionForDriver = (data, vehicleList) => {
+    const candidateIds = [
+        data?.change_assigned_vehicle,
+        data?.assigned_vehicle,
+        data?.vehicle_type,
+        data?.change_vehicle_type,
+    ]
+        .filter((value) => value !== undefined && value !== null && value !== "")
+        .map((value) => String(value));
+
+    const byId = vehicleList.find((vehicle) => candidateIds.includes(vehicle.value));
+    if (byId) return byId;
+
+    const candidateLabels = [
+        data?.change_vehicle_name,
+        data?.vehicle_name,
+        data?.change_vehicle_type,
+        data?.vehicle_type,
+    ]
+        .filter(Boolean)
+        .map((value) => String(value).trim().toLowerCase());
+
+    const candidateServices = [
+        data?.change_vehicle_service,
+        data?.vehicle_service,
+        data?.vehicle_type,
+    ]
+        .filter(Boolean)
+        .map((value) => String(value).trim().toLowerCase());
+
+    return vehicleList.find((vehicle) => (
+        candidateLabels.includes(String(vehicle.label || "").trim().toLowerCase()) ||
+        candidateServices.includes(String(vehicle.service || "").trim().toLowerCase())
+    ));
+};
+
 const DriverDetails = () => {
     const { id: driverId } = useParams();
 
@@ -186,11 +244,14 @@ const DriverDetails = () => {
     const canUploadProfileImage =
         !hasExistingProfileImage || profileImageApprovalStatus === "approved";
 
-    const getVehicleFormData = (data) => {
+    const getVehicleFormData = useCallback((data) => {
         const hasChangeRequest = Number(data?.vehicle_change_request) === 1;
-        const assignedVehicle = hasChangeRequest
-            ? data?.change_assigned_vehicle || data?.assigned_vehicle || ""
-            : data?.assigned_vehicle || "";
+        const selectedVehicle = findVehicleOptionForDriver(data, vehicleList);
+        const assignedVehicle = selectedVehicle?.value || (
+            hasChangeRequest
+                ? data?.change_assigned_vehicle || data?.assigned_vehicle || ""
+                : data?.assigned_vehicle || ""
+        );
 
         return {
             vehicle_name: hasChangeRequest
@@ -219,16 +280,10 @@ const DriverDetails = () => {
                 ? data?.change_plate_no || data?.plate_no || ""
                 : data?.plate_no || "",
             vehicle_registration_date: hasChangeRequest
-                ? data?.change_vehicle_registration_date
-                    ? data.change_vehicle_registration_date.split("T")[0]
-                    : data?.vehicle_registration_date
-                        ? data.vehicle_registration_date.split("T")[0]
-                        : ""
-                : data?.vehicle_registration_date
-                    ? data.vehicle_registration_date.split("T")[0]
-                    : "",
+                ? normalizeDateInput(data?.change_vehicle_registration_date || data?.vehicle_registration_date)
+                : normalizeDateInput(data?.vehicle_registration_date),
         };
-    };
+    }, [vehicleList]);
 
     const loadDriverRevenue = useCallback(async () => {
         if (!driverId) return;
@@ -323,9 +378,7 @@ const DriverDetails = () => {
                     address: data.address || "",
                     driver_license: data.driver_license || "",
                     assigned_vehicle: vehicleData.vehicle_type || (data.assigned_vehicle || ""),
-                    joined_date: data.joined_date
-                        ? data.joined_date.split(" ")[0]
-                        : "",
+                    joined_date: normalizeDateInput(data.joined_date),
                     sub_company: data.sub_company ? data.sub_company.toString() : "",
                     vehicle_name: vehicleData.vehicle_name,
                     vehicle_type: vehicleData.vehicle_type,
@@ -356,7 +409,7 @@ const DriverDetails = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [driverId]);
+    }, [driverId, getVehicleFormData]);
 
     useEffect(() => {
         loadDriverData();

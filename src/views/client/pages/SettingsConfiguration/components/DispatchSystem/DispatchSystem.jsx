@@ -191,6 +191,7 @@ const dispatchData = [
                     { label: "Third try onwards", key: "p3_third", stepKey: "show_only_after_not_selected_in_auto_dispatch_third_try" },
                 ],
             },
+            { label: "Put in bidding panel", key: "p3_bidding", stepKey: "put_in_bidding_panel", type: "checkbox" },
         ],
     },
     {

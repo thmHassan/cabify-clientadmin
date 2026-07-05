@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useTimezone } from "../../../../../../contexts/TimezoneContext";
 
 const DEFAULT_SEARCH_RADIUS_KM = 1;
+const DEFAULT_DRIVER_RESPONSE_SECONDS = 30;
 
 const isAutoDispatchNearestDriverEnabled = (dispatchItems) => {
     if (!Array.isArray(dispatchItems)) return false;
@@ -93,6 +94,7 @@ const CompanyProfile = () => {
                 setCompanyProfileData({
                     ...companyData,
                     search_radius: companyData.search_radius ?? DEFAULT_SEARCH_RADIUS_KM,
+                    dispatch_timeout: companyData.dispatch_timeout ?? DEFAULT_DRIVER_RESPONSE_SECONDS,
                 });
 
                 if (companyData?.company_timezone) {
@@ -154,6 +156,10 @@ const CompanyProfile = () => {
             formData.append(
                 "search_radius",
                 companyProfileData.search_radius || DEFAULT_SEARCH_RADIUS_KM
+            );
+            formData.append(
+                "dispatch_timeout",
+                companyProfileData.dispatch_timeout || DEFAULT_DRIVER_RESPONSE_SECONDS
             );
         }
 
@@ -322,22 +328,42 @@ const CompanyProfile = () => {
                         )}
                     </div>
                     {isNearestDriverEnabled && (
-                        <div>
-                            <label className="block text-sm font-medium mb-1">
-                                Search Radius (KM)
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={companyProfileData?.search_radius ?? DEFAULT_SEARCH_RADIUS_KM}
-                                placeholder={`${DEFAULT_SEARCH_RADIUS_KM}`}
-                                className={inputClass("search_radius")}
-                                onChange={(e) => handleChange("search_radius", e.target.value)}
-                            />
-                            {fieldErrors.search_radius && (
-                                <p className="text-red-500 text-xs mt-1">{fieldErrors.search_radius}</p>
-                            )}
-                        </div>
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Search Radius (KM)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={companyProfileData?.search_radius ?? DEFAULT_SEARCH_RADIUS_KM}
+                                    placeholder={`${DEFAULT_SEARCH_RADIUS_KM}`}
+                                    className={inputClass("search_radius")}
+                                    onChange={(e) => handleChange("search_radius", e.target.value)}
+                                />
+                                {fieldErrors.search_radius && (
+                                    <p className="text-red-500 text-xs mt-1">{fieldErrors.search_radius}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Driver Response Time (Seconds)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="5"
+                                    max="300"
+                                    value={companyProfileData?.dispatch_timeout ?? DEFAULT_DRIVER_RESPONSE_SECONDS}
+                                    placeholder={`${DEFAULT_DRIVER_RESPONSE_SECONDS}`}
+                                    className={inputClass("dispatch_timeout")}
+                                    onChange={(e) => handleChange("dispatch_timeout", e.target.value)}
+                                />
+                                {fieldErrors.dispatch_timeout && (
+                                    <p className="text-red-500 text-xs mt-1">{fieldErrors.dispatch_timeout}</p>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
 

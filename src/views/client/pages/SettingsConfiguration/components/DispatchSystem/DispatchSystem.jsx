@@ -39,10 +39,13 @@ const applyDefaultThirdTry = (state, followUp) => {
     return nextState;
 };
 
-const AUTO_DISPATCH_SYSTEM_KEYS = [
-    "auto_dispatch_plot_base",
-    "auto_dispatch_nearest_driver",
-];
+const DEFAULT_SYSTEM_PRIORITIES = {
+    auto_dispatch_plot_base: 1,
+    bidding_fixed_fare_plot_base: 2,
+    auto_dispatch_nearest_driver: 3,
+    manual_dispatch_only: 4,
+    bidding: 5,
+};
 
 const DEFAULT_RELEASE_SETTINGS = {
     enabled: true,
@@ -128,30 +131,8 @@ const clearOtherDispatchSystems = (activeSystemKey, state) =>
         return clearSystemFollowUps(dispatchItem.systemKey, nextState);
     }, state);
 
-const normalizeAutoDispatchSelection = (state, priorities = {}) => {
-    const enabledSystems = AUTO_DISPATCH_SYSTEM_KEYS.filter((systemKey) =>
-        systemHasEnabledFollowUps(systemKey, state)
-    );
-
-    if (enabledSystems.length <= 1) {
-        return state;
-    }
-
-    const activeSystem = [...enabledSystems].sort(
-        (a, b) => (priorities[a] || 99) - (priorities[b] || 99)
-    )[0];
-
-    return enabledSystems.reduce((nextState, systemKey) => {
-        if (systemKey === activeSystem) {
-            return nextState;
-        }
-        return clearSystemFollowUps(systemKey, nextState);
-    }, state);
-};
-
 const dispatchData = [
     {
-        priority: "Priority 1",
         type: "auto_dispatch",
         systemKey: "auto_dispatch_plot_base",
         followUps: [
@@ -178,7 +159,6 @@ const dispatchData = [
         ],
     },
     {
-        priority: "Priority 2",
         type: "bidding",
         systemKey: "bidding_fixed_fare_plot_base",
         followUps: [
@@ -194,7 +174,6 @@ const dispatchData = [
         ],
     },
     {
-        priority: "Priority 3",
         type: "auto_dispatch",
         systemKey: "auto_dispatch_nearest_driver",
         followUps: [
@@ -212,19 +191,16 @@ const dispatchData = [
                     { label: "Third try onwards", key: "p3_third", stepKey: "show_only_after_not_selected_in_auto_dispatch_third_try" },
                 ],
             },
-            { label: "Put in bidding panel", key: "p3_bidding", stepKey: "put_in_bidding_panel", type: "checkbox" },
         ],
     },
     {
-        priority: "Priority 4",
         type: "auto_dispatch",
         systemKey: "manual_dispatch_only",
         followUps: [
-            { label: "Manual Dispatch Only (disables all others)", key: "p4_manual", stepKey: "manual_dispatch_only" },
+            { label: "Manual Dispatch Only", key: "p4_manual", stepKey: "manual_dispatch_only" },
         ],
     },
     {
-        priority: "Priority 5",
         type: "bidding",
         systemKey: "bidding",
         followUps: [
@@ -253,7 +229,6 @@ const DispatchSystem = () => {
     const [adminDispatchSystem, setAdminDispatchSystem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [priorities, setPriorities] = useState({});
     const [showWarning, setShowWarning] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [password, setPassword] = useState("");
@@ -298,32 +273,25 @@ const DispatchSystem = () => {
     }, [checkedState]);
 
     const isAnyOptionConfigured = useMemo(() => {
-        const targetSystems = [
-            "auto_dispatch_plot_base",
-            "auto_dispatch_nearest_driver",
-            "manual_dispatch_only",
-        ];
+        if (!selectedDispatchSystem || !systemStatus[selectedDispatchSystem]) {
+            return false;
+        }
 
-        return targetSystems.some((systemKey) => {
-            if (!systemStatus[systemKey]) return false;
+        if (selectedDispatchSystem === "manual_dispatch_only") {
+            return true;
+        }
 
-            if (systemKey === "manual_dispatch_only") {
-                return true; // Manual dispatch is configured simply by being enabled
+        const dispatchItem = dispatchData.find((d) => d.systemKey === selectedDispatchSystem);
+        if (!dispatchItem) return false;
+
+        return dispatchItem.followUps.some((f) => {
+            if (checkedState[f.key]) return true;
+            if (f.children) {
+                return f.children.some((c) => checkedState[c.key]);
             }
-
-            // For auto dispatch options, check that at least one sub-option is selected
-            const dispatchItem = dispatchData.find((d) => d.systemKey === systemKey);
-            if (!dispatchItem) return false;
-
-            return dispatchItem.followUps.some((f) => {
-                if (checkedState[f.key]) return true;
-                if (f.children) {
-                    return f.children.some((c) => checkedState[c.key]);
-                }
-                return false;
-            });
+            return false;
         });
-    }, [systemStatus, checkedState]);
+    }, [selectedDispatchSystem, systemStatus, checkedState]);
 
     const fetchData = async () => {
         try {
@@ -342,7 +310,6 @@ const DispatchSystem = () => {
             const dispatchRes = await apiGetDispatchSystem();
             if (dispatchRes?.data?.success === 1) {
                 const initial = {};
-                const initialPriorities = {};
                 setReleaseSettings(
                     normalizeReleaseSettings(dispatchRes.data.release_settings)
                 );
@@ -351,29 +318,20 @@ const DispatchSystem = () => {
                     dispatchData.forEach((p) => {
                         if (p.systemKey !== item.dispatch_system) return;
 
-                        // ✅ Set priority from API
-                        if (item.priority) {
-                            initialPriorities[p.systemKey] = parseInt(item.priority);
-                        }
-
-                        // ✅ Fix: handle manual_dispatch_only with step "manual_only" or null
                         if (p.systemKey === "manual_dispatch_only") {
                             if (item.steps === null || item.steps === "manual_only" || item.steps === "manual_dispatch_only") {
                                 p.followUps.forEach((f) => {
                                     initial[f.key] = item.status === "enable";
                                 });
                             }
-                            return; // skip further processing for manual dispatch
+                            return;
                         }
 
-                        // Process normal followUps
                         p.followUps.forEach((f) => {
-                            // Match direct step
                             if (f.stepKey === item.steps) {
                                 initial[f.key] = item.status === "enable";
                             }
 
-                            // Match children steps
                             let hasEnabledChild = false;
                             f.children?.forEach((c) => {
                                 if (c.stepKey === item.steps) {
@@ -384,7 +342,6 @@ const DispatchSystem = () => {
                                 }
                             });
 
-                            // ✅ Auto-enable parent toggle if any child is enabled
                             if (hasEnabledChild && f.children) {
                                 initial[f.key] = true;
                             }
@@ -392,41 +349,30 @@ const DispatchSystem = () => {
                     });
                 });
 
-                // Priority initialization for filtered data
-                const filterType =
-                    companyAdminDispatchSystem === "both"
-                        ? companyBookingSystem
-                        : companyAdminDispatchSystem;
+                const activeSystem =
+                    dispatchData.find((dispatchItem) =>
+                        systemHasEnabledFollowUps(dispatchItem.systemKey, initial)
+                    )?.systemKey || null;
 
-                const filteredData =
-                    filterType === "both" || !filterType
-                        ? dispatchData
-                        : dispatchData.filter((d) => d.type === filterType);
-
-                filteredData.forEach((p, index) => {
-                    if (!initialPriorities[p.systemKey]) {
-                        initialPriorities[p.systemKey] = index + 1;
-                    }
-                });
-
-                const normalizedInitial = normalizeAutoDispatchSelection(
-                    dispatchData.reduce((state, dispatchItem) => {
+                const normalizedInitial = activeSystem
+                    ? clearOtherDispatchSystems(
+                        activeSystem,
+                        dispatchData.reduce((state, dispatchItem) => {
+                            dispatchItem.followUps.forEach((followUp) => {
+                                Object.assign(state, applyDefaultThirdTry(state, followUp));
+                            });
+                            return state;
+                        }, initial)
+                    )
+                    : dispatchData.reduce((state, dispatchItem) => {
                         dispatchItem.followUps.forEach((followUp) => {
                             Object.assign(state, applyDefaultThirdTry(state, followUp));
                         });
                         return state;
-                    }, initial),
-                    initialPriorities
-                );
-
-                const activeSystem =
-                    dispatchData.find((dispatchItem) =>
-                        systemHasEnabledFollowUps(dispatchItem.systemKey, normalizedInitial)
-                    )?.systemKey || null;
+                    }, initial);
 
                 setSelectedDispatchSystem(activeSystem);
                 setCheckedState(normalizedInitial);
-                setPriorities(initialPriorities);
             }
         } catch (e) {
             console.error(e);
@@ -506,19 +452,18 @@ const DispatchSystem = () => {
 
     const handleDispatchSystemSelect = (systemKey) => {
         setSelectedDispatchSystem(systemKey);
-        setCheckedState((prev) =>
-            dispatchData.reduce(
+        setCheckedState((prev) => {
+            let nextState = dispatchData.reduce(
                 (state, item) => clearSystemFollowUps(item.systemKey, state),
                 prev
-            )
-        );
-    };
+            );
 
-    const handlePriorityChange = (systemKey, newPriority) => {
-        setPriorities((prev) => ({
-            ...prev,
-            [systemKey]: parseInt(newPriority),
-        }));
+            if (systemKey === "manual_dispatch_only") {
+                nextState.p4_manual = true;
+            }
+
+            return nextState;
+        });
     };
 
     const updateReleaseSettings = (updates) => {
@@ -565,20 +510,11 @@ const DispatchSystem = () => {
         setSaving(true);
         try {
             const formData = new FormData();
-            const activeAutoDispatchSystem = AUTO_DISPATCH_SYSTEM_KEYS.find(
-                (systemKey) => systemStatus[systemKey]
-            );
+            formData.append("selected_dispatch_system", selectedDispatchSystem || "");
 
             dispatchData.forEach((p, i) => {
-                let isSystemEnabled = !!systemStatus[p.systemKey];
-
-                if (
-                    AUTO_DISPATCH_SYSTEM_KEYS.includes(p.systemKey) &&
-                    activeAutoDispatchSystem &&
-                    p.systemKey !== activeAutoDispatchSystem
-                ) {
-                    isSystemEnabled = false;
-                }
+                const isSystemEnabled =
+                    selectedDispatchSystem === p.systemKey && !!systemStatus[p.systemKey];
 
                 formData.append(
                     `${p.systemKey}[status]`,
@@ -587,7 +523,7 @@ const DispatchSystem = () => {
 
                 formData.append(
                     `${p.systemKey}[priority]`,
-                    priorities[p.systemKey] || i + 1
+                    DEFAULT_SYSTEM_PRIORITIES[p.systemKey] || i + 1
                 );
 
                 p.followUps.forEach((f) => {
@@ -795,31 +731,8 @@ const DispatchSystem = () => {
                             </div>
                             <div className="flex-1">
                                 <h2 className="font-semibold pb-3">
-                                    {getSystemDisplayName(p.systemKey)} (Priority{" "}
-                                    {priorities[p.systemKey] || i + 1})
+                                    {getSystemDisplayName(p.systemKey)}
                                 </h2>
-
-                                {/* Select Priority hidden — priority still saved from loaded/default values */}
-                                {/*
-                                <div className="mb-4">
-                                    <label className="text-sm text-gray-600 block mb-1">
-                                        Select Priority
-                                    </label>
-                                    <select
-                                        value={priorities[p.systemKey] || i + 1}
-                                        onChange={(e) =>
-                                            handlePriorityChange(p.systemKey, e.target.value)
-                                        }
-                                        className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        {[1, 2, 3, 4, 5].map((priority) => (
-                                            <option key={priority} value={priority}>
-                                                Priority {priority}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                */}
 
                                 {p.followUps.map((f) => (
                                     <div key={f.key} className="mb-2 py-2">

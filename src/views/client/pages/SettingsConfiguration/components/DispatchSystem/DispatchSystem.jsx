@@ -44,6 +44,41 @@ const AUTO_DISPATCH_SYSTEM_KEYS = [
     "auto_dispatch_nearest_driver",
 ];
 
+const DEFAULT_RELEASE_SETTINGS = {
+    enabled: true,
+    lead_minutes: 60,
+    mode: "auto_then_bidding",
+    modes: ["auto_dispatch", "bidding", "auto_then_bidding", "manual_review"],
+};
+
+const RELEASE_MODE_LABELS = {
+    auto_dispatch: "Auto Dispatch",
+    bidding: "Bidding",
+    auto_then_bidding: "Auto then Bidding",
+    manual_review: "Manual Review",
+};
+
+const RELEASE_LEAD_PRESETS = [15, 30, 60, 120];
+
+const normalizeReleaseSettings = (raw) => {
+    const value = raw && typeof raw === "object" ? raw : {};
+    const leadMinutes = Number(value.lead_minutes);
+    const mode = value.mode || DEFAULT_RELEASE_SETTINGS.mode;
+    const modes =
+        Array.isArray(value.modes) && value.modes.length
+            ? value.modes
+            : DEFAULT_RELEASE_SETTINGS.modes;
+
+    return {
+        enabled: value.enabled !== false && value.enabled !== 0 && value.enabled !== "0",
+        lead_minutes: Number.isFinite(leadMinutes)
+            ? Math.max(0, Math.min(Math.round(leadMinutes), 1440))
+            : DEFAULT_RELEASE_SETTINGS.lead_minutes,
+        mode: modes.includes(mode) ? mode : DEFAULT_RELEASE_SETTINGS.mode,
+        modes,
+    };
+};
+
 const getDispatchItem = (systemKey) =>
     dispatchData.find((item) => item.systemKey === systemKey);
 
@@ -224,6 +259,7 @@ const DispatchSystem = () => {
     const [password, setPassword] = useState("");
     const [verifying, setVerifying] = useState(false);
     const [selectedDispatchSystem, setSelectedDispatchSystem] = useState(null);
+    const [releaseSettings, setReleaseSettings] = useState(DEFAULT_RELEASE_SETTINGS);
     const socket = useSocket();
 
     const getSystemDisplayName = (key) =>
@@ -307,6 +343,9 @@ const DispatchSystem = () => {
             if (dispatchRes?.data?.success === 1) {
                 const initial = {};
                 const initialPriorities = {};
+                setReleaseSettings(
+                    normalizeReleaseSettings(dispatchRes.data.release_settings)
+                );
 
                 dispatchRes.data.data.forEach((item) => {
                     dispatchData.forEach((p) => {
@@ -482,6 +521,10 @@ const DispatchSystem = () => {
         }));
     };
 
+    const updateReleaseSettings = (updates) => {
+        setReleaseSettings((prev) => normalizeReleaseSettings({ ...prev, ...updates }));
+    };
+
     const handleSave = () => {
         setShowWarning(true);
     };
@@ -581,6 +624,16 @@ const DispatchSystem = () => {
                 formData.append("socket_id", socket.id);
             }
 
+            formData.append(
+                "auto_release[enabled]",
+                releaseSettings.enabled ? "1" : "0"
+            );
+            formData.append(
+                "auto_release[lead_minutes]",
+                String(releaseSettings.lead_minutes)
+            );
+            formData.append("auto_release[mode]", releaseSettings.mode);
+
             const res = await apiSaveDispatchSystem(formData);
             if (res?.data?.success === 1) {
                 toast.success(
@@ -606,6 +659,103 @@ const DispatchSystem = () => {
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
+            <CardContainer className="p-4 sm:p-5 bg-[#F5F5F5]">
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div>
+                            <h2 className="font-semibold text-base">Future Job Release</h2>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Company default for when scheduled bookings are released to drivers.
+                            </p>
+                        </div>
+                        <label className="flex items-center gap-3 text-sm font-medium">
+                            <span>{releaseSettings.enabled ? "Enabled" : "Disabled"}</span>
+                            <div className="relative inline-block w-11 h-6">
+                                <input
+                                    type="checkbox"
+                                    checked={releaseSettings.enabled}
+                                    onChange={(e) =>
+                                        updateReleaseSettings({ enabled: e.target.checked })
+                                    }
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Release before pickup
+                            </label>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="1440"
+                                    value={releaseSettings.lead_minutes}
+                                    disabled={!releaseSettings.enabled}
+                                    onChange={(e) =>
+                                        updateReleaseSettings({
+                                            lead_minutes: e.target.value,
+                                        })
+                                    }
+                                    className="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                    {RELEASE_LEAD_PRESETS.map((minutes) => (
+                                        <button
+                                            key={minutes}
+                                            type="button"
+                                            disabled={!releaseSettings.enabled}
+                                            onClick={() =>
+                                                updateReleaseSettings({
+                                                    lead_minutes: minutes,
+                                                })
+                                            }
+                                            className={`px-3 py-2 rounded-md border text-sm disabled:opacity-50 ${
+                                                releaseSettings.lead_minutes === minutes
+                                                    ? "bg-blue-600 text-white border-blue-600"
+                                                    : "bg-white text-gray-700 border-gray-300"
+                                            }`}
+                                        >
+                                            {minutes < 60 ? `${minutes} min` : `${minutes / 60} hr`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Default release mode
+                            </label>
+                            <select
+                                value={releaseSettings.mode}
+                                disabled={!releaseSettings.enabled}
+                                onChange={(e) =>
+                                    updateReleaseSettings({ mode: e.target.value })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                            >
+                                {releaseSettings.modes.map((mode) => (
+                                    <option key={mode} value={mode}>
+                                        {RELEASE_MODE_LABELS[mode] || mode}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                        {releaseSettings.enabled
+                            ? `Future jobs release ${releaseSettings.lead_minutes} minutes before pickup by default using ${RELEASE_MODE_LABELS[releaseSettings.mode] || releaseSettings.mode}. Dispatchers can still override this per booking.`
+                            : "Future jobs stay held for manual review unless a dispatcher releases them on the booking."}
+                    </p>
+                </div>
+            </CardContainer>
+
             {filteredDispatchData.map((p, i) => (
                 <CardContainer key={p.systemKey} className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
                     <div className="w-full">

@@ -14,6 +14,15 @@ import { apiGetAllVehicleType } from "../../../../../../services/VehicleTypeServ
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
 import { COUNTRY_CODE_OPTIONS } from "../../../../../../constants/countryCode.constant";
 import { getDefaultDialCode } from "../../../../../../utils/tenantFormatUtils";
+import { getDateStringInTimezone } from "../../../../../../utils/timezoneUtils";
+
+const normalizeDateInput = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    return value.split("T")[0].split(" ")[0];
+  }
+  return "";
+};
 
 const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreated }) => {
   const [submitError, setSubmitError] = useState(null);
@@ -151,7 +160,9 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
           address: initialValue?.address || "",
           driver_license: initialValue?.driver_license || "",
           assigned_vehicle: initialValue?.assigned_vehicle || "",
-          joined_date: initialValue?.joined_date || "",
+          joined_date: isEditMode
+            ? normalizeDateInput(initialValue?.joined_date)
+            : getDateStringInTimezone(),
           sub_company: initialValue?.sub_company || "",
         }}
         validationSchema={

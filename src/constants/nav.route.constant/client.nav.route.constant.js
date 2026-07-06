@@ -222,6 +222,20 @@ const userNavRoutes = [
         isStatic: false,
       },
       {
+        key: KEY.FINANCE_CENTER_KEY,
+        title: "Finance Center",
+        icon: {
+          active: RevenueNstatementsIcon,
+          component: RevenueNstatementsIcon,
+          size: 20,
+        },
+        route: PATH.FINANCE_CENTER_PATH,
+        active: [],
+        isSubMenu: false,
+        subMenu: [],
+        isStatic: false,
+      },
+      {
         key: KEY.PLOTS_KEY,
         title: "Plots",
         icon: {

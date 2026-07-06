@@ -18,6 +18,12 @@ const clientRoute = [
     authority: [],
   },
   {
+    key: KEY.FINANCE_CENTER_KEY,
+    path: PATH.FINANCE_CENTER_PATH,
+    component: lazy(() => import("../../../views/client/pages/FinanceCenter")),
+    authority: [],
+  },
+  {
     key: KEY.CANCELLATIONS_KEY,
     path: PATH.CANCELLATIONS_PATH,
     component: lazy(() => import("../../../views/client/pages/Cancellations")),

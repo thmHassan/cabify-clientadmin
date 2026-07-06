@@ -152,6 +152,16 @@ export const CHANGE_STATUS_LOST_FOUND = "/company/change-status-lost-found"
 export const GET_CARD_REVENUE = "/company/get-financial-summary"
 export const GET_REVENUE_HISTORY = "/company/get-ride-history"
 
+// api for finance center
+export const FINANCE_SUMMARY = "/company/finance/summary"
+export const FINANCE_ACCOUNTS = "/company/finance/accounts"
+export const FINANCE_PAYMENTS = "/company/finance/payments"
+export const FINANCE_RIDES = "/company/finance/rides"
+export const FINANCE_DRIVERS = "/company/finance/drivers"
+export const FINANCE_PACKAGES = "/company/finance/packages"
+export const FINANCE_STATEMENTS = "/company/finance/statements"
+export const FINANCE_SETTLEMENTS = "/company/finance/settlements"
+
 // api for subscriptions
 export const CREATE_SUBSCRIPTION = "/super-admin/create-subscription";
 export const GET_SUBSCRIPTION_BY_ID = "/super-admin/edit-subscription";

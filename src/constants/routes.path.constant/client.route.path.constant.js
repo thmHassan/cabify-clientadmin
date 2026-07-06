@@ -1,5 +1,6 @@
 export const OVERVIEW_PATH = "/overview";
 export const ACCOUNTS_PATH = "/accounts";
+export const FINANCE_CENTER_PATH = "/finance-center";
 export const CANCELLATIONS_PATH = "/cancellations";
 export const DISPATCHER_PATH = "/dispatcher";
 export const DRIVER_DOCUMENTS_PATH = "/driver-documents";

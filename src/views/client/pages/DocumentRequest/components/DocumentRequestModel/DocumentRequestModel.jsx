@@ -1,9 +1,16 @@
 import { Field, Form, Formik } from "formik";
 import Button from "../../../../../../components/ui/Button/Button";
 import FormLabel from "../../../../../../components/ui/FormLabel";
+import appConfig from "../../../../../../components/configs/app.config";
 import { formatPhoneNumber } from "../../../../../../utils/tenantFormatUtils";
 
 const DocumentRequestModel = ({ document, handleCloseModal }) => {
+    const documentImages = [
+        { label: "Front Image", path: document?.front_photo },
+        { label: "Back Image", path: document?.back_photo },
+        { label: "Profile Image", path: document?.profile_photo },
+    ].filter((image) => image.path);
+
     return (
         <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
             <Formik
@@ -124,6 +131,36 @@ const DocumentRequestModel = ({ document, handleCloseModal }) => {
                                 )}
                             </div>
                         </div>
+
+                        {documentImages.length > 0 && (
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-[#252525] mb-4">
+                                    Uploaded Images
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {documentImages.map((image) => (
+                                        <a
+                                            key={image.label}
+                                            href={appConfig.getAssetUrl(image.path)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="block border border-[#E9E9E9] rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow"
+                                        >
+                                            <div className="aspect-[4/3] bg-gray-100">
+                                                <img
+                                                    src={appConfig.getAssetUrl(image.path)}
+                                                    alt={image.label}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <div className="px-3 py-2 text-sm font-semibold text-[#252525]">
+                                                {image.label}
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Footer Buttons */}
                         <div className="mt-6 pt-4 border-t flex justify-end gap-3">

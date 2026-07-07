@@ -1,8 +1,24 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { apiSaveCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
-import { apiGetCompanyProfile } from "../../../../../../services/SettingsConfigurationServices";
+import {
+    apiGetCompanyProfile,
+    apiGetDispatchSystem,
+    apiSaveCompanyProfile,
+} from "../../../../../../services/SettingsConfigurationServices";
 import toast from "react-hot-toast";
 import { useTimezone } from "../../../../../../contexts/TimezoneContext";
+
+const DEFAULT_SEARCH_RADIUS_KM = 1;
+const DEFAULT_DRIVER_RESPONSE_SECONDS = 30;
+
+const isAutoDispatchNearestDriverEnabled = (dispatchItems) => {
+    if (!Array.isArray(dispatchItems)) return false;
+
+    return dispatchItems.some(
+        (item) =>
+            item.dispatch_system === "auto_dispatch_nearest_driver" &&
+            item.status === "enable"
+    );
+};
 
 const CompanyProfile = () => {
     const { updateTimezone } = useTimezone();
@@ -12,6 +28,7 @@ const CompanyProfile = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
+    const [isNearestDriverEnabled, setIsNearestDriverEnabled] = useState(false);
 
     const timeZoneOptions = [
         { value: "UTC", label: "UTC" },
@@ -61,16 +78,32 @@ const CompanyProfile = () => {
     const fetchCompanieProfile = useCallback(async () => {
         setTableLoading(true);
         try {
-            const response = await apiGetCompanyProfile();
-            if (response?.data?.success === 1) {
-                const companyData = response?.data?.data;
-                setCompanyProfileData(companyData || {});
+            const [profileResponse, dispatchResponse] = await Promise.all([
+                apiGetCompanyProfile(),
+                apiGetDispatchSystem(),
+            ]);
+
+            const nearestDriverEnabled = isAutoDispatchNearestDriverEnabled(
+                dispatchResponse?.data?.data
+            );
+            setIsNearestDriverEnabled(nearestDriverEnabled);
+
+            if (profileResponse?.data?.success === 1) {
+                const companyData = profileResponse?.data?.data || {};
+
+                setCompanyProfileData({
+                    ...companyData,
+                    search_radius: companyData.search_radius ?? DEFAULT_SEARCH_RADIUS_KM,
+                    dispatch_timeout: companyData.dispatch_timeout ?? DEFAULT_DRIVER_RESPONSE_SECONDS,
+                });
+
                 if (companyData?.company_timezone) {
                     updateTimezone(companyData.company_timezone);
                 }
             }
         } catch (error) {
             setCompanyProfileData({});
+            setIsNearestDriverEnabled(false);
         } finally {
             setTableLoading(false);
         }
@@ -119,7 +152,16 @@ const CompanyProfile = () => {
         formData.append("support_rescue_number", companyProfileData.support_rescue_number || "");
         formData.append("support_emergency_no", companyProfileData.support_emergency_no || "");
         formData.append("support_contact_no", companyProfileData.support_contact_no || "");
-        formData.append("search_radius", companyProfileData.search_radius || "");
+        if (isNearestDriverEnabled) {
+            formData.append(
+                "search_radius",
+                companyProfileData.search_radius || DEFAULT_SEARCH_RADIUS_KM
+            );
+            formData.append(
+                "dispatch_timeout",
+                companyProfileData.dispatch_timeout || DEFAULT_DRIVER_RESPONSE_SECONDS
+            );
+        }
 
         try {
             const response = await apiSaveCompanyProfile(formData);
@@ -285,19 +327,44 @@ const CompanyProfile = () => {
                             <p className="text-red-500 text-xs mt-1">{fieldErrors.support_rescue_number}</p>
                         )}
                     </div>
-                     <div>
-                        <label className="block text-sm font-medium mb-1">Search Radius</label>
-                        <input
-                            type="number"
-                            value={companyProfileData?.search_radius || ""}
-                            placeholder="Enter Search Radius"
-                            className={inputClass("search_radius")}
-                            onChange={(e) => handleChange("search_radius", e.target.value)}
-                        />
-                        {fieldErrors.search_radius && (
-                            <p className="text-red-500 text-xs mt-1">{fieldErrors.search_radius}</p>
-                        )}
-                    </div>
+                    {isNearestDriverEnabled && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Search Radius (KM)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={companyProfileData?.search_radius ?? DEFAULT_SEARCH_RADIUS_KM}
+                                    placeholder={`${DEFAULT_SEARCH_RADIUS_KM}`}
+                                    className={inputClass("search_radius")}
+                                    onChange={(e) => handleChange("search_radius", e.target.value)}
+                                />
+                                {fieldErrors.search_radius && (
+                                    <p className="text-red-500 text-xs mt-1">{fieldErrors.search_radius}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Driver Response Time (Seconds)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="5"
+                                    max="300"
+                                    value={companyProfileData?.dispatch_timeout ?? DEFAULT_DRIVER_RESPONSE_SECONDS}
+                                    placeholder={`${DEFAULT_DRIVER_RESPONSE_SECONDS}`}
+                                    className={inputClass("dispatch_timeout")}
+                                    onChange={(e) => handleChange("dispatch_timeout", e.target.value)}
+                                />
+                                {fieldErrors.dispatch_timeout && (
+                                    <p className="text-red-500 text-xs mt-1">{fieldErrors.dispatch_timeout}</p>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Company Description */}

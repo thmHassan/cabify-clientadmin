@@ -15,7 +15,6 @@ const BasicDetails = ({
     vehicleImage,
     setVehicleImage,
     existingVehicleImageUrl,
-    setExistingVehicleImageUrl,
     isEditMode,
 }) => {
     return (
@@ -146,7 +145,7 @@ const BasicDetails = ({
                         <div className="mb-3">
                             {/* <p className="text-sm text-gray-600 mb-2">Current Image:</p> */}
                             <img
-                                src={`${appConfig.backendUrl}${existingVehicleImageUrl}`}
+                                src={appConfig.getAssetUrl(existingVehicleImageUrl)}
                                 alt="Current vehicle type"
                                 className="w-12 h-12 object-contain border border-gray-300 rounded-lg bg-white"
                             />

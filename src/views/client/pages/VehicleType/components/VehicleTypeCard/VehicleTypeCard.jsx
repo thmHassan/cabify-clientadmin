@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import appConfig from "../../../../../../components/configs/app.config";
 import UserDropdown from "../../../../../../components/shared/UserDropdown";
 import Button from "../../../../../../components/ui/Button/Button";
 import ThreeDotsIcon from "../../../../../../components/svg/ThreeDotsIcon";
-import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
-import { formatDistanceFromMeters } from "../../../../../../utils/tenantFormatUtils";
 
 const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
+    const [imageFailed, setImageFailed] = useState(false);
     const actionOptions = [
         {
             label: "Edit",
@@ -18,11 +17,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         },
     ];
 
-    const distanceUnit = useDistanceUnit();
-
-    const formatDistance = (distanceInMeters) =>
-        formatDistanceFromMeters(distanceInMeters, distanceUnit);
-
     const capitalizeFirst = (value) => {
         if (!value) return "-";
         return value.charAt(0).toUpperCase() + value.slice(1);
@@ -32,13 +26,21 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
         <div
             className="bg-white rounded-[15px] p-4 gap-2 flex items-center justify-between hover:shadow-md overflow-auto"
         >
+            
             <div className="flex gap-2">
                 <div className="w-[100px] h-[60px]">
-                    <img
-                        src={`${appConfig.backendUrl}${vehicle.vehicle_image}`}
-                        className="w-full h-full rounded-md border-[1px] border-[#D7D7D7]"
-                        alt="vehicle"
-                    />
+                    {vehicle.vehicle_image && !imageFailed ? (
+                        <img
+                            src={appConfig.getAssetUrl(vehicle.vehicle_image)}
+                            className="w-full h-full rounded-md border-[1px] border-[#D7D7D7] object-contain bg-white"
+                            alt="vehicle"
+                            onError={() => setImageFailed(true)}
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-md border border-[#D7D7D7] bg-gray-50 text-xs text-gray-400">
+                            No Image
+                        </div>
+                    )}
                 </div>
                 <div className="w-60">
                     <p className="font-semibold text-xl text-[#333333]">{vehicle.vehicle_type_name}</p>
@@ -49,7 +51,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[140px]">
                     <p className="text-xs text-center text-[#6C6C6C]">Minimum Distance</p>
                     <p className="text-[#333333] font-semibold text-sm text-center">{vehicle.minimum_distance || "-"}</p>
-                    {/* <p className="text-[#333333] font-semibold text-sm text-center">{formatDistance(vehicle.minimum_distance || "-")}</p> */}
                 </div>
 
                 <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap w-[150px]">
@@ -77,7 +78,6 @@ const VehicleTypeCard = ({ vehicle, onEdit, onDelete }) => {
                         <ThreeDotsIcon />
                     </Button>
                 </UserDropdown>
-
             </div>
         </div>
     );

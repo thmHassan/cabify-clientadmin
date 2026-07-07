@@ -36,8 +36,8 @@ import AddBooking from "./components/AddBooking/AddBooking";
 import { apiGetDispatchSystem } from "../../../../services/SettingsConfigurationServices";
 import { apiGetDashboardDetails, apiGetSystemAlerts } from "../../../../services/DashboardService";
 import AppLogoLoader from "../../../../components/shared/AppLogoLoader";
-import { useTimezone } from "../../../../contexts/TimezoneContext";
-import { formatDate } from "../../../../utils/timezoneUtils";
+// import { useTimezone } from "../../../../contexts/TimezoneContext";
+// import { formatDate } from "../../../../utils/timezoneUtils";
 
 const DASHBOARD_CARDS = [
   {
@@ -191,28 +191,28 @@ const Overview = () => {
   const [dashboardDetails, setDashboardDetails] = useState({});
   const [systemAlerts, setSystemAlerts] = useState([]);
   const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
-  const { timezone } = useTimezone();
-  const [regionTime, setRegionTime] = useState("");
+  // const { timezone } = useTimezone();
+  // const [regionTime, setRegionTime] = useState("");
 
-  useEffect(() => {
-    const updateRegionTime = () => {
-      setRegionTime(
-        formatDate(new Date(), {
-          weekday: "short",
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }, timezone)
-      );
-    };
+  // useEffect(() => {
+  //   const updateRegionTime = () => {
+  //     setRegionTime(
+  //       formatDate(new Date(), {
+  //         weekday: "short",
+  //         day: "2-digit",
+  //         month: "short",
+  //         year: "numeric",
+  //         hour: "2-digit",
+  //         minute: "2-digit",
+  //         second: "2-digit",
+  //       }, timezone)
+  //     );
+  //   };
 
-    updateRegionTime();
-    const intervalId = setInterval(updateRegionTime, 1000);
-    return () => clearInterval(intervalId);
-  }, [timezone]);
+  //   updateRegionTime();
+  //   const intervalId = setInterval(updateRegionTime, 1000);
+  //   return () => clearInterval(intervalId);
+  // }, [timezone]);
 
 
   const resolveTenantData = () => {
@@ -416,9 +416,9 @@ const Overview = () => {
           <div className="flex flex-col gap-2.5 w-[calc(100%-100px)]">
             <PageTitle title={companyName} />
             {/* <PageSubTitle title="Welcome back! Here's what's happening with your transportation business today." /> */}
-            <p className="text-[11px] text-gray-500 leading-tight">
+            {/* <p className="text-[11px] text-gray-500 leading-tight">
               {timezone} · {regionTime}
-            </p>
+            </p> */}
           </div>
         </div>
         <div className="sm:w-auto xs:w-auto w-full sm:mb-[50px] mb-8">

@@ -1,5 +1,6 @@
 export const OVERVIEW_KEY = "overview";
 export const ACCOUNTS_KEY = "accounts";
+export const FINANCE_CENTER_KEY = "finance-center";
 export const CANCELLATIONS_KEY = "cancellations";
 export const DISPATCHER_KEY = "dispatcher";
 export const DRIVER_DOCUMENTS_KEY = "driver-documents";
@@ -18,4 +19,10 @@ export const RIDES_MANAGEMENT_KEY = "rides-management";
 export const SETTINGS_CONFIGURATION_KEY = "settings-configuration";
 export const SOS_KEY = "sos";
 export const SUB_COMPANY_KEY = "sub-company";
+export const TICKETS_KEY = "tickets";
+export const USERS_KEY = "users";
+export const USER_DETAILS_KEY = "user-details";
+export const VEHICLE_TYPE_KEY = "vehicle-type";
+export const VEHICLE_TYPE_DETAILS_KEY = "vehicle-type-details";
+export const APP_DISPLAY_CONTENT_KEY = "app-display-content";
 export const CONTACT_US_KEY = "contact-us";

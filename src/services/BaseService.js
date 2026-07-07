@@ -5,7 +5,8 @@ import store, { setUser, signOutSuccess } from "../store";
 import {
   clearAllAuthData,
   getDecryptedToken,
-  getTenantId,
+  ensureDatabaseIdSynced,
+  isAuthenticated,
 } from "../utils/functions/tokenEncryption";
 
 const unauthorizedCode = [401, 403, 419];
@@ -26,9 +27,9 @@ BaseService.interceptors.request.use(
 
     // Add database (tenant) id header if available
     try {
-      const tenantId = getTenantId();
-      if (tenantId) {
-        config.headers[REQUEST_HEADER_DATABASE_KEY] = tenantId;
+      const databaseId = ensureDatabaseIdSynced();
+      if (databaseId) {
+        config.headers[REQUEST_HEADER_DATABASE_KEY] = databaseId;
       }
     } catch (e) {
       // ignore database header errors
@@ -48,7 +49,11 @@ BaseService.interceptors.response.use(
 
     console.log(response, "response========");
 
-    if (response && unauthorizedCode.includes(response.status)) {
+    if (
+      response &&
+      unauthorizedCode.includes(response.status) &&
+      isAuthenticated()
+    ) {
       store.dispatch(signOutSuccess());
       store.dispatch(
         setUser({

@@ -124,6 +124,10 @@ export const SAVE_DISPATCH_SYSTEM = "/company/set-dispatch-system"
 export const GATE_DISPATCH_SYSTEM = "/company/get-dispatch-system"
 export const MATCH_PASSWORD = "/company/match-password"
 export const GET_COMPANY_API_KEYS = "/company/get-api-keys"
+export const GET_MAP_INFORMATION = "/company/map-information"
+export const GET_MAPIFY_TILES_BRIGHT = "/company/mapify-tiles/bright"
+export const GET_MAPIFY_GEOCODING = "/company/mapify-geocoding"
+export const GET_MAPIFY_SEARCH = "/company/mapify-search"
 
 //api for account
 export const GET_ACCOUNT = "/company/list-account";
@@ -147,6 +151,16 @@ export const CHANGE_STATUS_LOST_FOUND = "/company/change-status-lost-found"
 // api for revenue
 export const GET_CARD_REVENUE = "/company/get-financial-summary"
 export const GET_REVENUE_HISTORY = "/company/get-ride-history"
+
+// api for finance center
+export const FINANCE_SUMMARY = "/company/finance/summary"
+export const FINANCE_ACCOUNTS = "/company/finance/accounts"
+export const FINANCE_PAYMENTS = "/company/finance/payments"
+export const FINANCE_RIDES = "/company/finance/rides"
+export const FINANCE_DRIVERS = "/company/finance/drivers"
+export const FINANCE_PACKAGES = "/company/finance/packages"
+export const FINANCE_STATEMENTS = "/company/finance/statements"
+export const FINANCE_SETTLEMENTS = "/company/finance/settlements"
 
 // api for subscriptions
 export const CREATE_SUBSCRIPTION = "/super-admin/create-subscription";

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   apiSignIn,
@@ -21,10 +21,18 @@ import {
   clearAllAuthData,
   isAuthenticated,
   getUserDataFromToken,
-  storeTenantId,
-  storeTenantData,
-  storeCompanyId, 
+  getTenantData,
+  ensureDatabaseIdSynced,
+  extractApiTenantId,
+  persistTenantSession,
 } from "../functions/tokenEncryption";
+import {
+  INACTIVE_COMPANY_MESSAGE,
+  isCompanyInactive,
+  isDeactivatedCompanyLoginError,
+} from "../functions/tenantStatus";
+import { performCompanyInactiveLogout } from "../auth/forceLogoutBridge";
+import { requestSocketReconnect } from "../../components/routes/SocketProvider";
 
 function useAuth() {
   const dispatch = useAppDispatch();
@@ -69,31 +77,18 @@ function useAuth() {
 
         // Persist tenant metadata if present
         try {
-          const tenantId =
-            resp.data?.tenant_id ||
-            resp.data?.tenantId ||
-            resp.data?.data?.tenant_id ||
-            resp.data?.data?.tenantId ||
-            null;
-          if (tenantId) {
-            storeTenantId(tenantId);
-          }
-          const tenantData = resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
-          if (tenantData) {
-            storeTenantData(tenantData);
-            
-            // STORE COMPANY_ID - ADD THIS
-            if (tenantData.company_id) {
-              storeCompanyId(tenantData.company_id);
-              console.log("✅ Stored company_id:", tenantData.company_id);
-            }
-          }
+          const tenantData =
+            resp.data?.tenant_data || resp.data?.data?.tenant_data || null;
+          const apiTenantId = extractApiTenantId(resp.data, tenantData);
+
+          persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
         }
 
         const redirectUrl = query.get(REDIRECT_URL_KEY);
         navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath);
+        requestSocketReconnect();
         return {
           status: "success",
           message: "",
@@ -126,6 +121,22 @@ function useAuth() {
       if (isSuccess) {
         const token = possibleToken;
         const user = data.user || data.data?.user || data.admin || null;
+        const tenantData = data.tenant_data || data.data?.tenant_data || null;
+
+        if (isCompanyInactive(tenantData)) {
+          clearAllAuthData();
+          try {
+            localStorage.removeItem("auth_user");
+          } catch (e) {
+            console.warn("Failed to remove auth_user from localStorage", e);
+          }
+
+          return {
+            status: "failed",
+            message: INACTIVE_COMPANY_MESSAGE,
+            data,
+          };
+        }
 
         if (token) {
           // Store encrypted token in localStorage under 'admin_token'
@@ -148,22 +159,11 @@ function useAuth() {
           );
         }
 
-        // Save tenant id (if returned) to localStorage so BaseService can include it in headers
+        // Save tenant id (database) for socket room and API headers
         try {
-          const tenantId = data.tenant_id || data.tenantId || data.data?.tenant_id || data.data?.tenantId || null;
-          if (tenantId) {
-            storeTenantId(tenantId);
-          }
-          const tenantData = data.tenant_data || data.data?.tenant_data || null;
-          if (tenantData) {
-            storeTenantData(tenantData);
-            
-            // STORE COMPANY_ID - ADD THIS
-            if (tenantData.company_id) {
-              storeCompanyId(tenantData.company_id);
-              console.log("✅ Stored company_id:", tenantData.company_id);
-            }
-          }
+          const apiTenantId = extractApiTenantId(data, tenantData);
+
+          persistTenantSession({ tenantData, tenantId: apiTenantId });
         } catch (e) {
           console.warn("Failed to store tenant metadata", e);
         }
@@ -171,6 +171,7 @@ function useAuth() {
         // Redirect to home page on success
         const redirectUrl = query.get(REDIRECT_URL_KEY);
         navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath);
+        requestSocketReconnect();
 
         return {
           status: "success",
@@ -186,6 +187,14 @@ function useAuth() {
         data,
       };
     } catch (errors) {
+      if (isDeactivatedCompanyLoginError(errors)) {
+        return {
+          status: "failed",
+          message:
+            errors?.response?.data?.message || INACTIVE_COMPANY_MESSAGE,
+        };
+      }
+
       return {
         status: "failed",
         message: errors?.response?.data?.message || errors.toString(),
@@ -193,7 +202,7 @@ function useAuth() {
     }
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback(() => {
     clearAllAuthData();
 
     try {
@@ -213,7 +222,13 @@ function useAuth() {
     );
 
     navigate(appConfig.unAuthenticatedEntryPath);
-  };
+  }, [dispatch, navigate]);
+
+  const logoutInactiveCompany = useCallback((message = INACTIVE_COMPANY_MESSAGE) => {
+    performCompanyInactiveLogout(message);
+  }, []);
+
+  const forceLogout = logoutInactiveCompany;
 
   const signOut = () => {
     // Simple logout - just remove token and redirect
@@ -230,6 +245,15 @@ function useAuth() {
 
     // Restore authentication state from encrypted token
     if (isAuthenticated() && !signedIn) {
+      ensureDatabaseIdSynced();
+
+      const tenantData = getTenantData();
+
+      if (isCompanyInactive(tenantData)) {
+        logoutInactiveCompany();
+        return;
+      }
+
       // console.log("Restoring authentication state from encrypted token");
       dispatch(signInSuccess("restored")); // We don't need the actual token in Redux
 
@@ -238,14 +262,18 @@ function useAuth() {
       if (userData) {
         dispatch(setUser(userData));
       }
+
+      requestSocketReconnect();
     }
-  }, [dispatch, signedIn]);
+  }, [dispatch, signedIn, logoutInactiveCompany]);
 
   return {
     authenticated: isAuthenticated() || (token && signedIn),
     signIn,
     adminSignIn,
     signOut,
+    logoutInactiveCompany,
+    forceLogout,
   };
 }
 

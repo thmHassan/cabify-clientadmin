@@ -1,83 +1,88 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import { apiGetThirdPartyInformation, apiSaveThirdPartyInformation } from "../../../../../../services/SettingsConfigurationServices";
-import toast from 'react-hot-toast';
+import { apiSaveThirdPartyInformation } from "../../../../../../services/SettingsConfigurationServices";
+import { buildIntegrationFormState } from "../../../../../../utils/map/loadMapSettings";
+import {
+    hasValidGoogleKey,
+    isMapifyMapProvider,
+    normalizeMapsApi,
+} from "../../../../../../utils/map/resolveMapProvider";
+import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
+import MapConfigLoader from "../../../../../../components/shared/MapConfigLoader";
+import toast from "react-hot-toast";
 
 const Integrations = () => {
-    const [thirdPartyData, setThirdPartyData] = useState({
-        google_api_keys: "",
-        barikoi_api_keys: "",
-        map_settings: "",
-        mail_server: "",
-        mail_from: "",
-        mail_user_name: "",
-        mail_password: "",
-        mail_port: "",
-        tls_ssl_version: "TLSv1_2",
-        tls_ssl_enabled: true,
-        smtp_type: ""
-    });
-    const [tableLoading, setTableLoading] = useState(false);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const tenantDataFromStorage = getTenantData();
+    const {
+        loading: mapConfigLoading,
+        mapsApi: contextMapsApi,
+        settings,
+        mapConfigSource,
+        refreshMapConfig,
+    } = useMapConfig();
+
+    const [thirdPartyData, setThirdPartyData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    const tenantDataFromStorage = getTenantData();
     const showMapIntegrations = tenantDataFromStorage?.map !== "disable";
+    const mapDataReady = !mapConfigLoading && thirdPartyData;
 
-    const fetchThirdPartyInformation = useCallback(async () => {
-        setTableLoading(true);
-        try {
-            const response = await apiGetThirdPartyInformation();
-            if (response?.data?.success === 1) {
-                const data = response?.data?.settings || {};
-                setThirdPartyData(prev => ({
-                    ...prev,
-                    google_api_keys: data.google_api_keys || "",
-                    barikoi_api_keys: data.barikoi_api_keys || "",
-                    map_settings: data.map_settings || "",
-                    mail_server: data.mail_server || "",
-                    mail_from: data.mail_from || "",
-                    mail_user_name: data.mail_user_name || "",
-                    mail_password: data.mail_password || "",
-                    mail_port: data.mail_port || "",
-                    tls_ssl_version: data.tls_ssl_version || "TLSv1_2",
-                    tls_ssl_enabled: data.tls_ssl_enabled !== undefined ? data.tls_ssl_enabled : true,
-                    smtp_type: data.mail_server ? "custom" : "default"
-                }));
-            }
-        } catch (error) {
-            setThirdPartyData({
-                google_api_keys: "",
-                barikoi_api_keys: "",
-                map_settings: "",
-                mail_server: "",
-                mail_from: "",
-                mail_user_name: "",
-                mail_password: "",
-                mail_port: "",
-                tls_ssl_version: "TLSv1_2",
-                tls_ssl_enabled: true,
-                smtp_type: "default"
-            });
-        } finally {
-            setTableLoading(false);
-        }
-    }, []);
+    const effectiveMapsApi = normalizeMapsApi(contextMapsApi);
+    const usesMapifyMaps =
+        mapDataReady &&
+        (effectiveMapsApi === "mapify" ||
+            (effectiveMapsApi !== "google" &&
+                isMapifyMapProvider(thirdPartyData)));
+    const googleKeyConfigured = hasValidGoogleKey(
+        thirdPartyData?.google_api_keys
+    );
+    const activeMapProvider = usesMapifyMaps
+        ? "Mapify"
+        : googleKeyConfigured
+            ? "Google Maps"
+            : "Mapify (default)";
+
+    const refreshIntegrations = useCallback(() => {
+        setThirdPartyData(null);
+        refreshMapConfig();
+    }, [refreshMapConfig]);
 
     useEffect(() => {
-        fetchThirdPartyInformation();
-    }, [fetchThirdPartyInformation, refreshTrigger]);
+        refreshIntegrations();
+    }, [refreshIntegrations]);
+
+    useEffect(() => {
+        if (mapConfigLoading) {
+            setThirdPartyData(null);
+            return;
+        }
+
+        setThirdPartyData(
+            buildIntegrationFormState(settings, getTenantData())
+        );
+        setError(null);
+    }, [mapConfigLoading, settings]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!thirdPartyData) return;
+
         setIsSubmitting(true);
         setError(null);
 
         const formData = new FormData();
-        formData.append("google_api_keys", thirdPartyData.google_api_keys);
-        formData.append("barikoi_api_keys", thirdPartyData.barikoi_api_keys);
-        formData.append("map_settings", thirdPartyData.map_settings);
+
+        if (usesMapifyMaps) {
+            formData.append("map_type", thirdPartyData.map_type || "default");
+            formData.append("map_provider", "mapify");
+            formData.append("uses_mapify", "1");
+            formData.append("uses_google_map", "0");
+        } else {
+            formData.append("google_api_keys", thirdPartyData.google_api_keys);
+            formData.append("barikoi_api_keys", thirdPartyData.barikoi_api_keys);
+            formData.append("map_settings", thirdPartyData.map_settings);
+        }
 
         if (thirdPartyData.smtp_type === "custom") {
             formData.append("mail_server", thirdPartyData.mail_server);
@@ -90,15 +95,15 @@ const Integrations = () => {
         try {
             const response = await apiSaveThirdPartyInformation(formData);
             if (response?.data?.success === 1) {
-                toast.success("Settings saved successfully")
-                setRefreshTrigger(prev => prev + 1);
+                toast.success("Settings saved successfully");
+                refreshIntegrations();
             } else {
-                toast.error("Failed to save settings")
+                toast.error("Failed to save settings");
                 setError("Failed to save changes.");
             }
         } catch (err) {
             setError("An error occurred while saving the third-party information.");
-            toast.error("Failed to save settings")
+            toast.error("Failed to save settings");
         } finally {
             setIsSubmitting(false);
         }
@@ -113,146 +118,224 @@ const Integrations = () => {
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
-                    {showMapIntegrations && (
-                        <>
-                            <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1">
+                    {showMapIntegrations && mapConfigLoading && (
+                        <MapConfigLoader message="Loading map integration settings..." />
+                    )}
+
+                    {showMapIntegrations && mapDataReady && usesMapifyMaps && (
+                        <div className="p-4 border rounded-xl bg-white shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                                <h3 className="font-semibold text-gray-800">Mapify Maps</h3>
+                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                    Active
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Active map provider: {activeMapProvider}
+                                {mapConfigSource
+                                    ? ` (loaded from ${mapConfigSource})`
+                                    : ""}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-3">
+                                Your account uses Mapify for maps, location search, and geocoding.
+                                No Google API key is required.
+                            </p>
+                        </div>
+                    )}
+
+                    {showMapIntegrations && mapDataReady && !usesMapifyMaps && (
+                        <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between gap-3">
                                         <h3 className="font-semibold text-gray-800">Google Maps</h3>
-                                        <div className="mt-2">
-                                            <InputBox
-                                                label="API Key"
-                                                placeholder="Enter Google Maps API Key"
-                                                value={thirdPartyData.google_api_keys}
-                                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, google_api_keys: e.target.value })}
-                                            />
-                                        </div>
+                                        <span
+                                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                                googleKeyConfigured
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-gray-100 text-gray-600"
+                                            }`}
+                                        >
+                                            {googleKeyConfigured ? "API key configured" : "No API key"}
+                                        </span>
                                     </div>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Active map provider: {activeMapProvider}
+                                        {mapConfigSource
+                                            ? ` (loaded from ${mapConfigSource})`
+                                            : ""}
+                                    </p>
+                                    <div className="mt-2">
+                                        <InputBox
+                                            label="API Key"
+                                            placeholder="Enter Google Maps API Key"
+                                            value={thirdPartyData.google_api_keys}
+                                            onChange={(e) =>
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    google_api_keys: e.target.value,
+                                                })
+                                            }
+                                            disabled={mapConfigLoading}
+                                        />
+                                    </div>
+                                    {!googleKeyConfigured && (
+                                        <p className="text-sm text-gray-500 mt-2">
+                                            When no Google key is saved, the app uses Mapify as the default map provider.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-
-                            {/* <div className="grid grid-cols-2 p-4 border rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-800">Barikoi</h3>
-                                        <div className="mt-2">
-                                            <InputBox
-                                                label="API Key"
-                                                placeholder="Enter Barikoi API Key"
-                                                value={thirdPartyData.barikoi_api_keys}
-                                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, barikoi_api_keys: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> */}
-                        </>
+                        </div>
                     )}
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm border p-4 space-y-6 mt-4">
                     <h3 className="text-lg font-semibold">SMTP Options</h3>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                            <input
-                                type="radio"
-                                name="smtpType"
-                                value="default"
-                                checked={thirdPartyData.map_settings === "default"}
-                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, map_settings: e.target.value })}
-                            />
-                            Use default mail settings
-                        </label>
 
-                        <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                            <input
-                                type="radio"
-                                name="smtpType"
-                                value="custom"
-                                checked={thirdPartyData.map_settings === "custom"}
-                                onChange={(e) => setThirdPartyData({ ...thirdPartyData, map_settings: e.target.value })}
-                            />
-                            Use custom mail settings
-                        </label>
-                    </div>
+                    {mapConfigLoading || !thirdPartyData ? (
+                        <MapConfigLoader
+                            message="Loading integration settings..."
+                            minHeight="min-h-[200px]"
+                        />
+                    ) : (
+                        <>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer text-gray-700">
+                                    <input
+                                        type="radio"
+                                        name="smtpType"
+                                        value="default"
+                                        checked={thirdPartyData.map_settings === "default"}
+                                        onChange={(e) =>
+                                            setThirdPartyData({
+                                                ...thirdPartyData,
+                                                map_settings: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    Use default mail settings
+                                </label>
 
-                    {thirdPartyData.map_settings === "custom" && (
-                        <div>
-                            <div className="grid md:grid-cols-2 gap-5">
-                                <InputBox
-                                    label="Mail Server"
-                                    placeholder="smtp.looker.com"
-                                    value={thirdPartyData.mail_server}
-                                    onChange={(e) =>
-                                        setThirdPartyData({ ...thirdPartyData, mail_server: e.target.value })
-                                    }
-                                />
-
-                                <InputBox
-                                    label="From"
-                                    placeholder="Taxi Corp Admin <admin@looker.com>"
-                                    value={thirdPartyData.mail_from}
-                                    onChange={(e) =>
-                                        setThirdPartyData({ ...thirdPartyData, mail_from: e.target.value })
-                                    }
-                                />
-
-                                <InputBox
-                                    label="User Name"
-                                    placeholder="taxicorp@looker.com"
-                                    value={thirdPartyData.mail_user_name}
-                                    onChange={(e) =>
-                                        setThirdPartyData({ ...thirdPartyData, mail_user_name: e.target.value })
-                                    }
-                                />
-
-                                <InputBox
-                                    label="Password"
-                                    type="password"
-                                    placeholder="********"
-                                    value={thirdPartyData.mail_password}
-                                    onChange={(e) =>
-                                        setThirdPartyData({ ...thirdPartyData, mail_password: e.target.value })
-                                    }
-                                />
-
-                                <InputBox
-                                    label="Port"
-                                    placeholder="587"
-                                    value={thirdPartyData.mail_port}
-                                    onChange={(e) =>
-                                        setThirdPartyData({ ...thirdPartyData, mail_port: e.target.value })
-                                    }
-                                />
+                                <label className="flex items-center gap-2 cursor-pointer text-gray-700">
+                                    <input
+                                        type="radio"
+                                        name="smtpType"
+                                        value="custom"
+                                        checked={thirdPartyData.map_settings === "custom"}
+                                        onChange={(e) =>
+                                            setThirdPartyData({
+                                                ...thirdPartyData,
+                                                map_settings: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    Use custom mail settings
+                                </label>
                             </div>
-                            <div className="grid md:grid-cols-2 gap-5 mt-3">
+
+                            {thirdPartyData.map_settings === "custom" && (
                                 <div>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={thirdPartyData.tls_ssl_enabled}
+                                    <div className="grid md:grid-cols-2 gap-5">
+                                        <InputBox
+                                            label="Mail Server"
+                                            placeholder="smtp.looker.com"
+                                            value={thirdPartyData.mail_server}
                                             onChange={(e) =>
-                                                setThirdPartyData({ ...thirdPartyData, tls_ssl_enabled: e.target.checked })
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    mail_server: e.target.value,
+                                                })
                                             }
                                         />
-                                        <label className="text-[#6C6C6C]">TLS/SSL</label>
-                                    </div>
-                                    <div className="flex flex-col gap-1 mt-2">
-                                        <label className="block text-sm font-medium mb-1">TLS/SSL Version</label>
-                                        <select
-                                            className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
-                                            value={thirdPartyData.tls_ssl_version}
+
+                                        <InputBox
+                                            label="From"
+                                            placeholder="Taxi Corp Admin <admin@looker.com>"
+                                            value={thirdPartyData.mail_from}
                                             onChange={(e) =>
-                                                setThirdPartyData({ ...thirdPartyData, tls_ssl_version: e.target.value })
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    mail_from: e.target.value,
+                                                })
                                             }
-                                        >
-                                            <option value="TLSv1_2">TLSv1_2</option>
-                                            <option value="TLSv1_3">TLSv1_3</option>
-                                        </select>
+                                        />
+
+                                        <InputBox
+                                            label="User Name"
+                                            placeholder="taxicorp@looker.com"
+                                            value={thirdPartyData.mail_user_name}
+                                            onChange={(e) =>
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    mail_user_name: e.target.value,
+                                                })
+                                            }
+                                        />
+
+                                        <InputBox
+                                            label="Password"
+                                            type="password"
+                                            placeholder="********"
+                                            value={thirdPartyData.mail_password}
+                                            onChange={(e) =>
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    mail_password: e.target.value,
+                                                })
+                                            }
+                                        />
+
+                                        <InputBox
+                                            label="Port"
+                                            placeholder="587"
+                                            value={thirdPartyData.mail_port}
+                                            onChange={(e) =>
+                                                setThirdPartyData({
+                                                    ...thirdPartyData,
+                                                    mail_port: e.target.value,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-5 mt-3">
+                                        <div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={thirdPartyData.tls_ssl_enabled}
+                                                    onChange={(e) =>
+                                                        setThirdPartyData({
+                                                            ...thirdPartyData,
+                                                            tls_ssl_enabled: e.target.checked,
+                                                        })
+                                                    }
+                                                />
+                                                <label className="text-[#6C6C6C]">TLS/SSL</label>
+                                            </div>
+                                            <div className="flex flex-col gap-1 mt-2">
+                                                <label className="block text-sm font-medium mb-1">
+                                                    TLS/SSL Version
+                                                </label>
+                                                <select
+                                                    className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
+                                                    value={thirdPartyData.tls_ssl_version}
+                                                    onChange={(e) =>
+                                                        setThirdPartyData({
+                                                            ...thirdPartyData,
+                                                            tls_ssl_version: e.target.value,
+                                                        })
+                                                    }
+                                                >
+                                                    <option value="TLSv1_2">TLSv1_2</option>
+                                                    <option value="TLSv1_3">TLSv1_3</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
+                        </>
                     )}
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -260,7 +343,7 @@ const Integrations = () => {
                     <div className="flex justify-end gap-3 pt-4">
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || mapConfigLoading || !thirdPartyData}
                             className="px-4 py-2 bg-[#1F41BB] text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                         >
                             {isSubmitting ? "Saving..." : "Save Changes"}
@@ -276,15 +359,21 @@ const Integrations = () => {
             </form>
         </div>
     );
-}
+};
 
-
-const InputBox = ({ label, placeholder, type = "text", value, onChange, disabled = false }) => (
+const InputBox = ({
+    label,
+    placeholder,
+    type = "text",
+    value,
+    onChange,
+    disabled = false,
+}) => (
     <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
         <div className="">
             <input
-                type="text"
+                type={type}
                 disabled={disabled}
                 className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold disabled:bg-gray-50"
                 placeholder={placeholder}
@@ -294,6 +383,5 @@ const InputBox = ({ label, placeholder, type = "text", value, onChange, disabled
         </div>
     </div>
 );
-
 
 export default Integrations;

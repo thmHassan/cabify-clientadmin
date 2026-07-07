@@ -9,8 +9,10 @@ import AllRoutes from "./components/routes/AllRoutes";
 import ScrollToTop from "./components/shared/ScrollToTop";
 import Loading from "./components/shared/Loading/Loading";
 import { SocketProvider } from "./components/routes/SocketProvider";
+import ForceLogoutListener from "./components/routes/ForceLogoutListener";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
+import { MapConfigProvider } from "./contexts/MapConfigContext";
 
 const environment = import.meta.env.VITE_NODE_ENV;
 
@@ -26,9 +28,12 @@ function App() {
           <Suspense fallback={<Loading />}>
             <TimezoneProvider>
               <CurrencyProvider>
-                <SocketProvider>
-                  <AllRoutes />
-                </SocketProvider>
+                <MapConfigProvider>
+                  <SocketProvider>
+                    <ForceLogoutListener />
+                    <AllRoutes />
+                  </SocketProvider>
+                </MapConfigProvider>
               </CurrencyProvider>
             </TimezoneProvider>
           </Suspense>

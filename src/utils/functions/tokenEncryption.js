@@ -2,6 +2,11 @@
 // Using base64 encoding with a simple key for basic obfuscation
 // For production, consider using more robust encryption libraries like crypto-js
 
+import {
+  DEFAULT_DEACTIVATED_MESSAGE,
+  setInactiveCompanyMessage,
+} from "./tenantStatus";
+
 const ENCRYPTION_KEY = 'taxi-dispatch-admin-key-2024';
 
 /**
@@ -175,6 +180,106 @@ export const getTenantData = () => {
 };
 
 /**
+ * Extracts the tenant/database id from a login API response.
+ * Must not use company_id — that is a separate business identifier.
+ */
+export const extractApiTenantId = (data = {}, tenantData = null) => {
+  const td = tenantData || data?.tenant_data || data?.data?.tenant_data || null;
+
+  return (
+    data?.tenant_id ||
+    data?.tenantId ||
+    data?.database ||
+    data?.data?.tenant_id ||
+    data?.data?.tenantId ||
+    data?.data?.database ||
+    td?.tenant_id ||
+    td?.tenantId ||
+    td?.database ||
+    null
+  );
+};
+
+/**
+ * Resolves the value for the API `database` header and socket client_id.
+ */
+export const resolveDatabaseId = () => {
+  const storedTenantId = getTenantId();
+  const companyId = getCompanyId();
+  const tenantData = getTenantData();
+
+  const fromTenantData = extractApiTenantId({}, tenantData);
+
+  if (fromTenantData) {
+    if (
+      storedTenantId &&
+      companyId &&
+      String(storedTenantId) === String(companyId) &&
+      String(fromTenantData) !== String(companyId)
+    ) {
+      return fromTenantData;
+    }
+
+    return storedTenantId || fromTenantData;
+  }
+
+  return storedTenantId;
+};
+
+/**
+ * Fixes stale localStorage when tenant_id was incorrectly set to company_id.
+ */
+export const ensureDatabaseIdSynced = () => {
+  const resolved = resolveDatabaseId();
+
+  if (resolved && resolved !== getTenantId()) {
+    storeTenantId(resolved);
+    console.warn("[auth] synced database id:", resolved);
+  }
+
+  return resolved || getTenantId();
+};
+
+/**
+ * Tenant database id from login (used for API `database` header and socket client_id).
+ */
+export const getDatabaseId = () => resolveDatabaseId();
+
+/**
+ * Persists tenant metadata from login. Keeps tenant_id (database) separate from company_id.
+ */
+export const persistTenantSession = ({ tenantData, tenantId: apiTenantId } = {}) => {
+  const databaseId =
+    apiTenantId || extractApiTenantId({ tenant_data: tenantData }, tenantData);
+
+  const enrichedTenantData =
+    tenantData && databaseId
+      ? { ...tenantData, tenant_id: databaseId }
+      : tenantData;
+
+  if (enrichedTenantData) {
+    storeTenantData(enrichedTenantData);
+    if (enrichedTenantData.company_id) {
+      storeCompanyId(enrichedTenantData.company_id);
+    }
+  }
+
+  if (databaseId) {
+    storeTenantId(databaseId);
+    console.log("[auth] tenant session stored:", {
+      tenant_id: databaseId,
+      company_id: enrichedTenantData?.company_id,
+    });
+  } else {
+    console.warn(
+      "[auth] no tenant/database id in login response — API calls may fail"
+    );
+  }
+
+  return databaseId;
+};
+
+/**
  * Removes tenant id from localStorage
  */
 export const removeTenantId = () => {
@@ -222,30 +327,66 @@ export const isAuthenticated = () => {
 };
 
 /**
- * Clears all authentication data from localStorage
- * This includes both encrypted tokens and any legacy Redux persistence data
+ * Clears all cookies for the current domain.
+ */
+export const clearAllCookies = () => {
+  try {
+    const cookies = document.cookie ? document.cookie.split(";") : [];
+
+    for (const cookie of cookies) {
+      const eqPos = cookie.indexOf("=");
+      const name = (eqPos > -1 ? cookie.slice(0, eqPos) : cookie).trim();
+      if (!name) continue;
+
+      const expires = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = `${name}=;${expires};path=/`;
+      document.cookie = `${name}=;${expires};path=/;domain=${window.location.hostname}`;
+    }
+  } catch (error) {
+    console.warn("Failed to clear cookies:", error);
+  }
+};
+
+/**
+ * Clears all authentication data from localStorage.
  */
 export const clearAllAuthData = () => {
   try {
-    // Remove encrypted token
-    localStorage.removeItem('admin_token');
-    
-    // Remove tenant id
-    localStorage.removeItem('tenant_id');
-    
-    // Remove company id
-    localStorage.removeItem('company_id');
-    
-    // Remove tenant data
-    localStorage.removeItem('tenant_data');
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("tenant_id");
+    localStorage.removeItem("company_id");
+    localStorage.removeItem("tenant_data");
+    localStorage.removeItem("admin");
+    localStorage.removeItem("auth_user");
 
-    // Remove any legacy Redux persistence data
-    localStorage.removeItem('admin');
-    
-    console.log('All authentication data cleared from localStorage');
+    console.log("All authentication data cleared from localStorage");
   } catch (error) {
-    console.error('Failed to clear authentication data:', error);
+    console.error("Failed to clear authentication data:", error);
   }
+};
+
+/**
+ * Full browser auth wipe + hard redirect to login (used on socket force-logout).
+ */
+export const hardLogoutToLogin = (
+  message = DEFAULT_DEACTIVATED_MESSAGE,
+  loginPath = "/sign-in"
+) => {
+  const logoutMessage = message || DEFAULT_DEACTIVATED_MESSAGE;
+
+  clearAllAuthData();
+  clearAllCookies();
+
+  try {
+    sessionStorage.clear();
+    setInactiveCompanyMessage(logoutMessage);
+  } catch (error) {
+    console.warn("Failed to reset session storage for logout:", error);
+  }
+
+  console.info("[auth] hard logout — redirecting to login:", logoutMessage);
+
+  window.location.replace(loginPath);
 };
 
 /**

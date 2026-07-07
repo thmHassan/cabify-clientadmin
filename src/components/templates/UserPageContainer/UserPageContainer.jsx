@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import appConfig from "../../configs/app.config";
 import useAuth from "../../../utils/hooks/useAuth";
 import SettingIcon from "../../svg/SettingIcon";
@@ -18,10 +18,14 @@ import DrawerIcon from "../../svg/DrawerIcon";
 import CloseIcon from "../../svg/CloseIcon";
 import PageSubTitle from "../../ui/PageSubTitle/PageSubTitle";
 import { PlainSwitch } from "../../ui/Switch/Switch ";
-import { getTenantData, getTenantId } from "../../../utils/functions/tokenEncryption";
+import { getTenantData, resolveDatabaseId } from "../../../utils/functions/tokenEncryption";
 import { filterNavByTenantFeatures } from "../../../utils/functions/featureVisibilityFilter";
 import { apiGetBookingSystem, apiUpdateBookingSystem } from "../../../services/AddBookingServices";
 import { useSocket, useSocketStatus } from "../../routes/SocketProvider";
+import useDispatchSettingsRefreshNotification from "../../../utils/hooks/useDispatchSettingsRefreshNotification";
+import { rebindCompanyInactiveLogoutListener } from "../../../services/socketConntection";
+import { SOCKET_EVENTS, NOTIFICATION_ACTIONS } from "../../../constants/socketEvents.constant";
+import { refreshCurrentPage } from "../../../utils/notifications/refreshPageNotification";
 import {
   getAvatarSrc,
   handleAvatarError,
@@ -54,11 +58,17 @@ const UserPageContainer = ({ children }) => {
   const { signOut } = useAuth();
   const user = useAppSelector((state) => state.auth.user);
   const tenantData = getTenantData();
-  const tenantId = getTenantId();
+  const tenantId = resolveDatabaseId();
   const navigate = useNavigate();
   const location = useLocation();
   const socket = useSocket();
   const isConnected = useSocketStatus();
+
+  const addNotification = useCallback((notification) => {
+    setNotifications((prev) => [notification, ...prev]);
+  }, []);
+
+  useDispatchSettingsRefreshNotification(socket, addNotification);
 
   // Filter navigation elements based on tenant feature flags
   const filteredNavElements = useMemo(
@@ -135,16 +145,15 @@ const UserPageContainer = ({ children }) => {
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
-    socket.on("send-reminder", handleSendReminder);
+    socket.on(SOCKET_EVENTS.SEND_REMINDER, handleSendReminder);
+    rebindCompanyInactiveLogoutListener();
 
     console.log("🔌 All listeners registered");
 
     return () => {
-      console.log("🔌 Cleaning up listeners");
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-      socket.off("send-reminder", handleSendReminder);
-      socket.offAny();
+      socket.off(SOCKET_EVENTS.SEND_REMINDER, handleSendReminder);
     };
   }, [socket]);
 
@@ -587,12 +596,25 @@ const renderBookingSystemUI = () => {
                             </div>
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs text-gray-500 truncate">
-                                Client: {notification.client_id}
+                                {notification.client_id
+                                  ? `Client: ${notification.client_id}`
+                                  : notification.source === "dispatch_settings"
+                                    ? "Dispatch settings"
+                                    : ""}
                               </span>
                               <span className="text-xs text-gray-400 flex-shrink-0">
                                 {formatTimestamp(notification.timestamp)}
                               </span>
                             </div>
+                            {notification.action === NOTIFICATION_ACTIONS.REFRESH_PAGE && (
+                              <button
+                                type="button"
+                                onClick={refreshCurrentPage}
+                                className="self-start px-3 py-1.5 text-xs font-medium text-white bg-[#1F41BB] rounded-md hover:bg-blue-700"
+                              >
+                                Refresh page
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))

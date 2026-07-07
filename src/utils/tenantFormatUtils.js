@@ -1,5 +1,20 @@
 import { COUNTRY_CODE_MAP } from "../constants/countryCode.constant";
 import { getTenantData } from "./functions/tokenEncryption";
+import {
+    formatDistanceFromBooking,
+    formatDistanceFromMeters,
+    formatDistanceValueWithUnit,
+    metersToDisplayDistanceValue,
+    parseDistanceUnit,
+} from "./distanceFormatUtils.js";
+
+export {
+    formatDistanceFromBooking,
+    formatDistanceFromMeters,
+    formatDistanceValueWithUnit,
+    metersToDisplayDistanceValue,
+    parseDistanceUnit,
+};
 
 export const getTenantCountryIso = (tenant = getTenantData()) => {
     const iso = tenant?.country_of_use || tenant?.data?.country_of_use;
@@ -24,11 +39,6 @@ export const formatPhoneNumber = (countryCode, phoneNumber, tenant = getTenantDa
     return dial ? `${dial} ${phoneNumber}` : String(phoneNumber);
 };
 
-export const parseDistanceUnit = (unitsValue) => {
-    if (!unitsValue) return null;
-    return String(unitsValue).toLowerCase() === "km" ? "Km" : "Miles";
-};
-
 export const getDistanceUnitFromTenant = (tenant = getTenantData()) => {
     const units = tenant?.units || tenant?.data?.units;
     return parseDistanceUnit(units);
@@ -39,14 +49,4 @@ export const hasTenantDistanceUnit = (tenant = getTenantData()) =>
 
 export const resolveDistanceUnit = ({ tenant = getTenantData(), apiUnits } = {}) => {
     return getDistanceUnitFromTenant(tenant) || parseDistanceUnit(apiUnits) || "Km";
-};
-
-export const formatDistanceFromMeters = (distanceInMeters, distanceUnit = "Km") => {
-    if (!distanceInMeters) return "-";
-
-    if (distanceUnit === "Km") {
-        return `${(distanceInMeters / 1000).toFixed(2)} Km`;
-    }
-
-    return `${(distanceInMeters / 1609.34).toFixed(2)} Miles`;
 };

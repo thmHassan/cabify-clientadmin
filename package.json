@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test:unit": "node --test test/*.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -22,7 +23,7 @@
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "lodash": "^4.17.21",
-    "maplibre-gl": "^5.15.0",
+    "maplibre-gl": "^5.24.0",
     "miragejs": "^0.1.48",
     "moment": "^2.30.1",
     "pusher-js": "^8.4.0",

@@ -2,8 +2,13 @@ import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useRef, useState, useEffect } from "react";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
+import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
+import { formatDistanceFromBooking } from "../../../../../../utils/tenantFormatUtils";
 
 const ViewBookingModel = ({ initialValue, setIsOpen }) => {
+    const { googleKey, provider } = useMapConfig();
+    const distanceUnit = useDistanceUnit();
     const [isLoading, setIsLoading] = useState(false);
     const [rideData, setRideData] = useState(null);
     const [destinationPlotData, setDestinationPlotData] = useState("");
@@ -19,7 +24,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                 const pickup = initialValue.pickup_point.split(',').map(v => v.trim());
                 const destination = initialValue.destination_point.split(',').map(v => v.trim());
 
-                if (pickup.length === 2 && destination.length === 2) {
+                if (pickup.length === 2 && destination.length === 2 && provider === "google" && googleKey) {
                     let waypointsStr = "";
                     if (initialValue.via_point) {
                         try {
@@ -32,17 +37,15 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                         }
                     }
 
-                    const url = `https://www.google.com/maps/embed/v1/directions
-                    ?key=AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU
-                    &origin=${pickup[0]},${pickup[1]}
-                    &destination=${destination[0]},${destination[1]}${waypointsStr}
-                    &zoom=12`;
+                    const url = `https://www.google.com/maps/embed/v1/directions?key=${googleKey}&origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}${waypointsStr}&zoom=12`;
 
-                    setMapUrl(url.replace(/\s/g, ""));
+                    setMapUrl(url);
+                } else {
+                    setMapUrl("https://www.google.com/maps/embed");
                 }
             }
         }
-    }, [initialValue]);
+    }, [initialValue, googleKey, provider]);
 
     const chargeFields = [
         "fares",
@@ -436,7 +439,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                         <input
                                             type="text"
                                             readOnly
-                                            value={rideData?.distance ? `${rideData.distance} km` : "N/A"}
+                                            value={rideData?.distance ? formatDistanceFromBooking(rideData, distanceUnit) : "N/A"}
                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50 font-medium"
                                         />
                                     </div>

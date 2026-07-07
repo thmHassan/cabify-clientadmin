@@ -1,5 +1,6 @@
 export const ROUTE_FEATURE_MAP = {
     "accounts": "accounts",
+    "finance-center": { flag: "finance_center", defaultVisible: true },
     // "map": "map",
     "manage-zones": "manage_zones",
     "plots": "zone",
@@ -32,10 +33,21 @@ export const filterNavByTenantFeatures = (navElements, tenantData) => {
         title,
         routes: routes.filter((route) => {
             // Get the feature flag name from the route key
-            const featureFlagName = ROUTE_FEATURE_MAP[route.key];
+            const featureConfig = ROUTE_FEATURE_MAP[route.key];
+            const featureFlagName = typeof featureConfig === "string"
+                ? featureConfig
+                : featureConfig?.flag;
 
             // If route has no feature mapping, show it by default (always visible)
             if (!featureFlagName) return true;
+
+            if (
+                typeof featureConfig === "object" &&
+                featureConfig.defaultVisible &&
+                tenantData[featureFlagName] == null
+            ) {
+                return true;
+            }
 
             // Show route only if feature is enabled in tenant data (supports both formats)
             return isFeatureEnabled(tenantData[featureFlagName]);

@@ -3,9 +3,12 @@ import { useRef, useState, useEffect } from "react";
 import { unlockBodyScroll } from "../../../../../../utils/functions/common.function";
 import Button from "../../../../../../components/ui/Button/Button";
 import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
+import { formatDistanceFromBooking } from "../../../../../../utils/tenantFormatUtils";
 
 const ViewBookingModel = ({ initialValue, setIsOpen }) => {
     const { googleKey, provider } = useMapConfig();
+    const distanceUnit = useDistanceUnit();
     const [isLoading, setIsLoading] = useState(false);
     const [rideData, setRideData] = useState(null);
     const [destinationPlotData, setDestinationPlotData] = useState("");
@@ -436,7 +439,7 @@ const ViewBookingModel = ({ initialValue, setIsOpen }) => {
                                         <input
                                             type="text"
                                             readOnly
-                                            value={rideData?.distance ? `${rideData.distance} km` : "N/A"}
+                                            value={rideData?.distance ? formatDistanceFromBooking(rideData, distanceUnit) : "N/A"}
                                             className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50 font-medium"
                                         />
                                     </div>

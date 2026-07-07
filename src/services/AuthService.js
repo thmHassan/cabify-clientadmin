@@ -46,11 +46,3 @@ export async function apiForgotPassword(data) {
     },
   });
 }
-
-export async function apiResetPassword(data) {
-  return ApiService.fetchData({
-    url: "/company/reset-password",
-    method: "post",
-    data,
-  });
-}

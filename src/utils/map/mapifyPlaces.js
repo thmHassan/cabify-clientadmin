@@ -2,7 +2,10 @@ import {
   apiGetMapifyGeocoding,
   apiGetMapifySearch,
 } from "../../services/MapService";
+import { toMapifyBoundaryCountryCode } from "./mapifyBoundaryCountry";
 import { getCountryCenter } from "./countryCenters";
+
+export { toMapifyBoundaryCountryCode } from "./mapifyBoundaryCountry";
 
 export const isMapifyRequestCanceled = (error) =>
   error?.name === "CanceledError" ||
@@ -90,11 +93,12 @@ export async function geocodeWithMapify({
   signal,
 }) {
   if (!query?.trim()) return [];
+  const boundaryCode = toMapifyBoundaryCountryCode(boundaryCountry);
 
   const response = await apiGetMapifyGeocoding(
     {
       q: query.trim(),
-      boundary_country: (boundaryCountry || "").toUpperCase(),
+      ...(boundaryCode ? { boundary_country: boundaryCode } : {}),
       ...buildFocusParams({ lat, lon }),
     },
     signal
@@ -135,13 +139,18 @@ export async function autocompleteWithMapify({
 }) {
   if (!query?.trim()) return [];
 
-  const geocoded = await geocodeWithMapify({
-    query,
-    lat,
-    lon,
-    boundaryCountry,
-    signal,
-  });
+  let geocoded = [];
+  try {
+    geocoded = await geocodeWithMapify({
+      query,
+      lat,
+      lon,
+      boundaryCountry,
+      signal,
+    });
+  } catch (error) {
+    if (isMapifyRequestCanceled(error)) throw error;
+  }
 
   if (geocoded.length) return geocoded;
 
@@ -155,13 +164,22 @@ export async function addressToCoordinatesMapify({
   boundaryCountry,
   signal,
 }) {
-  const results = await geocodeWithMapify({
-    query: address,
-    lat,
-    lon,
-    boundaryCountry,
-    signal,
-  });
+  let results = [];
+  try {
+    results = await geocodeWithMapify({
+      query: address,
+      lat,
+      lon,
+      boundaryCountry,
+      signal,
+    });
+  } catch (error) {
+    if (isMapifyRequestCanceled(error)) throw error;
+  }
+
+  if (!results.length) {
+    results = await searchWithMapify({ query: address, lat, lon, signal });
+  }
 
   if (!results.length) return null;
 

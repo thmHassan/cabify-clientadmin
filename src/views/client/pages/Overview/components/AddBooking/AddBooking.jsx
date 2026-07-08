@@ -2,7 +2,13 @@ import { ErrorMessage, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
 import Maps from "./components/Maps";
 import { getTenantData } from "../../../../../../utils/functions/tokenEncryption";
-import { getTenantCountryIso } from "../../../../../../utils/tenantFormatUtils";
+import {
+    formatDistanceValueWithUnit,
+    getTenantCountryIso,
+    metersToDisplayDistanceValue,
+    parseDistanceUnit,
+} from "../../../../../../utils/tenantFormatUtils";
+import useDistanceUnit from "../../../../../../utils/hooks/useDistanceUnit";
 import { apiGetSubCompany } from "../../../../../../services/SubCompanyServices";
 import { apiGetAccount } from "../../../../../../services/AccountService";
 import { apiGetDriverManagement } from "../../../../../../services/DriverManagementService";
@@ -102,6 +108,7 @@ const AddBooking = ({ setIsOpen }) => {
         barikoiKey,
         countryOfUse,
     } = useMapConfig();
+    const distanceUnit = useDistanceUnit();
     const apiKeys = { googleKey, barikoiKey };
     const isConfigLoaded = !mapConfigLoading;
 
@@ -652,7 +659,14 @@ const AddBooking = ({ setIsOpen }) => {
             if (response?.data?.success === 1) {
                 setFareData(response.data);
                 setFareCalculated(true);
-                if (response.data.distance) setFieldValue('distance', (response.data.distance / 1000).toFixed(2));
+                if (response.data.distance_value != null) {
+                    const responseUnit = parseDistanceUnit(response.data.distance_unit) || distanceUnit;
+                    setFieldValue('distance', responseUnit === distanceUnit
+                        ? Number(response.data.distance_value).toFixed(2)
+                        : metersToDisplayDistanceValue(response.data.distance, distanceUnit));
+                } else if (response.data.distance) {
+                    setFieldValue('distance', metersToDisplayDistanceValue(response.data.distance, distanceUnit));
+                }
                 toast.success("Fare calculated successfully");
             } else {
                 const errorMsg = response?.data?.message || "Failed to calculate fares";
@@ -1484,7 +1498,7 @@ const AddBooking = ({ setIsOpen }) => {
                                                 type="text"
                                                 placeholder="Distance will be shown here"
                                                 readOnly
-                                                value={values.distance ? `${values.distance} km` : ""}
+                                                value={formatDistanceValueWithUnit(values.distance, distanceUnit)}
                                                 className="border-[1.5px] shadow-lg border-[#8D8D8D] rounded-[8px] px-3 py-2 w-full bg-gray-50"
                                             />
                                         </div>

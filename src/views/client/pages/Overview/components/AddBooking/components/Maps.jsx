@@ -1196,7 +1196,6 @@ export default function Maps({
 // }) {
 //     const tenant = getTenantData();
 //     const barikoiApiKey = tenant?.barikoi_api_key || "bkoi_a468389d0211910bd6723de348e0de79559c435f07a17a5419cbe55ab55a890a";
-//     const googleApiKey = tenant?.google_api_key || "AIzaSyDTlV1tPVuaRbtvBQu4-kjDhTV54tR4cDU";
 
 //     if (mapsApi === "barikoi") {
 //         return (

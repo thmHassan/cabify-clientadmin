@@ -103,15 +103,6 @@ export const resolveMapProvider = ({
     return { provider: "mapify" };
   }
 
-  const googleKey = getGoogleApiKey(settings, apiKeysData);
-
-  if (hasValidGoogleKey(googleKey)) {
-    return {
-      provider: "google",
-      googleKey: googleKey.trim(),
-    };
-  }
-
   const mapType = String(settings.map_type || "")
     .trim()
     .toLowerCase();

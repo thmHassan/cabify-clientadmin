@@ -33,16 +33,50 @@ export async function apiSignOut() {
 }
 
 export async function apiForgotPassword(data) {
-  // Create FormData for the forgot password API
-  const formData = new FormData();
-  formData.append('email', data.email);
+  const payload = {
+    email: data.email,
+  };
 
-  return ApiService.fetchData({
-    url: "/company/forgot-password",
-    method: "post",
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const primaryUrl = "/company/forgot-password";
+  const fallbackUrl = "/forgot-password";
+  try {
+    return await ApiService.fetchData({
+      url: primaryUrl,
+      method: "post",
+      data: payload,
+    });
+  } catch (primaryError) {
+    if (primaryError?.response?.status === 404 || primaryError?.response?.status === 405) {
+      return await ApiService.fetchData({
+        url: fallbackUrl,
+        method: "post",
+        data: payload,
+      });
+    }
+    throw primaryError;
+  }
+
+}
+
+export async function apiResetPassword(data) {
+  const payload = data;
+  const primaryUrl = "/company/reset-password";
+  const fallbackUrl = "/reset-password";
+
+  try {
+    return await ApiService.fetchData({
+      url: primaryUrl,
+      method: "post",
+      data: payload,
+    });
+  } catch (primaryError) {
+    if (primaryError?.response?.status === 404 || primaryError?.response?.status === 405) {
+      return await ApiService.fetchData({
+        url: fallbackUrl,
+        method: "post",
+        data: payload,
+      });
+    }
+    throw primaryError;
+  }
 }

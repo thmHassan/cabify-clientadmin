@@ -3,7 +3,7 @@ export const ROUTE_FEATURE_MAP = {
     "finance-center": { flag: "finance_center", defaultVisible: true },
     // "map": "map",
     "manage-zones": "manage_zones",
-    "plots": "zone",
+    "plots": { flag: "zone", defaultVisible: true },
     "lost-found": "lost_found",
     "dispatcher": "dispatcher",
     "sub-company": "sub_company",
@@ -12,12 +12,29 @@ export const ROUTE_FEATURE_MAP = {
 };
 
 /**
- * Checks if a feature is enabled (supports both "enable"/"disable" and "yes"/"no" formats)
- * @param {string} value - The feature flag value from tenant data
- * @returns {boolean} True if feature is enabled
+ * Checks if a feature is enabled across common backend payload formats.
+ * @param {string|number|boolean} value
+ * @returns {boolean}
  */
 const isFeatureEnabled = (value) => {
-    return value === "enable" || value === "yes";
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === "enable" || normalized === "yes" || normalized === "true" || normalized === "on" || normalized === "1";
+};
+
+/**
+ * Checks if a feature is explicitly disabled.
+ * @param {string|number|boolean} value
+ * @returns {boolean}
+ */
+const isFeatureDisabled = (value) => {
+    if (value === false) return true;
+    if (value === null || value === undefined || value === "") return false;
+
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === "disable" || normalized === "no" || normalized === "false" || normalized === "off" || normalized === "0";
 };
 
 /**
@@ -49,8 +66,10 @@ export const filterNavByTenantFeatures = (navElements, tenantData) => {
                 return true;
             }
 
-            // Show route only if feature is enabled in tenant data (supports both formats)
-            return isFeatureEnabled(tenantData[featureFlagName]);
+            const featureValue = tenantData[featureFlagName];
+
+            if (isFeatureDisabled(featureValue)) return false;
+            return isFeatureEnabled(featureValue);
         }),
     }));
 };

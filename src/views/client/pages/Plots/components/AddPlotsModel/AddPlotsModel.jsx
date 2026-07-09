@@ -118,6 +118,47 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
     return [];
   }, []);
 
+  const normalizeCoordinatePair = useCallback((pair) => {
+    if (!Array.isArray(pair) || pair.length < 2) return null;
+
+    const first = Number(pair[0]);
+    const second = Number(pair[1]);
+    const normalizeLon = (value) => ((((value + 180) % 360) + 360) % 360) - 180;
+
+    if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+
+    const firstAsLngLat = Math.abs(first) <= 180 && Math.abs(second) <= 90;
+    const secondAsLngLat = Math.abs(second) <= 180 && Math.abs(first) <= 90;
+
+    if (firstAsLngLat) {
+      return [first, second];
+    }
+
+    // Likely [lng, lat] with longitude wrapped/shifted and latitude valid.
+    if (Math.abs(second) <= 90) {
+      const normalizedLng = normalizeLon(first);
+      if (Math.abs(normalizedLng) <= 180) return [normalizedLng, second];
+      return null;
+    }
+
+    // Likely [lat, lng] where longitude is second field.
+    if (secondAsLngLat) {
+      return [second, first];
+    }
+
+    if (Math.abs(first) <= 90) {
+      const normalizedLng = normalizeLon(second);
+      if (Math.abs(normalizedLng) <= 180) return [first, normalizedLng];
+    }
+
+    return null;
+  }, []);
+
+  const normalizeCoordinates = useCallback((coords) => {
+    if (!Array.isArray(coords)) return [];
+    return coords.map(normalizeCoordinatePair).filter(Boolean);
+  }, [normalizeCoordinatePair]);
+
   useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current || mapInstanceRef.current || !window.L) return;
 
@@ -128,12 +169,20 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
 
     map.on("click", (e) => {
       const { lat, lng } = e.latlng;
-      const newCoords = [...coordinatesRef.current, [lng, lat]];
+      const normalizedPoint = normalizeCoordinatePair([lng, lat]);
+
+      if (!normalizedPoint) {
+        setSubmitError("Invalid map point received. Please click a valid map location.");
+        return;
+      }
+
+      const newCoords = [...coordinatesRef.current, normalizedPoint];
       coordinatesRef.current = newCoords;
       setCoordinates(newCoords);
       if (formikSetFieldRef.current) formikSetFieldRef.current("coordinates", newCoords);
 
-      const m = window.L.circleMarker([lat, lng], {
+      const markerPoint = [normalizedPoint[1], normalizedPoint[0]];
+      const m = window.L.circleMarker(markerPoint, {
         radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
       }).addTo(map);
       m.bindTooltip(`${newCoords.length}`, { permanent: true, direction: "center", className: "coordinate-label" });
@@ -147,7 +196,7 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
       }
     });
 
-    const initCoords = coordinatesRef.current;
+    const initCoords = normalizeCoordinates(coordinatesRef.current);
     if (initCoords.length >= 3) {
       initCoords.forEach((c, idx) => {
         const m = window.L.circleMarker([c[1], c[0]], {
@@ -164,7 +213,7 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
 
     mapInstanceRef.current = map;
     setMapReady(true);
-  }, [mapLoaded]);
+  }, [mapLoaded, normalizeCoordinatePair, normalizeCoordinates]);
 
   useEffect(() => {
     if (!mapLoaded || !mapReady || !mapInstanceRef.current || !window.L) return;
@@ -221,13 +270,27 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
   const handleSubmit = async (values) => {
     setIsLoading(true); setSubmitError(null);
     try {
+      const normalizedCoordinates = normalizeCoordinates(coordinates);
+      if (normalizedCoordinates.length < 3) {
+        setSubmitError("Invalid coordinates. Please redraw the plot on map.");
+        return;
+      }
+
+      const hasInvalidRange = normalizedCoordinates.some(
+        ([lng, lat]) => Math.abs(lng) > 180 || Math.abs(lat) > 90
+      );
+      if (hasInvalidRange) {
+        setSubmitError("Invalid plot coordinates. Longitude must be within -180..180 and latitude within -90..90.");
+        return;
+      }
+
       const fd = new FormData();
       if (isEditMode) fd.append("id", initialValue.id);
       fd.append("name", values.name || "");
       fd.append("features[type]", "Feature");
       fd.append("features[properties][name]", values.name);
       fd.append("features[geometry][type]", "Polygon");
-      const closed = [...coordinates, coordinates[0]];
+      const closed = [...normalizedCoordinates, normalizedCoordinates[0]];
       fd.append("features[geometry][coordinates]", JSON.stringify([closed]));
       const res = isEditMode ? await apiEditPlot(fd) : await apiCreatePlot(fd);
       if (res?.data?.success === 1 || res?.status === 200) {

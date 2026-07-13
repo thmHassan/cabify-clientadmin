@@ -62,6 +62,8 @@ const RELEASE_MODE_LABELS = {
 };
 
 const RELEASE_LEAD_PRESETS = [15, 30, 60, 120];
+const DEFAULT_DRIVER_JOB_START_WINDOW_MINUTES = 120;
+const DRIVER_JOB_START_WINDOW_PRESETS = [60, 120, 180, 240];
 
 const normalizeReleaseSettings = (raw) => {
     const value = raw && typeof raw === "object" ? raw : {};
@@ -80,6 +82,13 @@ const normalizeReleaseSettings = (raw) => {
         mode: modes.includes(mode) ? mode : DEFAULT_RELEASE_SETTINGS.mode,
         modes,
     };
+};
+
+const normalizeDriverJobStartWindowMinutes = (value) => {
+    const minutes = Number(value);
+    return Number.isFinite(minutes)
+        ? Math.max(0, Math.min(Math.round(minutes), 1440))
+        : DEFAULT_DRIVER_JOB_START_WINDOW_MINUTES;
 };
 
 const getDispatchItem = (systemKey) =>
@@ -236,6 +245,9 @@ const DispatchSystem = () => {
     const [verifying, setVerifying] = useState(false);
     const [selectedDispatchSystem, setSelectedDispatchSystem] = useState(null);
     const [releaseSettings, setReleaseSettings] = useState(DEFAULT_RELEASE_SETTINGS);
+    const [driverJobStartWindowMinutes, setDriverJobStartWindowMinutes] = useState(
+        DEFAULT_DRIVER_JOB_START_WINDOW_MINUTES
+    );
     const socket = useSocket();
 
     const getSystemDisplayName = (key) =>
@@ -313,6 +325,11 @@ const DispatchSystem = () => {
                 const initial = {};
                 setReleaseSettings(
                     normalizeReleaseSettings(dispatchRes.data.release_settings)
+                );
+                setDriverJobStartWindowMinutes(
+                    normalizeDriverJobStartWindowMinutes(
+                        dispatchRes.data.driver_job_start_window_minutes
+                    )
                 );
 
                 dispatchRes.data.data.forEach((item) => {
@@ -500,7 +517,7 @@ const DispatchSystem = () => {
             } else {
                 toast.error("Incorrect password");
             }
-        } catch (e) {
+        } catch {
             toast.error("Password verification failed");
         } finally {
             setVerifying(false);
@@ -570,6 +587,10 @@ const DispatchSystem = () => {
                 String(releaseSettings.lead_minutes)
             );
             formData.append("auto_release[mode]", releaseSettings.mode);
+            formData.append(
+                "driver_job_start_window_minutes",
+                String(normalizeDriverJobStartWindowMinutes(driverJobStartWindowMinutes))
+            );
 
             const res = await apiSaveDispatchSystem(formData);
             if (res?.data?.success === 1) {
@@ -683,17 +704,60 @@ const DispatchSystem = () => {
                                 ))}
                             </select>
                         </div>
+
+                        <div className="lg:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Driver job start window
+                            </label>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="1440"
+                                    value={driverJobStartWindowMinutes}
+                                    onChange={(e) =>
+                                        setDriverJobStartWindowMinutes(e.target.value)
+                                    }
+                                    onBlur={(e) =>
+                                        setDriverJobStartWindowMinutes(
+                                            normalizeDriverJobStartWindowMinutes(e.target.value)
+                                        )
+                                    }
+                                    className="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                    {DRIVER_JOB_START_WINDOW_PRESETS.map((minutes) => (
+                                        <button
+                                            key={minutes}
+                                            type="button"
+                                            onClick={() =>
+                                                setDriverJobStartWindowMinutes(minutes)
+                                            }
+                                            className={`px-3 py-2 rounded-md border text-sm ${
+                                                normalizeDriverJobStartWindowMinutes(driverJobStartWindowMinutes) === minutes
+                                                    ? "bg-blue-600 text-white border-blue-600"
+                                                    : "bg-white text-gray-700 border-gray-300"
+                                            }`}
+                                        >
+                                            {minutes / 60} hr
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <p className="text-sm text-gray-600">
                         {releaseSettings.enabled
                             ? `Future jobs release ${releaseSettings.lead_minutes} minutes before pickup by default using ${RELEASE_MODE_LABELS[releaseSettings.mode] || releaseSettings.mode}. Dispatchers can still override this per booking.`
                             : "Future jobs stay held for manual review unless a dispatcher releases them on the booking."}
+                        {" "}
+                        Drivers can mark arrived or start scheduled jobs up to {normalizeDriverJobStartWindowMinutes(driverJobStartWindowMinutes)} minutes before pickup.
                     </p>
                 </div>
             </CardContainer>
 
-            {filteredDispatchData.map((p, i) => (
+            {filteredDispatchData.map((p) => (
                 <CardContainer key={p.systemKey} className="p-3 sm:p-4 lg:p-5 bg-[#F5F5F5]">
                     <div className="w-full">
                         <div className="flex flex-row gap-3 items-start">

@@ -21,7 +21,6 @@ import { apiGetRideHistory, apiGetUser } from "../../../../../../services/UserSe
 import { debounce } from "lodash";
 import History from "./components/History";
 import successSound from "../../../../../../assets/audio/meldix-success-340660.mp3";
-import { getTimePartsInTimezone } from "../../../../../../utils/timezoneUtils";
 import { useMapConfig } from "../../../../../../contexts/MapConfigContext";
 import { addressToCoordinatesMapify } from "../../../../../../utils/map/mapifyGeocoding";
 import { resolveMapifyFocus } from "../../../../../../utils/map/mapifyPlaces";
@@ -97,6 +96,14 @@ const playSuccessSound = () => {
     } catch (error) {
         console.log('Audio not supported:', error);
     }
+};
+
+const getLocalDateForInput = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 };
 
 const AddBooking = ({ setIsOpen }) => {
@@ -730,15 +737,16 @@ const AddBooking = ({ setIsOpen }) => {
                 formData.append('week', values.week_pattern || '');
             }
 
+            formData.append('pickup_time_type', values.pickup_time_type === "time" ? "time" : "asap");
+
             if (values.pickup_time_type === "asap") {
-                const { hour, minute } = getTimePartsInTimezone();
-                formData.append('pickup_time', `${hour}:${minute}:00`);
+                formData.append('pickup_time', 'asap');
             } else {
                 const timeValue = values.pickup_time || '';
                 formData.append('pickup_time', timeValue ? `${timeValue}:00` : '');
             }
 
-            formData.append('booking_date', values.booking_date || '');
+            formData.append('booking_date', values.pickup_time_type === "asap" ? (values.booking_date || getLocalDateForInput()) : (values.booking_date || ''));
             formData.append('booking_type', values.booking_type || '');
 
             const pickupCoords = await getCoordinatesFromAddress(values.pickup_point);

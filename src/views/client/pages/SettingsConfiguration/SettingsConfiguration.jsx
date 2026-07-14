@@ -21,7 +21,7 @@ const SettingsConfiguration = () => {
       case "Security": return <Security />;
       case "Billing": return <Billing />;
       case "Integrations": return <Integrations />;
-      case "Mobile App": return <MobileApp />;
+      // case "Mobile App": return <MobileApp />;
       case "Commission": return <Commission />;
       case "Dispatch System": return <DispatchSystem />
       default: return null;
@@ -33,7 +33,7 @@ const SettingsConfiguration = () => {
     "Security",
     "Billing",
     "Integrations",
-    "Mobile App",
+    // "Mobile App",
     "Commission",
     "Dispatch System"
   ];

@@ -129,7 +129,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Front Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${appConfig.backendUrl}${values.frontPhoto}`}
+                                                            src={appConfig.getAssetUrl(values.frontPhoto)}
                                                             className="w-full h-48 object-cover"
                                                             alt="Front"
                                                         />
@@ -142,7 +142,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Back Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${appConfig.backendUrl}${values.backPhoto}`}
+                                                            src={appConfig.getAssetUrl(values.backPhoto)}
                                                             className="w-full h-48 object-cover"
                                                             alt="Back"
                                                         />
@@ -155,7 +155,7 @@ const AddDocumentModel = ({ initialValue = {}, setIsOpen, onDocumentCreated }) =
                                                     <FormLabel>Profile Photo</FormLabel>
                                                     <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
                                                         <img
-                                                            src={`${appConfig.backendUrl}${values.profilePhoto}`}
+                                                            src={appConfig.getAssetUrl(values.profilePhoto)}
                                                             className="w-full h-48 object-cover"
                                                             alt="Profile"
                                                         />

@@ -106,6 +106,24 @@ const Billing = () => {
         setIsSubmitting(true);
         setError(null);
 
+        if (stripeData.stripe_key && !stripeData.stripe_key.startsWith("pk_")) {
+            toast.error("Stripe publishable key must start with pk_test_ or pk_live_");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (stripeData.stripe_secret_key && !stripeData.stripe_secret_key.startsWith("sk_")) {
+            toast.error("Stripe secret key must start with sk_test_ or sk_live_");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (stripeData.stripe_webhook_secret && !stripeData.stripe_webhook_secret.startsWith("whsec_")) {
+            toast.error("Stripe webhook secret must start with whsec_");
+            setIsSubmitting(false);
+            return;
+        }
+
         const formData = new FormData();
         formData.append("stripe_payment", stripeData.stripe_payment);
         formData.append("driver_app", stripeData.driver_app);
@@ -246,15 +264,21 @@ const Billing = () => {
                     <div className="grid md:grid-cols-2 gap-6 mt-6">
                         <InputField
                             label="Stripe Publishable Key"
-                            placeholder="customer_live_1234567890abc..."
+                            placeholder="pk_test_..."
                             value={stripeData.stripe_key}
                             onChange={(e) => setStripeData({ ...stripeData, stripe_key: e.target.value })}
                         />
                         <InputField
                             label="Stripe Secret Key"
-                            placeholder=""
+                            placeholder="sk_test_..."
                             value={stripeData.stripe_secret_key}
                             onChange={(e) => setStripeData({ ...stripeData, stripe_secret_key: e.target.value })}
+                        />
+                        <InputField
+                            label="Stripe Webhook Secret"
+                            placeholder="whsec_..."
+                            value={stripeData.stripe_webhook_secret}
+                            onChange={(e) => setStripeData({ ...stripeData, stripe_webhook_secret: e.target.value })}
                         />
                     </div>
 

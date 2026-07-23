@@ -220,6 +220,7 @@ const CompanyProfile = () => {
                             type="email"
                             value={companyProfileData?.company_email || ""}
                             placeholder="Enter Email"
+                            disabled
                             className={inputClass("company_email")}
                             onChange={(e) => handleChange("company_email", e.target.value)}
                         />

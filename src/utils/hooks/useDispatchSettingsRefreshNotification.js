@@ -6,17 +6,17 @@ const useDispatchSettingsRefreshNotification = (socket, onNotification) => {
   useEffect(() => {
     if (!socket || !onNotification) return;
 
-    const handleDispatchSettingsChanged = (data) => {
+    const handleCompanySettingsChanged = (data) => {
       const notification = notifyRefreshRequired(data);
       if (notification) {
         onNotification(notification);
       }
     };
 
-    socket.on(SOCKET_EVENTS.DISPATCH_SETTINGS_CHANGED, handleDispatchSettingsChanged);
+    socket.on(SOCKET_EVENTS.COMPANY_SETTINGS_CHANGED, handleCompanySettingsChanged);
 
     return () => {
-      socket.off(SOCKET_EVENTS.DISPATCH_SETTINGS_CHANGED, handleDispatchSettingsChanged);
+      socket.off(SOCKET_EVENTS.COMPANY_SETTINGS_CHANGED, handleCompanySettingsChanged);
     };
   }, [socket, onNotification]);
 };

@@ -595,7 +595,7 @@ const DispatchSystem = () => {
             const res = await apiSaveDispatchSystem(formData);
             if (res?.data?.success === 1) {
                 toast.success(
-                    "Dispatch system saved successfully. Connected company users will be notified to refresh."
+                    "Dispatch system saved successfully. Connected applications will receive the update."
                 );
             } else {
                 toast.error("Save failed");

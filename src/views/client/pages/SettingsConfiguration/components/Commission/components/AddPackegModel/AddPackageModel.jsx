@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { PACKAGE_VALIDATION_SCHEMA } from "../../../../../../validators/pages/package.validation";
 
 const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => {
-    const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
@@ -21,6 +20,11 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
         { value: "day", label: "Day" },
         { value: "week", label: "Week" },
         { value: "month", label: "Month" },
+    ];
+
+    const commissionTypeOptions = [
+        { value: "percentage", label: "Percentage" },
+        { value: "fixed", label: "Fixed Amount" },
     ];
 
     const handleSubmit = async (values) => {
@@ -36,6 +40,8 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
         formData.append("package_duration", values.packageDuration);
         formData.append("package_duration_unit", values.durationType);
         formData.append("package_price", values.packagePrice);
+        formData.append("commission_type", values.commissionType);
+        formData.append("commission_value", values.commissionValue);
 
         if (isEditMode && values.id) {
             formData.append("id", values.id);
@@ -87,6 +93,8 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
                     packageDuration: initialValue?.package_duration || "",
                     durationType: initialValue?.package_duration_unit || "",
                     packagePrice: initialValue?.package_price || "",
+                    commissionType: initialValue?.commission_type || "percentage",
+                    commissionValue: initialValue?.commission_value ?? "",
                 }}
                 onSubmit={handleSubmit}
                 enableReinitialize={true}
@@ -102,11 +110,6 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
                                     {isEditMode ? "Edit Package" : "Add New Package"}
                                 </span>
                             </div>
-                            {submitError && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                    {submitError}
-                                </div>
-                            )}
                             <div className="mb-6 sm:mb-[60px]">
                                 <div className="w-full mb-4">
                                     <FormLabel htmlFor="packageName">Package Name</FormLabel>
@@ -165,6 +168,43 @@ const AddPackageModel = ({ initialValue = {}, setIsOpen, onPackageCreated }) => 
                                     />
                                     <ErrorMessage
                                         name="packagePrice"
+                                        component="div"
+                                        className="text-red-500 text-sm mt-1"
+                                    />
+                                </div>
+
+                                <div className="w-full mb-4">
+                                    <FormLabel htmlFor="commissionType">Commission Type</FormLabel>
+                                    <FormSelection
+                                        label="Select Commission Type"
+                                        name="commissionType"
+                                        value={values.commissionType}
+                                        options={commissionTypeOptions}
+                                        onChange={(val) => setFieldValue("commissionType", val)}
+                                        placeholder="Select Commission Type"
+                                    />
+                                    <ErrorMessage
+                                        name="commissionType"
+                                        component="div"
+                                        className="text-red-500 text-sm mt-1"
+                                    />
+                                </div>
+
+                                <div className="w-full mb-4">
+                                    <FormLabel htmlFor="commissionValue">
+                                        {values.commissionType === "fixed" ? "Commission Amount" : "Commission Percentage"}
+                                    </FormLabel>
+                                    <Field
+                                        type="number"
+                                        min="0"
+                                        max={values.commissionType === "percentage" ? "100" : undefined}
+                                        step="0.01"
+                                        name="commissionValue"
+                                        className="sm:px-5 px-4 sm:py-[21px] py-4 border border-[#8D8D8D] rounded-lg w-full h-full shadow-[-4px_4px_6px_0px_#0000001F] placeholder:text-[#6C6C6C] sm:text-base text-sm leading-[22px] font-semibold"
+                                        placeholder={values.commissionType === "fixed" ? "Enter amount" : "Enter percentage"}
+                                    />
+                                    <ErrorMessage
+                                        name="commissionValue"
                                         component="div"
                                         className="text-red-500 text-sm mt-1"
                                     />

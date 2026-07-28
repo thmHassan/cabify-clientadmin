@@ -141,6 +141,7 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
 
   const validateDynamicFields = (values) => {
     const errors = {};
+    const today = getDateStringInTimezone();
 
     if (!isEditMode && !values.profile_image) {
       errors.profile_image = "Profile photo is required";
@@ -158,9 +159,15 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
         }
         if (doc.has_issue_date === "yes" && !value.issueDate) {
           currentErrors.issueDate = "Issue date is required";
+        } else if (value.issueDate && value.issueDate > today) {
+          currentErrors.issueDate = "Issue date cannot be in the future";
         }
         if (doc.has_expiry_date === "yes" && !value.expiryDate) {
           currentErrors.expiryDate = "Expiry date is required";
+        } else if (value.expiryDate && value.expiryDate < today) {
+          currentErrors.expiryDate = "Expiry date cannot be in the past";
+        } else if (value.issueDate && value.expiryDate && value.expiryDate <= value.issueDate) {
+          currentErrors.expiryDate = "Expiry date must be after the issue date";
         }
         if (doc.front_photo === "yes" && !value.frontPhoto) {
           currentErrors.frontPhoto = "Front photo is required";
@@ -564,7 +571,12 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                               <div className={fieldWrapClass}>
                                 <FormLabel htmlFor={`documents.${doc.key}.issueDate`}>Issue Date</FormLabel>
                                 <div className="sm:h-16 h-14">
-                                  <Field type="date" name={`documents.${doc.key}.issueDate`} className={inputClass} />
+                                  <Field
+                                    type="date"
+                                    name={`documents.${doc.key}.issueDate`}
+                                    max={getDateStringInTimezone()}
+                                    className={inputClass}
+                                  />
                                 </div>
                                 {docErrors.issueDate && docTouched.issueDate && <div className="text-red-500 text-sm mt-1">{docErrors.issueDate}</div>}
                               </div>
@@ -574,7 +586,12 @@ const AddDriversManagementModal = ({ initialValue = {}, setIsOpen, onDriverCreat
                               <div className={fieldWrapClass}>
                                 <FormLabel htmlFor={`documents.${doc.key}.expiryDate`}>Expiry Date</FormLabel>
                                 <div className="sm:h-16 h-14">
-                                  <Field type="date" name={`documents.${doc.key}.expiryDate`} className={inputClass} />
+                                  <Field
+                                    type="date"
+                                    name={`documents.${doc.key}.expiryDate`}
+                                    min={values.documents?.[doc.key]?.issueDate || getDateStringInTimezone()}
+                                    className={inputClass}
+                                  />
                                 </div>
                                 {docErrors.expiryDate && docTouched.expiryDate && <div className="text-red-500 text-sm mt-1">{docErrors.expiryDate}</div>}
                               </div>

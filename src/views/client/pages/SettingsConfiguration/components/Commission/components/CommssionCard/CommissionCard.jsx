@@ -42,6 +42,17 @@ const CommissionCard = ({ commission, onEdit, onDelete }) => {
                     <p className="text-[#333333] text-center font-semibold text-sm"> {currencySymbol} {commission.package_price}</p>
                 </div>
 
+                <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] text-left whitespace-nowrap">
+                    <p className="text-xs text-center text-[#6C6C6C]">Commission</p>
+                    <p className="text-[#333333] text-center font-semibold text-sm">
+                        {commission.commission_value == null
+                            ? "Company default"
+                            : commission.commission_type === "fixed"
+                                ? `${currencySymbol} ${commission.commission_value}`
+                                : `${commission.commission_value}%`}
+                    </p>
+                </div>
+
                 <UserDropdown options={actionOptions} itemData={commission}>
                     <Button className="w-10 h-10 bg-[#EFEFEF] rounded-full flex justify-center items-center">
                         <ThreeDotsIcon />

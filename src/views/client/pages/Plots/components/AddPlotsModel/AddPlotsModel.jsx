@@ -35,6 +35,13 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
   useEffect(() => { coordinatesRef.current = coordinates; }, [coordinates]);
   useEffect(() => { setIsEditMode(!!initialValue?.id); }, [initialValue]);
 
+  const bringSelectedDrawingToFront = useCallback(() => {
+    try { polygonRef.current?.bringToFront(); } catch { /* Leaflet layer may already be removed. */ }
+    markersRef.current.forEach((marker) => {
+      try { marker.bringToFront(); } catch { /* Leaflet layer may already be removed. */ }
+    });
+  }, []);
+
   useEffect(() => {
     if (!mapWrapperRef.current) return;
 
@@ -47,14 +54,14 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
 
     return () => {
       if (mapInstanceRef.current) {
-        try { mapInstanceRef.current.remove(); } catch { }
+        try { mapInstanceRef.current.remove(); } catch { /* Map may already be disposed. */ }
         mapInstanceRef.current = null;
       }
       try {
         if (mapContainerRef.current?.parentNode) {
           mapContainerRef.current.parentNode.removeChild(mapContainerRef.current);
         }
-      } catch { }
+      } catch { /* Container may already be detached. */ }
     };
   }, []);
 
@@ -148,7 +155,7 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
 
     if (Math.abs(first) <= 90) {
       const normalizedLng = normalizeLon(second);
-      if (Math.abs(normalizedLng) <= 180) return [first, normalizedLng];
+      if (Math.abs(normalizedLng) <= 180) return [normalizedLng, first];
     }
 
     return null;
@@ -163,9 +170,17 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
     if (!mapLoaded || !mapContainerRef.current || mapInstanceRef.current || !window.L) return;
 
     const map = window.L.map(mapContainerRef.current).setView([20, 0], 2);
+    map.createPane("existingPlotsPane");
+    map.getPane("existingPlotsPane").style.zIndex = 390;
+    map.createPane("selectedPlotPane");
+    map.getPane("selectedPlotPane").style.zIndex = 430;
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors", maxZoom: 19,
     }).addTo(map);
+
+    setTimeout(() => {
+      try { map.invalidateSize(); } catch { /* Map may be gone before timeout runs. */ }
+    }, 0);
 
     map.on("click", (e) => {
       const { lat, lng } = e.latlng;
@@ -183,7 +198,7 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
 
       const markerPoint = [normalizedPoint[1], normalizedPoint[0]];
       const m = window.L.circleMarker(markerPoint, {
-        radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
+        pane: "selectedPlotPane", radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
       }).addTo(map);
       m.bindTooltip(`${newCoords.length}`, { permanent: true, direction: "center", className: "coordinate-label" });
       markersRef.current.push(m);
@@ -191,35 +206,37 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
       if (newCoords.length >= 3) {
         if (polygonRef.current) map.removeLayer(polygonRef.current);
         polygonRef.current = window.L.polygon(newCoords.map(c => [c[1], c[0]]), {
-          color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
+          pane: "selectedPlotPane", color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
         }).addTo(map);
       }
+      bringSelectedDrawingToFront();
     });
 
     const initCoords = normalizeCoordinates(coordinatesRef.current);
     if (initCoords.length >= 3) {
       initCoords.forEach((c, idx) => {
         const m = window.L.circleMarker([c[1], c[0]], {
-          radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
+          pane: "selectedPlotPane", radius: 6, fillColor: "#3B82F6", color: "#fff", weight: 2, fillOpacity: 0.8,
         }).addTo(map);
         m.bindTooltip(`${idx + 1}`, { permanent: true, direction: "center", className: "coordinate-label" });
         markersRef.current.push(m);
       });
       polygonRef.current = window.L.polygon(initCoords.map(c => [c[1], c[0]]), {
-        color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
+        pane: "selectedPlotPane", color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
       }).addTo(map);
       map.fitBounds(polygonRef.current.getBounds());
+      bringSelectedDrawingToFront();
     }
 
     mapInstanceRef.current = map;
     setMapReady(true);
-  }, [mapLoaded, normalizeCoordinatePair, normalizeCoordinates]);
+  }, [bringSelectedDrawingToFront, mapLoaded, normalizeCoordinatePair, normalizeCoordinates]);
 
   useEffect(() => {
     if (!mapLoaded || !mapReady || !mapInstanceRef.current || !window.L) return;
 
     existingPolygonsRef.current.forEach(p => {
-      try { mapInstanceRef.current.removeLayer(p); } catch { }
+      try { mapInstanceRef.current.removeLayer(p); } catch { /* Layer may already be removed. */ }
     });
     existingPolygonsRef.current = [];
 
@@ -233,19 +250,20 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
       const color = colors[i % 4];
 
       const p = window.L.polygon(coords.map(c => [c.lat, c.lng]), {
-        color, fillOpacity: 0.1, weight: 2, dashArray: "5,5",
+        pane: "existingPlotsPane", color, fillOpacity: 0.1, weight: 2, dashArray: "5,5",
       }).addTo(mapInstanceRef.current);
       p.bindPopup(`<div style="padding:8px;font-weight:600">${plot.name}</div>`);
       existingPolygonsRef.current.push(p);
     });
-  }, [allPlots, mapLoaded, mapReady, parseCoordinates]);
+    bringSelectedDrawingToFront();
+  }, [allPlots, bringSelectedDrawingToFront, mapLoaded, mapReady, parseCoordinates]);
 
   const handleClearCoordinates = useCallback((setFieldValue) => {
     setCoordinates([]); coordinatesRef.current = [];
     setFieldValue("coordinates", []);
     if (mapInstanceRef.current) {
-      markersRef.current.forEach(m => { try { mapInstanceRef.current.removeLayer(m); } catch { } });
-      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { } polygonRef.current = null; }
+      markersRef.current.forEach(m => { try { mapInstanceRef.current.removeLayer(m); } catch { /* Layer may already be removed. */ } });
+      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { /* Layer may already be removed. */ } polygonRef.current = null; }
     }
     markersRef.current = [];
   }, []);
@@ -257,15 +275,16 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
     setFieldValue("coordinates", newCoords);
     if (mapInstanceRef.current) {
       const last = markersRef.current.pop();
-      if (last) { try { mapInstanceRef.current.removeLayer(last); } catch { } }
-      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { } polygonRef.current = null; }
+      if (last) { try { mapInstanceRef.current.removeLayer(last); } catch { /* Layer may already be removed. */ } }
+      if (polygonRef.current) { try { mapInstanceRef.current.removeLayer(polygonRef.current); } catch { /* Layer may already be removed. */ } polygonRef.current = null; }
       if (newCoords.length >= 3) {
         polygonRef.current = window.L.polygon(newCoords.map(c => [c[1], c[0]]), {
-          color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
+          pane: "selectedPlotPane", color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 0.2, weight: 2,
         }).addTo(mapInstanceRef.current);
+        bringSelectedDrawingToFront();
       }
     }
-  }, []);
+  }, [bringSelectedDrawingToFront]);
 
   const handleSubmit = async (values) => {
     setIsLoading(true); setSubmitError(null);
@@ -313,7 +332,7 @@ const AddPlotsModel = ({ initialValue = {}, existingPlots = [], setIsOpen, onPlo
         validationSchema={PLOT_VALIDATION_SCHEMA}
         onSubmit={handleSubmit}
       >
-        {({ values, setFieldValue }) => {
+        {({ setFieldValue }) => {
           formikSetFieldRef.current = setFieldValue;
 
           return (

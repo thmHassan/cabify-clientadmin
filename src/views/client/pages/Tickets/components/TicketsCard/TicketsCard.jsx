@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTimezoneFormatting } from "../../../../../../utils/timezoneUtils";
+import { getTicketCreatorInfo } from "../TicketUserDetailModal";
 
 const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => {
     const { formatDateOnly } = useTimezoneFormatting();
@@ -11,6 +12,8 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => 
 
     const statusOptions =
         tickets.status === "open" ? ["closed"] : ["open"];
+    const { displayName } = getTicketCreatorInfo(tickets);
+    const replyCount = tickets.reply_count || tickets.replies?.length || (tickets.reply_message ? 1 : 0);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -57,7 +60,7 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => 
                             onClick={() => onUserClick?.(tickets)}
                             className="text-sm font-medium text-[#1F41BB] hover:underline text-left"
                         >
-                            {tickets.customer || "Unknown"}
+                            {displayName}
                         </button>
                         <p className="text-xs">
                             {formatDateOnly(tickets.created_at)}
@@ -66,9 +69,9 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => 
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="inline-flex flex-col px-4 py-2 rounded-full bg-[#EFEFEF] w-[200px]">
-                        <p className="text-xs text-[#6C6C6C] text-center">
-                            Subject
+                    <div className="inline-flex flex-row px-4 py-2 rounded-full bg-[#EFEFEF] w-[200px]">
+                        <p className="text-[#00000] text-sm mr-2">
+                            Subject: 
                         </p>
                         <p className="text-[#333333] text-center text-sm">
                             {tickets.subject}
@@ -109,7 +112,7 @@ const TicketsCard = ({ tickets, onReplyClick, onStatusChange, onUserClick }) => 
                         onClick={() => onReplyClick(tickets)}
                         className="px-4 py-2 rounded-full border border-[#1F41BB] text-xs text-[#1F41BB] text-nowrap"
                     >
-                        {tickets.reply_message === null ? "Reply" : "View Reply"}
+                        {replyCount > 0 ? `Open (${replyCount})` : "Reply"}
                     </button>
                 </div>
             </div>

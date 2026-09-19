@@ -11,6 +11,22 @@ import CardContainer from "../../../../components/shared/CardContainer";
 import FormLabel from "../../../../components/ui/FormLabel";
 import Button from "../../../../components/ui/Button/Button";
 
+const editorContentClassName = [
+    "p-4 bg-white focus:outline-none",
+    "[&_img]:max-w-full [&_img]:h-auto [&_img]:my-2",
+    "[&_ul]:list-disc [&_ul]:pl-7 [&_ul]:my-3",
+    "[&_ol]:list-decimal [&_ol]:pl-7 [&_ol]:my-3",
+    "[&_li]:my-1 [&_li]:pl-1",
+    "[&_p]:my-2",
+    "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:my-3",
+    "[&_h2]:text-2xl [&_h2]:font-bold [&_h2]:my-3",
+    "[&_h3]:text-xl [&_h3]:font-semibold [&_h3]:my-2",
+    "[&_h4]:text-lg [&_h4]:font-semibold [&_h4]:my-2",
+    "[&_h5]:text-base [&_h5]:font-semibold [&_h5]:my-2",
+    "[&_h6]:text-sm [&_h6]:font-semibold [&_h6]:my-2",
+    "[&_a]:text-blue-700 [&_a]:underline",
+].join(" ");
+
 const AppDisplayContent = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [appContentData, setAppContentData] = useState({
@@ -377,7 +393,7 @@ const AppDisplayContent = () => {
                                         <div
                                             id="about-us-editor"
                                             contentEditable={true}
-                                            className="p-4 bg-white focus:outline-none [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+                                            className={editorContentClassName}
                                             style={{ minHeight: '300px' }}
                                         />
                                     </div>
@@ -391,7 +407,7 @@ const AppDisplayContent = () => {
                                         <div
                                             id="terms-editor"
                                             contentEditable={true}
-                                            className="p-4 bg-white focus:outline-none [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+                                            className={editorContentClassName}
                                             style={{ minHeight: '300px' }}
                                         />
                                     </div>
@@ -405,7 +421,7 @@ const AppDisplayContent = () => {
                                         <div
                                             id="privacy-editor"
                                             contentEditable={true}
-                                            className="p-4 bg-white focus:outline-none [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+                                            className={editorContentClassName}
                                             style={{ minHeight: '300px' }}
                                         />
                                     </div>
